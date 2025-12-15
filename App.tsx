@@ -5,7 +5,6 @@ import { StatusBar } from 'expo-status-bar';
 import { Linking } from 'react-native';
 import AppNavigator from './src/navigations/AppNavigator';
 import { LanguageProvider } from './src/contexts/LanguageContext';
-import { ThemeProvider } from './src/contexts/ThemeContext';
 
 // @ts-ignore
 const linking = {
@@ -25,13 +24,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <LanguageProvider>
-        <ThemeProvider>
-          {/* @ts-ignore */}
-          <NavigationContainer linking={linking}>
-            <AppNavigator />
-            <StatusBar style="auto" />
-          </NavigationContainer>
-        </ThemeProvider>
+        {/* @ts-ignore */}
+        <NavigationContainer linking={linking}>
+          <AppNavigator />
+          <StatusBar style="auto" />
+        </NavigationContainer>
       </LanguageProvider>
     </SafeAreaProvider>
   );

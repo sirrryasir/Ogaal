@@ -10,7 +10,7 @@ import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
-import BrandColors from '../../../theme';
+const BrandColors = require('../../../theme');
 import { useTranslation } from '../../../contexts/LanguageContext';
 
 const ReportConditionsScreen: React.FC = () => {

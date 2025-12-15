@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
-import BrandColors from '../../../theme';
+const BrandColors = require('../../../theme');
 
 interface Alert {
   id: string;

@@ -5,7 +5,6 @@ import DroughtStatusDashboard from '../screens/main/Home/index';
 import WaterSourcesMap from '../screens/main/WaterSourcesMap/index';
 import ReportConditions from '../screens/main/ReportConditions/index';
 import SettingsScreen from '../screens/main/Settings/index';
-import BrandColors from '../theme';
 import { useTranslation } from '../contexts/LanguageContext';
 
 const Tab = createBottomTabNavigator();
@@ -31,11 +30,11 @@ const MainTabNavigator = () => {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: BrandColors.ui.primary,
-        tabBarInactiveTintColor: BrandColors.ui.mutedForeground,
+        tabBarActiveTintColor: '#0c6dff',
+        tabBarInactiveTintColor: '#64748b',
         tabBarStyle: {
-          backgroundColor: BrandColors.ui.card,
-          borderTopColor: BrandColors.ui.border,
+          backgroundColor: '#ffffff',
+          borderTopColor: '#e2e8f0',
         },
         headerShown: false,
       })}

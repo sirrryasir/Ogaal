@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { TextInput, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import BrandColors from '../theme';
 import Typography from './Typography';
 
 interface InputProps {
@@ -43,7 +42,7 @@ const Input: React.FC<InputProps> = ({
             <Ionicons
               name={leftIcon}
               size={20}
-              color={BrandColors.ui.mutedForeground}
+              color={'#64748b'}
             />
           </View>
         )}
@@ -54,18 +53,18 @@ const Input: React.FC<InputProps> = ({
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={isPassword && !showPassword}
-          placeholderTextColor={BrandColors.ui.mutedForeground}
+          placeholderTextColor={'#64748b'}
           onFocus={handleFocus}
           onBlur={handleBlur}
           underlineColorAndroid="transparent"
-          selectionColor={BrandColors.ui.primary}
+          selectionColor={'#0c6dff'}
         />
         {isPassword && (
           <TouchableOpacity onPress={togglePasswordVisibility} style={styles.icon}>
             <Ionicons
               name={showPassword ? 'eye-off' : 'eye'}
               size={20}
-              color={BrandColors.ui.mutedForeground}
+              color={'#64748b'}
             />
           </TouchableOpacity>
         )}
@@ -83,22 +82,22 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: BrandColors.ui.border,
-    borderRadius: 8,
-    backgroundColor: BrandColors.ui.input,
-  },
-  focusedInput: {
-    borderColor: BrandColors.ui.primary,
-  },
-  input: {
-    flex: 1,
-    padding: 12,
-    color: BrandColors.ui.foreground,
-    fontSize: 16,
-  },
+   flexDirection: 'row',
+   alignItems: 'center',
+   borderWidth: 1,
+   borderColor: '#e2e8f0',
+   borderRadius: 8,
+   backgroundColor: '#e2e8f0',
+ },
+ focusedInput: {
+   borderColor: '#0c6dff',
+ },
+ input: {
+   flex: 1,
+   padding: 12,
+   color: '#0f172a',
+   fontSize: 16,
+ },
   icon: {
     padding: 12,
   },
@@ -109,8 +108,8 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   errorInput: {
-    borderColor: BrandColors.ui.destructive,
-  },
+   borderColor: '#ef4444',
+ },
   error: {
     marginTop: 4,
   },

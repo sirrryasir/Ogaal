@@ -6,8 +6,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
 import Button from '../../../components/Button';
-import BrandColors from '../../../theme';
 import { useTranslation } from '../../../contexts/LanguageContext';
+const BrandColors = require('../../../theme');
 
 interface Alert {
   id: number;
@@ -38,7 +38,7 @@ const HomeScreen: React.FC = () => {
       case 'Low': return '#ffc107'; // Yellow
       case 'Dry': return '#dc3545'; // Red
       case 'Broken': return '#000000'; // Black
-      default: return BrandColors.ui.foreground;
+      default: return '#0f172a';
     }
   };
 
@@ -72,7 +72,7 @@ const HomeScreen: React.FC = () => {
       <View style={styles.topBar}>
         <Typography variant="h1" style={styles.topBarTitle}>{t('homeTitle')}</Typography>
         <TouchableOpacity style={styles.topBarRight} onPress={() => navigation.navigate('Notifications' as never)}>
-          <MaterialIcons name="notifications" size={24} color={BrandColors.brand.blue} />
+          <MaterialIcons name="notifications" size={24} color={'#0c6dff'} />
         </TouchableOpacity>
       </View>
         <Animated.ScrollView

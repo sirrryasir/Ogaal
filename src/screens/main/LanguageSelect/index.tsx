@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
-import BrandColors from '../../../theme';
+const BrandColors = require('../../../theme');
 import { useTranslation } from '../../../contexts/LanguageContext';
 
 const LanguageSelectScreen: React.FC = () => {
