@@ -30,7 +30,7 @@ export default function UssdPhone({ sources }: UssdPhoneProps) {
     if (!session) {
       if (text === "*123#") {
         response =
-          "AquaGuard Menu:\n1. Check Water\n2. Report Issue\n3. Drought Risk\n4. Exit";
+          "Ogaal Menu:\n1. Check Water\n2. Report Issue\n3. Drought Risk\n4. Exit";
         nextStep = "main_menu";
       } else {
         response = "Invalid Code. Dial *123#";

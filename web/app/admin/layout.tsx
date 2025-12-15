@@ -33,9 +33,7 @@ export default function AdminLayout({
             <div className="w-12 h-12 bg-blue-600 rounded-xl mx-auto mb-4 flex items-center justify-center">
               <Droplet className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              AquaGuard Admin
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">Ogaal Admin</h1>
             <p className="text-gray-500">Sign in to manage resources</p>
           </div>
           <form
@@ -52,7 +50,7 @@ export default function AdminLayout({
               </label>
               <input
                 type="email"
-                defaultValue="admin@aquaguard.so"
+                defaultValue="admin@Ogaal.so"
                 className="w-full p-3 bg-gray-50 rounded-lg border-2 border-gray-100 focus:border-blue-500 outline-none"
               />
             </div>
@@ -90,7 +88,7 @@ export default function AdminLayout({
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
               <Droplet className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl tracking-tight">AquaGuard</span>
+            <span className="font-bold text-xl tracking-tight">Ogaal</span>
           </Link>
         </div>
 

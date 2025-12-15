@@ -1,4 +1,4 @@
-const CACHE_NAME = "aquaguard-v1";
+const CACHE_NAME = "Ogaal-v1";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

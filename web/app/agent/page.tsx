@@ -71,7 +71,7 @@ export default function AgentPage() {
           offlineMode ? "bg-gray-800" : "bg-green-600"
         }`}
       >
-        <h1 className="font-bold text-lg">💧 AquaGuard Agent</h1>
+        <h1 className="font-bold text-lg">💧 Ogaal Agent</h1>
         <div
           onClick={() => setOfflineMode(!offlineMode)}
           className="flex items-center space-x-2 text-sm cursor-pointer bg-white/20 px-2 py-1 rounded"

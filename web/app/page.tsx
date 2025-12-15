@@ -51,7 +51,11 @@ export default function Home() {
             </span>
             <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-tight">
               Ogaal <br />
+<<<<<<< HEAD
               <span className="text-blue-300">Platform.</span>
+=======
+              <span className="text-blue-300">Resilience.</span>
+>>>>>>> b3e1235 (refactor: rename to Ogaal)
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 max-w-2xl mx-auto mb-12 leading-relaxed">
               Monitoring water resources in real-time. Empowering communities
@@ -152,7 +156,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-sm">
           <div className="col-span-1 md:col-span-2">
             <span className="text-white font-bold text-2xl mb-6 block">
-              AquaGuard
+              Ogaal
             </span>
             <p className="max-w-xs leading-relaxed">
               Building digital infrastructure for water security in the Horn of
@@ -200,7 +204,7 @@ export default function Home() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-gray-800 text-center md:text-left flex flex-col md:flex-row justify-between items-center">
-          <p>&copy; 2025 AquaGuard Somaliland.</p>
+          <p>&copy; 2025 Ogaal Somaliland.</p>
           <p className="mt-2 md:mt-0 opacity-50">
             Built with Next.js 16 & Tailwind
           </p>
