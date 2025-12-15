@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import BrandColors from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface ButtonProps {
   title: string;
@@ -23,18 +23,19 @@ const Button: React.FC<ButtonProps> = ({
   style,
   accessibilityLabel,
 }) => {
+  const { theme } = useTheme();
   const variantStyles = {
     primary: {
-      backgroundColor: BrandColors.ui.primary,
-      borderColor: BrandColors.ui.primary,
+      backgroundColor: theme.ui.primary,
+      borderColor: theme.ui.primary,
     },
     secondary: {
-      backgroundColor: BrandColors.ui.secondary,
-      borderColor: BrandColors.ui.secondary,
+      backgroundColor: theme.ui.secondary,
+      borderColor: theme.ui.secondary,
     },
     destructive: {
-      backgroundColor: BrandColors.ui.destructive,
-      borderColor: BrandColors.ui.destructive,
+      backgroundColor: theme.ui.destructive,
+      borderColor: theme.ui.destructive,
     },
   };
 
@@ -45,9 +46,9 @@ const Button: React.FC<ButtonProps> = ({
   };
 
   const textColors = {
-    primary: BrandColors.ui.primaryForeground,
-    secondary: BrandColors.ui.secondaryForeground,
-    destructive: BrandColors.ui.destructiveForeground,
+    primary: theme.ui.primaryForeground,
+    secondary: theme.ui.secondaryForeground,
+    destructive: theme.ui.destructiveForeground,
   };
 
   return (

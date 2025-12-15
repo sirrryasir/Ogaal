@@ -4,6 +4,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Linking } from 'react-native';
 import AppNavigator from './src/navigations/AppNavigator';
+import { LanguageProvider } from './src/contexts/LanguageContext';
+import { ThemeProvider } from './src/contexts/ThemeContext';
 
 // @ts-ignore
 const linking = {
@@ -22,11 +24,15 @@ const linking = {
 export default function App() {
   return (
     <SafeAreaProvider>
-      {/* @ts-ignore */}
-      <NavigationContainer linking={linking}>
-        <AppNavigator />
-        <StatusBar style="auto" />
-      </NavigationContainer>
+      <LanguageProvider>
+        <ThemeProvider>
+          {/* @ts-ignore */}
+          <NavigationContainer linking={linking}>
+            <AppNavigator />
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </ThemeProvider>
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }

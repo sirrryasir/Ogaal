@@ -1,33 +1,71 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { View, StyleSheet, Dimensions, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
 import Layout from '../../components/Layout';
 import Typography from '../../components/Typography';
 import Button from '../../components/Button';
 import Logo from '../../components/Logo';
 import BrandColors from '../../theme';
+import { useTranslation } from '../../contexts/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
-const onboardingData = [
-  {
-    title: 'Welcome to BARWAAQO AI',
-    subtitle: 'Your intelligent assistant for productivity and creativity.',
-  },
-  {
-    title: 'Smart Features',
-    subtitle: 'Experience AI-powered tools that help you work smarter and faster.',
-  },
-  {
-    title: 'Get Started',
-    subtitle: 'Join thousands of users who trust BARWAAQO AI for their daily tasks.',
-  },
-];
+interface OnboardingItem {
+   title: string;
+   subtitle: string;
+   icon: string;
+}
+
+const getOnboardingData = (lang: string): OnboardingItem[] => {
+   if (lang === 'so') {
+     return [
+       {
+         title: 'Ujeedo',
+         subtitle: 'Raadi ceelasha u dhow oo arag haddii biyuhu diyaar yihiin ka hor intaadan dhaqaaqin.',
+         icon: 'location-on',
+       },
+       {
+         title: 'Sida ay u shaqeyso',
+         subtitle: 'Ceelasha waxaa lagu muujiyaa khariidad toos ah. Midabada waxay muujinayaan shaqeynaya, hooseeya, ama qalalan.',
+         icon: 'map',
+       },
+       {
+         title: 'Doorka bulshada',
+         subtitle: 'Ka warbixi xaaladda ceelka si aad u caawiso dadka kale. Cusbooneysiinta la xaqiijiyay waxay badbaadinayaan qof walba.',
+         icon: 'people',
+       },
+     ];
+   }
+   return [
+     {
+       title: 'Purpose',
+       subtitle: 'Find nearby wells and see if water is available before you move.',
+       icon: 'location-on',
+     },
+     {
+       title: 'How it works',
+       subtitle: 'Wells are shown on a live map. Colors show working, low, or dry.',
+       icon: 'map',
+     },
+     {
+       title: 'Community role',
+       subtitle: 'Report well status to help others. Verified updates keep everyone safe.',
+       icon: 'people',
+     },
+   ];
+ };
 
 const OnboardingScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { language, setLanguage, t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const data = useMemo(() => getOnboardingData(language), [language]);
+  const animValues = useRef(data.map(() => new Animated.Value(0.5))).current;
+  const textAnimValues = useRef(data.map(() => new Animated.Value(0))).current;
+  const rotateAnimValues = useRef(data.map(() => new Animated.Value(0))).current;
 
   const handleScroll = (event: any) => {
     const slideSize = event.nativeEvent.layoutMeasurement.width;
@@ -39,28 +77,83 @@ const OnboardingScreen: React.FC = () => {
   };
 
   const handleNext = () => {
-    if (currentIndex < onboardingData.length - 1) {
+    if (currentIndex < data.length - 1) {
       const nextIndex = currentIndex + 1;
       scrollViewRef.current?.scrollTo({ x: nextIndex * width, animated: true });
       setCurrentIndex(nextIndex);
     } else {
-      navigation.navigate('Auth' as never);
+      navigation.navigate('Main' as never);
     }
   };
 
   const handleSkip = () => {
-    navigation.navigate('Auth' as never);
+    navigation.navigate('Main' as never);
   };
+
+  useEffect(() => {
+    animValues.forEach((anim, i) => {
+      if (i !== currentIndex) {
+        Animated.spring(anim, {
+          toValue: 0.5,
+          useNativeDriver: true,
+          friction: 5,
+        }).start();
+        Animated.timing(textAnimValues[i], {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+        Animated.timing(rotateAnimValues[i], {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }
+    });
+    Animated.spring(animValues[currentIndex], {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 5,
+    }).start();
+    Animated.timing(textAnimValues[currentIndex], {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+    Animated.timing(rotateAnimValues[currentIndex], {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  }, [currentIndex]);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+    scrollViewRef.current?.scrollTo({ x: 0, animated: false });
+  }, [language]);
 
   const renderIndicators = () => {
     return (
       <View style={styles.indicators}>
-        {onboardingData.map((_, index) => (
-          <View
+        {data.map((_, index) => (
+          <Animated.View
             key={index}
             style={[
               styles.indicator,
-              index === currentIndex && styles.activeIndicator,
+              {
+                opacity: animValues[index].interpolate({
+                  inputRange: [0.5, 1],
+                  outputRange: [0.3, 1],
+                }),
+                transform: [
+                  {
+                    scale: animValues[index].interpolate({
+                      inputRange: [0.5, 1],
+                      outputRange: [0.8, 1.2],
+                    }),
+                  },
+                ],
+              },
             ]}
           />
         ))}
@@ -70,7 +163,48 @@ const OnboardingScreen: React.FC = () => {
 
   return (
     <Layout style={styles.container} noPadding={true}>
+      <View style={styles.backgroundOverlay} />
+      <View style={styles.logoContainer}>
+        <Logo size="large" />
+      </View>
       <View style={styles.header}>
+        <View style={styles.languageContainer}>
+          <TouchableOpacity
+            onPress={() => setShowDropdown(!showDropdown)}
+            style={styles.dropdownButton}
+            accessibilityLabel="Select language"
+            accessibilityRole="button"
+          >
+            <Typography variant="body" style={styles.dropdownText}>
+              {language === 'en' ? t('english') : t('somali')}
+            </Typography>
+            <MaterialIcons name={showDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={20} color={BrandColors.brand.blue} />
+          </TouchableOpacity>
+          {showDropdown && (
+            <View style={styles.dropdown}>
+              <TouchableOpacity
+                onPress={() => { setLanguage('en'); setShowDropdown(false); }}
+                style={styles.dropdownItem}
+                accessibilityLabel="Switch to English"
+                accessibilityRole="button"
+              >
+                <Typography variant="body" style={styles.dropdownItemText}>
+                  {t('english')}
+                </Typography>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => { setLanguage('so'); setShowDropdown(false); }}
+                style={styles.dropdownItem}
+                accessibilityLabel="Switch to Somali"
+                accessibilityRole="button"
+              >
+                <Typography variant="body" style={styles.dropdownItemText}>
+                  {t('somali')}
+                </Typography>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
         <TouchableOpacity
           onPress={handleSkip}
           style={styles.skipButton}
@@ -92,16 +226,28 @@ const OnboardingScreen: React.FC = () => {
           ref={scrollViewRef}
           style={styles.scrollView}
         >
-          {onboardingData.map((item, index) => (
+          {data.map((item, index) => (
             <View key={index} style={styles.slide}>
               <View style={styles.textContainer}>
-                <Logo size="medium" />
-                <Typography variant="h1" style={styles.title}>
-                  {item.title}
-                </Typography>
-                <Typography variant="body" style={styles.subtitle}>
-                  {item.subtitle}
-                </Typography>
+                <Animated.View style={{
+                  transform: [
+                    { scale: animValues[index] },
+                    { rotate: rotateAnimValues[index].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '360deg'],
+                    }) }
+                  ]
+                }}>
+                  <MaterialIcons name={item.icon as any} size={120} color={BrandColors.brand.blue} />
+                </Animated.View>
+                <Animated.View style={{ opacity: textAnimValues[index] }}>
+                  <Typography variant="h1" style={styles.title}>
+                    {item.title}
+                  </Typography>
+                  <Typography variant="body" style={styles.subtitle}>
+                    {item.subtitle}
+                  </Typography>
+                </Animated.View>
               </View>
             </View>
           ))}
@@ -109,11 +255,11 @@ const OnboardingScreen: React.FC = () => {
         {renderIndicators()}
         <View style={styles.buttonContainer}>
           <Button
-            title={currentIndex === onboardingData.length - 1 ? 'Get Started' : 'Next'}
+            title={currentIndex === data.length - 1 ? 'Start Exploring' : 'Continue'}
             onPress={handleNext}
             size="large"
             style={styles.fullWidthButton}
-            accessibilityLabel={currentIndex === onboardingData.length - 1 ? 'Get Started with BARWAAQO AI' : 'Next onboarding screen'}
+            accessibilityLabel={currentIndex === data.length - 1 ? 'Start exploring the app' : 'Continue to next screen'}
           />
         </View>
       </View>
@@ -123,12 +269,26 @@ const OnboardingScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: BrandColors.app.bodyBackground,
+    backgroundColor: BrandColors.ui.background,
     flex: 1,
+  },
+  backgroundOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: BrandColors.brand.light,
+    opacity: 0.1,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    paddingTop: 40,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
@@ -152,14 +312,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    marginTop: 20,
-    marginBottom: 16,
+    marginTop: 30,
+    marginBottom: 15,
     textAlign: 'center',
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: BrandColors.brand.blue,
   },
   subtitle: {
-    marginBottom: 40,
+    marginBottom: 50,
     textAlign: 'center',
-    color: BrandColors.ui.mutedForeground,
+    fontSize: 18,
+    lineHeight: 26,
+    color: BrandColors.ui.foreground,
+    paddingHorizontal: 30,
   },
   indicators: {
     flexDirection: 'row',
@@ -168,17 +334,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   indicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(12, 109, 255, 0.3)',
-    marginHorizontal: 5,
-  },
-  activeIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: BrandColors.brand.blue,
-    width: 30,
-    height: 10,
-    borderRadius: 5,
+    marginHorizontal: 5,
   },
   buttonContainer: {
     width: '100%',
@@ -187,6 +347,11 @@ const styles = StyleSheet.create({
   },
   fullWidthButton: {
     width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
   },
   scrollView: {
     flex: 1,
@@ -197,6 +362,65 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+  },
+  illustration: {
+    width: 250,
+    height: 200,
+    resizeMode: 'contain',
+  },
+  languageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  lang: {
+    padding: 5,
+  },
+  activeLang: {
+    padding: 5,
+    backgroundColor: BrandColors.brand.blue,
+    borderRadius: 5,
+  },
+  langText: {
+    color: BrandColors.ui.foreground,
+    fontWeight: '500',
+  },
+  activeLangText: {
+    color: BrandColors.app.bodyBackground,
+    fontWeight: '500',
+  },
+  separator: {
+    marginHorizontal: 5,
+    color: BrandColors.ui.foreground,
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 5,
+  },
+  dropdownText: {
+    color: BrandColors.brand.blue,
+    fontWeight: '500',
+    marginRight: 5,
+  },
+  dropdown: {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    backgroundColor: BrandColors.app.bodyBackground,
+    borderRadius: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    minWidth: 100,
+  },
+  dropdownItem: {
+    padding: 10,
+  },
+  dropdownItemText: {
+    color: BrandColors.ui.foreground,
+    fontWeight: '500',
   },
 });
 
