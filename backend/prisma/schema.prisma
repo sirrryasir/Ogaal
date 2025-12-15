@@ -1,0 +1,189 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"] // Enable PostGIS if available, standard otherwise
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User Roles: Government, NGO, Community, Admin
+enum UserRole {
+  ADMIN
+  GOVERNMENT
+  NGO_WORKER
+  COMMUNITY_MEMBER
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  fullName  String
+  email     String   @unique
+  password  String
+  role      UserRole @default(COMMUNITY_MEMBER)
+  
+  // Relations
+  ngo       NGO?     @relation(fields: [ngo_id], references: [id])
+  ngo_id    Int?
+  
+  reports   Report[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("users")
+}
+
+model NGO {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  contact     String?
+  
+  workers       User[]
+  interventions Intervention[]
+  
+  @@map("ngos")
+}
+
+model Region {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  districts District[]
+  
+  @@map("regions")
+}
+
+model District {
+  id        Int       @id @default(autoincrement())
+  name      String
+  region_id Int
+  region    Region    @relation(fields: [region_id], references: [id])
+  villages  Village[]
+  
+  @@map("districts")
+}
+
+model Village {
+  id                 Int        @id @default(autoincrement())
+  name               String
+  district_id        Int?       
+  district           District?  @relation(fields: [district_id], references: [id])
+  latitude           Float?
+  longitude          Float?
+  drought_risk_level String?    @default("Low") // Low, Medium, High, Severe
+  
+  water_sources      WaterSource[]
+  reports            Report[]
+  alerts             Alert[]
+  ai_predictions     AIPrediction[]
+  interventions      Intervention[]
+  
+  @@map("villages")
+}
+
+model WaterSource {
+  id              Int       @id @default(autoincrement())
+  village_id      Int
+  name            String
+  type            String    @default("Borehole") // Borehole, Dam, Berkad, Well
+  status          String?   @default("Working")   // Working, Needed Maintenance, Broken
+  water_level     Float?    @default(100.0)
+  latitude        Float?
+  longitude       Float?
+  
+  last_maintained DateTime?
+  
+  village         Village   @relation(fields: [village_id], references: [id])
+  reports         Report[]
+  interventions   Intervention[]
+  sensor_readings SensorReading[]
+
+  @@map("water_sources")
+}
+
+model Intervention {
+  id              Int       @id @default(autoincrement())
+  ngo_id          Int
+  water_source_id Int?
+  village_id      Int?
+  
+  type            String    // Digging, Repair, Food Distribution, Water Trucking
+  description     String?
+  status          String    @default("Planned") // Planned, In Progress, Completed
+  start_date      DateTime?
+  end_date        DateTime?
+  
+  ngo             NGO          @relation(fields: [ngo_id], references: [id])
+  water_source    WaterSource? @relation(fields: [water_source_id], references: [id])
+  village         Village?     @relation(fields: [village_id], references: [id])
+  
+  createdAt       DateTime  @default(now())
+  
+  @@map("interventions")
+}
+
+model Report {
+  id             Int       @id @default(autoincrement())
+  user_id        Int?
+  village_id     Int?
+  water_source_id Int?
+  
+  reporter_type  String?   // User (App), USSD
+  content        String?
+  is_verified    Boolean   @default(false)
+  timestamp      DateTime  @default(now())
+  
+  user           User?         @relation(fields: [user_id], references: [id])
+  village        Village?      @relation(fields: [village_id], references: [id])
+  water_source   WaterSource?  @relation(fields: [water_source_id], references: [id])
+  
+  @@map("reports")
+}
+
+model Alert {
+  id         Int      @id @default(autoincrement())
+  village_id Int?
+  message    String?
+  severity   String? // Info, Warning, Critical
+  is_active  Boolean @default(true)
+  created_at DateTime @default(now())
+  
+  village    Village? @relation(fields: [village_id], references: [id])
+  
+  @@map("alerts")
+}
+
+model SensorReading {
+  id              Int      @id @default(autoincrement())
+  water_source_id Int
+  
+  soil_moisture   Float?
+  temperature     Float?
+  humidity        Float?
+  water_level     Float?
+  timestamp       DateTime @default(now())
+  
+  water_source    WaterSource @relation(fields: [water_source_id], references: [id])
+  
+  @@map("sensor_readings")
+}
+
+model AIPrediction {
+  id               Int      @id @default(autoincrement())
+  village_id       Int
+  
+  prediction_date  DateTime
+  drought_risk     Float    // 0.0 to 1.0 probability
+  predicted_level  String   // Label
+  confidence_score Float?
+  
+  created_at       DateTime @default(now())
+  
+  village          Village  @relation(fields: [village_id], references: [id])
+  
+  @@map("ai_predictions")
+}
