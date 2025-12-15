@@ -50,8 +50,8 @@ export default function Home() {
               Somaliland Water Intelligence Platform
             </span>
             <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-tight">
-              AquaGuard <br />
-              <span className="text-blue-300">Resilience.</span>
+              Ogaal <br />
+              <span className="text-blue-300">Platform.</span>
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 max-w-2xl mx-auto mb-12 leading-relaxed">
               Monitoring water resources in real-time. Empowering communities
