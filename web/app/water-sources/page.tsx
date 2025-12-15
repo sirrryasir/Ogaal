@@ -43,7 +43,7 @@ export default function WaterSourcesPage() {
     <div className="h-screen w-full flex flex-col md:flex-row bg-gray-50 overflow-hidden">
       {/* Mobile Toggle & Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b z-20 shadow-sm shrink-0">
-        <h1 className="font-bold text-lg text-blue-600">AquaGuard Monitor</h1>
+        <h1 className="font-bold text-lg text-blue-600">Ogaal Monitor</h1>
         <div className="flex bg-gray-100 rounded-lg p-1">
           <button
             onClick={() => setViewMode("map")}

@@ -43,12 +43,9 @@ export default function Navigation() {
             A
           </div>
           <span
-            className={cn(
-              "font-bold text-xl tracking-tight",
-              "text-gray-900"
-            )}
+            className={cn("font-bold text-xl tracking-tight", "text-gray-900")}
           >
-            AquaGuard
+            Ogaal
           </span>
         </Link>
         <nav className="flex items-center gap-1 bg-white/10 backdrop-blur-sm p-1 rounded-full border border-white/20">
@@ -86,7 +83,7 @@ export default function Navigation() {
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
             A
           </div>
-          <span className="font-bold text-lg text-gray-900">AquaGuard</span>
+          <span className="font-bold text-lg text-gray-900">Ogaal</span>
         </Link>
         <button
           className="p-2 text-gray-600"

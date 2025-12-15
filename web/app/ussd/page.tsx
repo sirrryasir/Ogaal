@@ -15,7 +15,7 @@ export default async function UssdPage() {
         </div>
         <h1 className="text-3xl font-bold text-gray-900">USSD Simulator</h1>
         <p className="text-gray-500 mt-2 max-w-md mx-auto">
-          Experience how non-smartphone users interact with AquaGuard via simple
+          Experience how non-smartphone users interact with Ogaal via simple
           text menus.
           <br />
           <span className="font-mono bg-gray-200 px-2 rounded text-sm mt-2 inline-block">

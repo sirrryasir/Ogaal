@@ -126,7 +126,7 @@ const USSDSimulator = () => {
         ) : (
           <div className="flex flex-col items-center text-center">
             <div className="text-3xl mb-2">📞</div>
-            <div className="text-xl font-bold">AquaGuard</div>
+            <div className="text-xl font-bold">Ogaal</div>
             <div className="text-sm mt-4">Dial *123# to start</div>
             <div className="mt-8 text-2xl font-mono border-b-2 border-white min-h-[32px]">
               {input}
