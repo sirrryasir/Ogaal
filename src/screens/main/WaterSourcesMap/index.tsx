@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, Modal, TouchableWithoutFeedback, Linking, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert, Modal, TouchableWithoutFeedback, Linking, Platform, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { WebView } from 'react-native-webview';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
 import Button from '../../../components/Button';
-import { useTheme } from '../../../contexts/ThemeContext';
 import { useTranslation } from '../../../contexts/LanguageContext';
 
 interface WaterSource {
@@ -24,10 +24,15 @@ interface WaterSource {
 const WaterSourcesMapScreen: React.FC = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
-  const { theme } = useTheme();
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedWell, setSelectedWell] = useState<WaterSource | null>(null);
+  const [region, setRegion] = useState({
+    latitude: 9.5624,
+    longitude: 44.0770,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  });
 
 
   // Mock data with coordinates around Hargeisa, Somaliland
@@ -41,10 +46,9 @@ const WaterSourcesMapScreen: React.FC = () => {
   const isWeb = Platform.OS === 'web';
   const getMaps = () => {
     if (isWeb) {
-      return { MapView: null, Marker: null };
+      return { MapView: null, Marker: null, PROVIDER_GOOGLE: null };
     } else {
-      const maps = require('react-native-maps');
-      return maps;
+      return { MapView: WebView, Marker: null, PROVIDER_GOOGLE: null };
     }
   };
   const maps = getMaps();
@@ -60,9 +64,16 @@ const WaterSourcesMapScreen: React.FC = () => {
       }
 
       let location = await Location.getCurrentPositionAsync({});
-      setLocation({
+      const newLocation = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
+      };
+      setLocation(newLocation);
+      setRegion({
+        latitude: newLocation.latitude,
+        longitude: newLocation.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
       });
     })();
   }, []);
@@ -73,7 +84,7 @@ const WaterSourcesMapScreen: React.FC = () => {
       case 'Low water': return '#ffc107'; // Yellow
       case 'Dry': return '#dc3545'; // Red
       case 'Broken': return '#000000'; // Black
-      default: return theme.ui.mutedForeground;
+      default: return '#64748b';
     }
   };
 
@@ -132,50 +143,96 @@ const WaterSourcesMapScreen: React.FC = () => {
     navigation.navigate('Report' as never);
   };
 
-  const initialRegion = location ? {
-    latitude: location.latitude,
-    longitude: location.longitude,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  } : {
-    latitude: 9.5624,
-    longitude: 44.0770,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  };
 
   return (
     <Layout noPadding>
-      <View style={[styles.topBar, { backgroundColor: theme.app.bodyBackground, borderBottomColor: theme.ui.border }]}>
-        <Typography variant="h1" style={[styles.topBarTitle, { color: theme.brand.blue }]}>{t('waterSourcesMapTitle')}</Typography>
+      <View style={[styles.topBar, { backgroundColor: '#f8fafc', borderBottomColor: '#e2e8f0' }]}>
+        <Typography variant="h1" style={[styles.topBarTitle, { color: '#0c6dff' }]}>{t('waterSourcesMapTitle')}</Typography>
         <TouchableOpacity style={styles.topBarRight} onPress={() => navigation.navigate('Notifications' as never)}>
-          <MaterialIcons name="notifications" size={24} color={theme.brand.blue} />
+          <MaterialIcons name="notifications" size={24} color={'#0c6dff'} />
         </TouchableOpacity>
       </View>
       <View style={styles.container}>
         <View style={styles.mapContainer}>
-          {isWeb ? (
+          {isWeb || !MapViewComp ? (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Typography variant="h1">Map not available on web</Typography>
+              <Typography variant="h1">{isWeb ? 'Map not available on web' : 'Map not available on this device'}</Typography>
             </View>
           ) : (
             <MapViewComp
+              source={{
+                html: `
+<!DOCTYPE html>
+<html>
+<head>
+<title>Water Sources Map</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { height: 100vh; width: 100vw; }
+.custom-icon { }
+.bg-green-500 { background-color: #10b981; }
+.bg-yellow-500 { background-color: #f59e0b; }
+.bg-red-500 { background-color: #ef4444; }
+.bg-gray-800 { background-color: #1f2937; }
+.bg-gray-400 { background-color: #9ca3af; }
+.w-6 { width: 1.5rem; }
+.h-6 { height: 1.5rem; }
+.rounded-full { border-radius: 9999px; }
+.border-2 { border-width: 2px; }
+.border-white { border-color: white; }
+.shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+var map = L.map('map').setView([${region.latitude}, ${region.longitude}], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+
+function getStatusColor(status) {
+  switch (status) {
+    case 'Working': return '#10b981';
+    case 'Low water': return '#f59e0b';
+    case 'Dry': return '#ef4444';
+    case 'Broken': return '#1f2937';
+    default: return '#9ca3af';
+  }
+}
+
+${waterSources.map(source => `
+L.circleMarker([${source.latitude}, ${source.longitude}], {
+  color: getStatusColor('${source.status}'),
+  fillColor: getStatusColor('${source.status}'),
+  fillOpacity: 0.8,
+  radius: 10
+}).addTo(map)
+    .on('click', function() {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'select', id: '${source.id}' }));
+    });
+`).join('')}
+</script>
+</body>
+</html>
+`
+              }}
               style={styles.map}
-              initialRegion={initialRegion}
-              showsUserLocation={true}
-              showsMyLocationButton={true}
-            >
-              {waterSources.map((source) => (
-                <MarkerComp
-                  key={source.id}
-                  coordinate={{ latitude: source.latitude, longitude: source.longitude }}
-                  title={source.name}
-                  description={`${source.type} - ${source.status}`}
-                  pinColor={source.status === 'Broken' ? 'black' : getStatusColor(source.status)}
-                  onPress={() => setSelectedWell(source)}
-                />
-              ))}
-            </MapViewComp>
+              onMessage={(event) => {
+                try {
+                  const data = JSON.parse(event.nativeEvent.data);
+                  if (data.type === 'select') {
+                    const source = waterSources.find(s => s.id === data.id);
+                    setSelectedWell(source || null);
+                  }
+                } catch (e) {
+                  console.warn('Failed to parse message', e);
+                }
+              }}
+            />
           )}
         </View>
 
@@ -189,12 +246,12 @@ const WaterSourcesMapScreen: React.FC = () => {
       >
         <TouchableWithoutFeedback onPress={() => setSelectedWell(null)}>
           <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { borderTopColor: selectedWell ? getStatusColor(selectedWell.status) : theme.ui.border, borderTopWidth: 4, backgroundColor: theme.ui.background }]}>
+          <View style={[styles.modalContent, { borderTopColor: selectedWell ? getStatusColor(selectedWell.status) : '#e2e8f0', borderTopWidth: 4, backgroundColor: '#ffffff' }]}>
             {selectedWell && (
               <>
-                <View style={[styles.statusHeader, { backgroundColor: getStatusColor(selectedWell.status) + '20', borderBottomColor: theme.ui.border }]}>
+                <View style={[styles.statusHeader, { backgroundColor: getStatusColor(selectedWell.status) + '20', borderBottomColor: '#e2e8f0' }]}>
                   <Ionicons name={getStatusIcon(selectedWell.type)} size={30} color={getStatusColor(selectedWell.status)} />
-                  <Typography variant="h2" style={[styles.modalTitle, { color: theme.ui.foreground }]}>{selectedWell.name}</Typography>
+                  <Typography variant="h2" style={[styles.modalTitle, { color: '#0f172a' }]}>{selectedWell.name}</Typography>
                   <Typography variant="body" style={[styles.statusText, { color: getStatusColor(selectedWell.status) }]}>{selectedWell.status}</Typography>
                 </View>
 

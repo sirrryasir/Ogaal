@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
-import BrandColors from '../../../theme';
+const BrandColors = require('../../../theme');
 import { useTranslation } from '../../../contexts/LanguageContext';
 
 const AboutScreen: React.FC = () => {
@@ -15,14 +15,14 @@ const AboutScreen: React.FC = () => {
     <Layout>
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.topBarLeft} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={BrandColors.brand.blue} />
+          <Ionicons name="arrow-back" size={24} color={'#0c6dff'} />
         </TouchableOpacity>
         <Typography variant="h1" style={styles.topBarTitle}>{t('aboutTitle')}</Typography>
         <View style={styles.topBarRight} />
       </View>
       <ScrollView style={styles.container}>
         <View style={styles.content}>
-          <Ionicons name="water" size={80} color={BrandColors.brand.blue} style={styles.logo} />
+          <Ionicons name="water" size={80} color={'#0c6dff'} style={styles.logo} />
           <Typography variant="h1" style={styles.appName}>{t('appName')}</Typography>
           <Typography variant="body" style={styles.version}>{t('version')}</Typography>
           <Typography variant="body" style={styles.description}>
@@ -58,9 +58,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 40,
     paddingBottom: 15,
-    backgroundColor: BrandColors.app.bodyBackground,
+    backgroundColor: '#f8fafc',
     borderBottomWidth: 1,
-    borderBottomColor: BrandColors.ui.border,
+    borderBottomColor: '#e2e8f0',
   },
   topBarLeft: {
     width: 40,
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 24,
     fontWeight: 'bold',
-    color: BrandColors.brand.blue,
+    color: '#0c6dff',
     textAlign: 'center',
   },
   topBarRight: {
@@ -89,24 +89,24 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: BrandColors.brand.blue,
+    color: '#0c6dff',
     marginBottom: 10,
   },
   version: {
     fontSize: 16,
-    color: BrandColors.ui.secondaryForeground,
+    color: '#64748b',
     marginBottom: 20,
   },
   description: {
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 30,
-    color: BrandColors.ui.foreground,
+    color: '#0f172a',
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: BrandColors.brand.blue,
+    color: '#0c6dff',
     alignSelf: 'flex-start',
     marginBottom: 15,
     marginTop: 20,

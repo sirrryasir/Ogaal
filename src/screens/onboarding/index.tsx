@@ -6,7 +6,6 @@ import Layout from '../../components/Layout';
 import Typography from '../../components/Typography';
 import Button from '../../components/Button';
 import Logo from '../../components/Logo';
-import BrandColors from '../../theme';
 import { useTranslation } from '../../contexts/LanguageContext';
 
 const { width } = Dimensions.get('window');
@@ -178,7 +177,7 @@ const OnboardingScreen: React.FC = () => {
             <Typography variant="body" style={styles.dropdownText}>
               {language === 'en' ? t('english') : t('somali')}
             </Typography>
-            <MaterialIcons name={showDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={20} color={BrandColors.brand.blue} />
+            <MaterialIcons name={showDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={20} color={'#0c6dff'} />
           </TouchableOpacity>
           {showDropdown && (
             <View style={styles.dropdown}>
@@ -238,7 +237,7 @@ const OnboardingScreen: React.FC = () => {
                     }) }
                   ]
                 }}>
-                  <MaterialIcons name={item.icon as any} size={120} color={BrandColors.brand.blue} />
+                  <MaterialIcons name={item.icon as any} size={120} color={'#0c6dff'} />
                 </Animated.View>
                 <Animated.View style={{ opacity: textAnimValues[index] }}>
                   <Typography variant="h1" style={styles.title}>
@@ -269,7 +268,7 @@ const OnboardingScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: BrandColors.ui.background,
+    backgroundColor: '#ffffff',
     flex: 1,
   },
   backgroundOverlay: {
@@ -278,7 +277,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: BrandColors.brand.light,
+    backgroundColor: '#f0f7ff',
     opacity: 0.1,
   },
   logoContainer: {
@@ -297,7 +296,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   skipText: {
-    color: BrandColors.brand.blue,
+    color: '#0c6dff',
     fontWeight: '500',
   },
   content: {
@@ -317,14 +316,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 32,
     fontWeight: 'bold',
-    color: BrandColors.brand.blue,
+    color: '#0c6dff',
   },
   subtitle: {
     marginBottom: 50,
     textAlign: 'center',
     fontSize: 18,
     lineHeight: 26,
-    color: BrandColors.ui.foreground,
+    color: '#0f172a',
     paddingHorizontal: 30,
   },
   indicators: {
@@ -337,7 +336,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: BrandColors.brand.blue,
+    backgroundColor: '#0c6dff',
     marginHorizontal: 5,
   },
   buttonContainer: {
@@ -377,20 +376,20 @@ const styles = StyleSheet.create({
   },
   activeLang: {
     padding: 5,
-    backgroundColor: BrandColors.brand.blue,
+    backgroundColor: '#0c6dff',
     borderRadius: 5,
   },
   langText: {
-    color: BrandColors.ui.foreground,
+    color: '#0f172a',
     fontWeight: '500',
   },
   activeLangText: {
-    color: BrandColors.app.bodyBackground,
+    color: '#f8fafc',
     fontWeight: '500',
   },
   separator: {
     marginHorizontal: 5,
-    color: BrandColors.ui.foreground,
+    color: '#0f172a',
   },
   dropdownButton: {
     flexDirection: 'row',
@@ -398,7 +397,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   dropdownText: {
-    color: BrandColors.brand.blue,
+    color: '#0c6dff',
     fontWeight: '500',
     marginRight: 5,
   },
@@ -406,7 +405,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 40,
     left: 0,
-    backgroundColor: BrandColors.app.bodyBackground,
+    backgroundColor: '#f8fafc',
     borderRadius: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -419,7 +418,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   dropdownItemText: {
-    color: BrandColors.ui.foreground,
+    color: '#0f172a',
     fontWeight: '500',
   },
 });

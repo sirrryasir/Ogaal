@@ -3,7 +3,6 @@ import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Layout from '../../components/Layout';
 import Logo from '../../components/Logo';
-import BrandColors from '../../theme';
 
 const SplashScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -27,7 +26,7 @@ const SplashScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: BrandColors.app.bodyBackground,
+    backgroundColor: '#f8fafc',
   },
   logoContainer: {
     flex: 1,
