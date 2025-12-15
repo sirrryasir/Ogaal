@@ -51,11 +51,7 @@ export default function Home() {
             </span>
             <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-tight">
               Ogaal <br />
-<<<<<<< HEAD
               <span className="text-blue-300">Platform.</span>
-=======
-              <span className="text-blue-300">Resilience.</span>
->>>>>>> b3e1235 (refactor: rename to Ogaal)
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 max-w-2xl mx-auto mb-12 leading-relaxed">
               Monitoring water resources in real-time. Empowering communities
