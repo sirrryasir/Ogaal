@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Village {
+  id                 Int        @id @default(autoincrement())
+  name               String
+  district           String?
+  latitude           Float?
+  longitude          Float?
+  drought_risk_level String?    @default("Low")
+  boreholes          Borehole[]
+  reports            Report[]
+  alerts             Alert[]
+
+  @@map("villages")
+}
+
+model Borehole {
+  id              Int       @id @default(autoincrement())
+  village_id      Int
+  name            String
+  status          String?   @default("Working")
+  water_level     Float?    @default(100.0)
+  last_maintained DateTime?
+  village         Village   @relation(fields: [village_id], references: [id])
+  reports         Report[]
+
+  @@map("boreholes")
+}
+
+model Report {
+  id             Int       @id @default(autoincrement())
+  borehole_id    Int?
+  village_id     Int?
+  reporter_type  String? // User (USSD), Agent (App)
+  report_content String?
+  timestamp      DateTime? @default(now())
+  is_verified    Int?      @default(0)
+  borehole       Borehole? @relation(fields: [borehole_id], references: [id])
+  village        Village?  @relation(fields: [village_id], references: [id])
+
+  @@map("reports")
+}
+
+model Alert {
+  id         Int      @id @default(autoincrement())
+  village_id Int?
+  message    String?
+  severity   String? // Info, Warning, Critical
+  created_at DateTime? @default(now())
+  village    Village? @relation(fields: [village_id], references: [id])
+
+  @@map("alerts")
+}
