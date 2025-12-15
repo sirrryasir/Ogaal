@@ -1,8 +1,8 @@
-// File: Z:\ZAKI\EAL\Projects\unmsys\web\BARWAAXO-AI\water-intelligence\backend\app\api\water-stress\route.ts
-import * as entry from '../../../../../app/api/water-stress/route.js'
+// File: Z:\ZAKI\EAL\Projects\unmsys\web\Barwaaqo\ai-engine\Barwaaqo\backend\app\api\investment-priorities\route.ts
+import * as entry from '../../../../../app/api/investment-priorities/route.js'
 import type { NextRequest } from 'next/server.js'
 
-type TEntry = typeof import('../../../../../app/api/water-stress/route.js')
+type TEntry = typeof import('../../../../../app/api/investment-priorities/route.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{

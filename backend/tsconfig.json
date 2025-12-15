@@ -18,6 +18,10 @@
     "jsx": "preserve",
     "incremental": true,
     "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
     "plugins": [
       {
         "name": "next"
