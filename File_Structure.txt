@@ -1,0 +1,99 @@
+water-intelligence/
+│
+├── app/
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── water_stress_api.py
+│   │
+│   ├── domain/
+│   │   ├── __init__.py
+│   │   ├── stress_rules.py
+│   │   └── priority_scoring.py
+│   │
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── stress_evaluator.py
+│   │   └── explanation_builder.py
+│   │
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   ├── input.py
+│   │   └── output.py
+│   │
+│   └── main.py
+|
+├── backend/                      # NEXT.JS BACKEND (TEST LAYER)
+│   ├── app/
+│   │   └── api/
+│   │       └── water-stress/
+│   │           └── route.ts
+│   │
+│   ├── lib/
+│   │   └── aiClient.ts
+│   │
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── environment.yml
+└── README.md
+
+## Run locally
+```bash
+conda env create -f environment.yml
+conda activate water-intelligence
+python -m app.main
+```
+API: POST /ai/water-stress
+
+# 3. HOW TO RUN (DO THIS NOW)
+
+```bash
+cd water-intelligence
+conda env create -f environment.yml
+conda activate water-intelligence
+python -m app.main
+```
+
+Open browser: http://127.0.0.1:8000/docs
+
+NB:-
+1. api → talks to backend
+2. domain → pure logic (AI brain)
+3. services → orchestration
+4. schemas → contracts (VERY important)
+5. main.py → entry point
+
+
+🟢 LOW STRESS
+    ``` 
+    {
+    "location_id": 3,
+    "total_water_sources": 6,
+    "working_sources": 5,
+    "reports_last_7_days": 0,
+    "days_since_last_intervention": 10
+    }
+    ```
+
+🔴 CRITICAL STRESS
+    ```
+    {
+    "location_id": 12,
+    "total_water_sources": 4,
+    "working_sources": 1,
+    "reports_last_7_days": 6,
+    "days_since_last_intervention": 21
+    }
+    ```
+
+🟡 MEDIUM STRESS
+    ```
+    {
+    "location_id": 7,
+    "total_water_sources": 5,
+    "working_sources": 3,
+    "reports_last_7_days": 2,
+    "days_since_last_intervention": 14
+    }
+    ```
+
