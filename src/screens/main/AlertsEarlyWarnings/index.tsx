@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
 import BrandColors from '../../../theme';
@@ -14,6 +15,8 @@ interface Alert {
 }
 
 const AlertsEarlyWarningsScreen: React.FC = () => {
+  const navigation = useNavigation();
+
   // Mock data
   const alerts: Alert[] = [
     {
@@ -57,8 +60,13 @@ const AlertsEarlyWarningsScreen: React.FC = () => {
 
   return (
     <Layout noPadding>
+      <View style={styles.topBar}>
+        <Typography variant="h1" style={styles.topBarTitle}>Alerts & Early Warnings</Typography>
+        <TouchableOpacity style={styles.topBarRight} onPress={() => navigation.navigate('Notifications' as never)}>
+          <MaterialIcons name="notifications" size={24} color={BrandColors.brand.blue} />
+        </TouchableOpacity>
+      </View>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
-        <Typography variant="h1" style={styles.title}>Alerts & Early Warnings</Typography>
 
         <View style={styles.deliveryInfo}>
           <Typography variant="body" style={styles.deliveryText}>
@@ -101,15 +109,30 @@ const AlertsEarlyWarningsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 15,
+    backgroundColor: BrandColors.app.bodyBackground,
+    borderBottomWidth: 1,
+    borderBottomColor: BrandColors.ui.border,
+  },
+  topBarTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: BrandColors.brand.blue,
+  },
+  topBarRight: {
+    // For future icons
+  },
   scrollView: {
     flex: 1,
   },
   container: {
     padding: 20,
-  },
-  title: {
-    marginBottom: 20,
-    textAlign: 'center',
   },
   deliveryInfo: {
     backgroundColor: BrandColors.ui.muted,

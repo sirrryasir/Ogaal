@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import BrandColors from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface LogoProps {
   size?: 'small' | 'medium' | 'large';
 }
 
 const Logo: React.FC<LogoProps> = ({ size = 'medium' }) => {
+  const { theme } = useTheme();
   const sizeStyles = {
     small: { fontSize: 24 },
     medium: { fontSize: 36 },
@@ -15,7 +16,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium' }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.logoText, sizeStyles[size]]}>BARWAAQO</Text>
+      <Text style={[styles.logoText, sizeStyles[size], { color: theme.brand.blue }]}>OGAAL</Text>
       {/* <Text style={[styles.brandText, sizeStyles[size]]}>AI</Text> */}
     </View>
   );
@@ -28,11 +29,9 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontWeight: 'bold',
-    color: BrandColors.brand.blue,
   },
   brandText: {
     fontWeight: '300',
-    color: BrandColors.ui.foreground,
     marginTop: 8,
   },
 });

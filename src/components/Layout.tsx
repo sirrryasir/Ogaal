@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BrandColors from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,8 +11,9 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, style, centered = true, noPadding = false }) => {
+  const { theme } = useTheme();
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.app.bodyBackground }]}>
       <View style={[styles.container, style, !centered && styles.notCentered, noPadding && styles.noPadding]}>
         {children}
       </View>
@@ -23,7 +24,6 @@ const Layout: React.FC<LayoutProps> = ({ children, style, centered = true, noPad
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: BrandColors.app.bodyBackground,
   },
   container: {
     flex: 1,
