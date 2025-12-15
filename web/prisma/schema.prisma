@@ -28,6 +28,8 @@ model Borehole {
   village_id      Int
   name            String
   status          String?   @default("Working")
+  latitude        Float?
+  longitude       Float?
   water_level     Float?    @default(100.0)
   last_maintained DateTime?
   village         Village   @relation(fields: [village_id], references: [id])

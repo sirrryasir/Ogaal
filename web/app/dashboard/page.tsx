@@ -33,7 +33,6 @@ export default function DashboardPage() {
   const [villages, setVillages] = useState<Village[]>([]);
   const [waterSources, setWaterSources] = useState<WaterSource[]>([]);
 
-  // Mock Data for Prototype
   useEffect(() => {
     // In real app, fetch from /api/villages (would need to create this endpoint)
     setVillages([
