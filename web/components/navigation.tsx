@@ -7,7 +7,6 @@ import {
   Home,
   MapPin,
   Activity,
-  Calculator,
   Droplets,
   Settings,
   Menu,
@@ -20,7 +19,6 @@ const NAV_ITEMS = [
   { label: "Home", href: "/", icon: Home },
   { label: "Map", href: "/water-sources", icon: MapPin },
   { label: "Report", href: "/report", icon: Activity },
-  { label: "Planner", href: "/calculator", icon: Calculator },
   { label: "Admin", href: "/admin", icon: Droplets },
 ];
 

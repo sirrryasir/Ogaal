@@ -42,7 +42,7 @@ export default function AgentPage() {
     for (const report of reports) {
       if (!report.synced) {
         try {
-          await fetch("http://localhost:3001/api/reports", {
+          await fetch("https://barwaaqo.onrender.com/api/reports", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

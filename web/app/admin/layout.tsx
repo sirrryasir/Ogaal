@@ -79,7 +79,6 @@ export default function AdminLayout({
     { href: "/admin", label: "Overview", icon: LayoutDashboard },
     { href: "/admin/reports", label: "Approvals", icon: FileText },
     { href: "/admin/sources", label: "Water Sources", icon: Droplet },
-    { href: "/admin/drought", label: "Drought AI", icon: AlertOctagon },
   ];
 
   return (

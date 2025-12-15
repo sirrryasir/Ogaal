@@ -58,6 +58,39 @@ const createStatusIcon = (status: WaterSource["status"]) => {
   });
 };
 
+const userIcon = new L.DivIcon({
+  className: "user-icon",
+  html: `<div class="bg-blue-600 w-6 h-6 rounded-full border-2 border-white shadow-md shadow-blue-400/50 flex items-center justify-center">
+    <div class="w-2 h-2 bg-white rounded-full"></div>
+  </div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
+function calculateDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) *
+      Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c; // Distance in km
+  return d;
+}
+
+function deg2rad(deg: number) {
+  return deg * (Math.PI / 180);
+}
+
 interface MapViewProps {
   sources: WaterSource[];
   onSelectSource: (source: WaterSource) => void;
@@ -69,7 +102,26 @@ export default function MapView({
   onSelectSource,
   selectedSourceId,
 }: MapViewProps) {
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(
+    null
+  );
   const defaultCenter: [number, number] = [9.56, 44.06]; // Hargeisa Coords
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation([
+            position.coords.latitude,
+            position.coords.longitude,
+          ]);
+        },
+        (error) => {
+          console.error("Error getting user location:", error);
+        }
+      );
+    }
+  }, []);
 
   return (
     <MapContainer
@@ -83,31 +135,55 @@ export default function MapView({
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {sources.map((source) => (
-        <Marker
-          key={source.id}
-          position={[source.lat, source.lng]}
-          icon={createStatusIcon(source.status)}
-          eventHandlers={{
-            click: () => onSelectSource(source),
-          }}
-        >
+      {userLocation && (
+        <Marker position={userLocation} icon={userIcon}>
           <Popup>
-            <div className="p-1">
-              <h3 className="font-bold text-sm">{source.name}</h3>
-              <p className="text-xs text-gray-500">{source.village}</p>
-              <span
-                className={cn(
-                  "text-xs font-semibold px-2 py-0.5 rounded-full text-white",
-                  statusColors[source.status] || "bg-gray-400"
-                )}
-              >
-                {statusLabels[source.status] || source.status}
-              </span>
-            </div>
+            <div className="text-xs font-semibold">Your Location</div>
           </Popup>
         </Marker>
-      ))}
+      )}
+
+      {sources.map((source) => {
+        const distance = userLocation
+          ? calculateDistance(
+              userLocation[0],
+              userLocation[1],
+              source.lat,
+              source.lng
+            ).toFixed(1)
+          : null;
+
+        return (
+          <Marker
+            key={source.id}
+            position={[source.lat, source.lng]}
+            icon={createStatusIcon(source.status)}
+            eventHandlers={{
+              click: () => onSelectSource(source),
+            }}
+          >
+            <Popup>
+              <div className="p-1">
+                <h3 className="font-bold text-sm">{source.name}</h3>
+                <p className="text-xs text-gray-500">{source.village}</p>
+                {distance && (
+                  <p className="text-xs font-medium text-blue-600 mt-1">
+                    {distance} km away
+                  </p>
+                )}
+                <span
+                  className={cn(
+                    "text-xs font-semibold px-2 py-0.5 rounded-full text-white mt-1 inline-block",
+                    statusColors[source.status] || "bg-gray-400"
+                  )}
+                >
+                  {statusLabels[source.status] || source.status}
+                </span>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
 
       {selectedSourceId && sources.find((s) => s.id === selectedSourceId) && (
         <MapController

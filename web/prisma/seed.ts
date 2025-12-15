@@ -11,55 +11,109 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log(`Start seeding ...`);
 
-  // 1. Create Village
-  const village = await prisma.village.upsert({
-    where: { id: 1 }, // Assuming ID 1 for simplicity or just create
-    update: {},
-    create: {
+  // Clear existing data (optional, be careful in prod)
+  // await prisma.report.deleteMany();
+  // await prisma.borehole.deleteMany();
+  // await prisma.village.deleteMany();
+
+  const villages = [
+    {
       name: "Hargeisa",
-      latitude: 9.56,
-      longitude: 44.06,
-      drought_risk_level: "Low",
-    },
-  });
-
-  console.log(`Created/Found village: ${village.name}`);
-
-  const waterSources = [
-    {
-      name: "Central Borehole",
-      status: "Working",
-      water_level: 80.0,
+      latitude: 9.562,
+      longitude: 44.065,
+      drought_risk_level: "Medium",
     },
     {
-      name: "Village Well North",
-      status: "Low Water",
-      water_level: 20.0,
+      name: "Arabsiyo",
+      latitude: 9.674,
+      longitude: 43.764,
+      drought_risk_level: "High",
     },
     {
-      name: "Community Pump",
-      status: "Broken",
-      water_level: 0.0,
+      name: "Gabiley",
+      latitude: 9.696,
+      longitude: 43.626,
+      drought_risk_level: "High",
     },
     {
-      name: "River Access Point",
-      status: "Low Water",
-      water_level: 10.0,
+      name: "Dararweyne",
+      latitude: 9.712,
+      longitude: 44.178,
+      drought_risk_level: "Critical",
+    },
+    {
+      name: "Baligubadle",
+      latitude: 9.387,
+      longitude: 44.004,
+      drought_risk_level: "High",
     },
   ];
 
-  for (const ws of waterSources) {
-    const source = await prisma.borehole.create({
-      data: {
-        village_id: village.id,
-        name: ws.name,
-        status: ws.status,
-        water_level: ws.water_level,
-      },
+  for (const vData of villages) {
+    const village = await prisma.village.upsert({
+      where: { id: villages.indexOf(vData) + 1 }, // Simple ID strategy for seed
+      update: {},
+      create: vData,
     });
-    console.log(`Created borehole with id: ${source.id}`);
+    console.log(`Upserted village: ${village.name}`);
+
+    // Create boreholes for each village
+    const boreholes = getBoreholesForVillage(
+      village.name,
+      village.latitude!,
+      village.longitude!
+    );
+
+    for (const bh of boreholes) {
+      await prisma.borehole.create({
+        data: {
+          village_id: village.id,
+          name: bh.name,
+          status: bh.status,
+          water_level: bh.water_level,
+          latitude: bh.latitude,
+          longitude: bh.longitude,
+          last_maintained: new Date(),
+        },
+      });
+    }
   }
+
   console.log(`Seeding finished.`);
+}
+
+function getBoreholesForVillage(villageName: string, lat: number, lng: number) {
+  // Generate some realistic offsets for boreholes around the village center
+  const sources = [
+    {
+      name: `Ceelka ${villageName} Main`,
+      status: "working",
+      offset: [0.002, 0.002],
+    },
+    {
+      name: `Ceelka ${villageName} North`,
+      status: "low",
+      offset: [0.005, -0.001],
+    },
+    {
+      name: `Ceelka Reer ${villageName}`,
+      status: "working",
+      offset: [-0.003, 0.004],
+    },
+    {
+      name: `Barkada ${villageName}`,
+      status: "broken",
+      offset: [-0.001, -0.005],
+    },
+  ];
+
+  return sources.map((s) => ({
+    name: s.name,
+    status: s.status,
+    water_level: Math.floor(Math.random() * 100),
+    latitude: lat + s.offset[0],
+    longitude: lng + s.offset[1],
+  }));
 }
 
 main()

@@ -23,22 +23,6 @@ const FEATURES = [
     delay: 0.1,
   },
   {
-    title: "Drought AI",
-    desc: "Early warning system powered by satellite weather data.",
-    icon: AlertTriangle,
-    href: "/drought-alerts",
-    color: "bg-orange-100 text-orange-600",
-    delay: 0.2,
-  },
-  {
-    title: "Water Calculator",
-    desc: "Smart usage planner for households and farms.",
-    icon: Calculator,
-    href: "/calculator",
-    color: "bg-cyan-100 text-cyan-600",
-    delay: 0.3,
-  },
-  {
     title: "Admin Portal",
     desc: "Manage sources, approve reports, and view logs.",
     icon: Droplet,
