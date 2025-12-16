@@ -8,6 +8,7 @@ import {
   MapPin,
   Activity,
   Droplets,
+  Droplet,
   Settings,
   Menu,
   X,
@@ -40,7 +41,7 @@ export default function Navigation() {
       >
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl group-hover:scale-110 transition-transform">
-            A
+            <Droplet className="w-6 h-6 text-white" />
           </div>
           <span
             className={cn("font-bold text-xl tracking-tight", "text-gray-900")}
