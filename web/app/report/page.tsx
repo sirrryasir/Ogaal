@@ -1,27 +1,96 @@
 "use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import {
+  getVillages,
+  getWaterSources,
+  submitReport,
+  Village,
+  WaterSource,
+} from "@/lib/data";
 
 const ReportPage = () => {
   const router = useRouter();
+  const [villages, setVillages] = useState<Village[]>([]);
+  const [allSources, setAllSources] = useState<WaterSource[]>([]);
+  const [filteredSources, setFilteredSources] = useState<WaterSource[]>([]);
+
   const [formData, setFormData] = useState({
-    village: "",
-    sourceType: "Borehole",
+    villageId: "",
+    sourceId: "", // Water Source ID
+    status: "Working", // Default status
     content: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch initial data
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [v, s] = await Promise.all([getVillages(), getWaterSources()]);
+        setVillages(v);
+        setAllSources(s);
+      } catch (e) {
+        console.error("Failed to load data", e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  // Filter sources when village changes
+  useEffect(() => {
+    if (formData.villageId) {
+      const vId = parseInt(formData.villageId);
+      const filtered = allSources.filter((s) => s.village_id === vId);
+      setFilteredSources(filtered);
+      // Reset source selection when village changes
+      setFormData((prev) => ({ ...prev, sourceId: "" }));
+    } else {
+      setFilteredSources([]);
+    }
+  }, [formData.villageId, allSources]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.villageId || !formData.sourceId) {
+      alert("Please select a village and a water source.");
+      return;
+    }
+
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await submitReport({
+        village_id: parseInt(formData.villageId),
+        water_source_id: parseInt(formData.sourceId),
+        report_content: `[Status: ${formData.status}] ${formData.content}`,
+        reporter_type: "WEB_USER",
+      });
       alert("Report submitted successfully!");
+      // Reset form instead of redirecting
+      setFormData({
+        villageId: "",
+        sourceId: "",
+        status: "Working",
+        content: "",
+      });
+    } catch (error) {
+      console.error("Submission failed", error);
+      alert("Failed to submit report. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      router.push("/dashboard");
-    }, 1500);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -34,49 +103,83 @@ const ReportPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Village Selection */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Village / Location
             </label>
-            <input
-              type="text"
+            <select
               required
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              placeholder="e.g. Baligubadle"
-              value={formData.village}
+              value={formData.villageId}
               onChange={(e) =>
-                setFormData({ ...formData, village: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Water Source Type
-            </label>
-            <select
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              value={formData.sourceType}
-              onChange={(e) =>
-                setFormData({ ...formData, sourceType: e.target.value })
+                setFormData({ ...formData, villageId: e.target.value })
               }
             >
-              <option>Borehole</option>
-              <option>Dam (Berkad)</option>
-              <option>Well</option>
-              <option>Other</option>
+              <option value="">Select Village</option>
+              {villages.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
             </select>
           </div>
 
+          {/* Water Source Selection (Dependent) */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Report Details
+              Water Source
+            </label>
+            <select
+              required
+              disabled={!formData.villageId}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-slate-100 disabled:text-slate-400"
+              value={formData.sourceId}
+              onChange={(e) =>
+                setFormData({ ...formData, sourceId: e.target.value })
+              }
+            >
+              <option value="">
+                {formData.villageId
+                  ? "Select Water Source"
+                  : "Select Village First"}
+              </option>
+              {filteredSources.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.type})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Selection (Fixed Options) */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Current Status
+            </label>
+            <select
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              value={formData.status}
+              onChange={(e) =>
+                setFormData({ ...formData, status: e.target.value })
+              }
+            >
+              <option value="Working">Water Available (Working)</option>
+              <option value="Low Water">Water Level Low</option>
+              <option value="Broken">Pump Broken / No Access</option>
+              <option value="Other">Other Issue</option>
+            </select>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Additional Details
             </label>
             <textarea
-              required
-              rows={4}
+              rows={3}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              placeholder="Describe the issue (e.g. pump broken, water level low, dries up...)"
+              placeholder="Describe the issue... "
               value={formData.content}
               onChange={(e) =>
                 setFormData({ ...formData, content: e.target.value })

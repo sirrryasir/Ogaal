@@ -51,19 +51,21 @@ export async function rejectReport(id: number) {
 
 export async function addSource(formData: FormData) {
   const name = formData.get("name") as string;
-  const lat = parseFloat(formData.get("lat") as string);
-  const lng = parseFloat(formData.get("lng") as string);
-  const villageName = formData.get("village") as string;
+  const villageId = formData.get("villageId");
+  const type = formData.get("type") as string;
+  const status = formData.get("status") as string;
+  const latStr = formData.get("lat") as string;
+  const lngStr = formData.get("lng") as string;
 
   try {
-    // In a real app we'd look up village ID first or have the backend handle "get or create"
-    // For now mocking the village ID as 1 or handling it on backend if updated
-    // Ideally user selects village from dropdown
+    const lat = latStr ? parseFloat(latStr) : 0;
+    const lng = lngStr ? parseFloat(lngStr) : 0;
 
     await api.post("/water-sources", {
-      village_id: 1, // Placeholder
+      village_id: Number(villageId),
       name,
-      type: "Borehole",
+      type,
+      status, // Optional, but good to set initial status
       latitude: lat,
       longitude: lng,
     });
