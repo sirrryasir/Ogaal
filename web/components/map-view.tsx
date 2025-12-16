@@ -33,28 +33,34 @@ function MapController({ center }: { center: [number, number] }) {
   return null;
 }
 
-const statusColors: Record<string, string> = {
-  working: "bg-green-500",
-  low: "bg-yellow-500",
-  no_water: "bg-red-500",
-  broken: "bg-gray-800",
-};
-
-const statusLabels: Record<string, string> = {
-  working: "Working",
-  low: "Low Water",
-  no_water: "No Water",
-  broken: "Broken",
+// Helper to get color hex
+const getStatusColor = (status: string) => {
+  const s = status?.toLowerCase() || "";
+  if (s.includes("working") || s.includes("good")) return "#22c55e"; // Green
+  if (s.includes("low") || s.includes("maintenance")) return "#f97316"; // Orange
+  if (s.includes("dry") || s.includes("no water")) return "#ef4444"; // Red
+  if (s.includes("broken")) return "#000000"; // Black
+  return "#9ca3af"; // Gray
 };
 
 // Custom DivIcon based on status
 const createStatusIcon = (status: WaterSource["status"]) => {
-  const colorClass = statusColors[status] || "bg-gray-400";
+  const color = getStatusColor(status);
+
   return new L.DivIcon({
-    className: "custom-icon",
-    html: `<div class="${colorClass} w-6 h-6 rounded-full border-2 border-white shadow-md"></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    className: "custom-status-marker",
+    html: `
+      <div style="
+        background-color: ${color};
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      "></div>
+    `,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
   });
 };
 
@@ -172,12 +178,10 @@ export default function MapView({
                   </p>
                 )}
                 <span
-                  className={cn(
-                    "text-xs font-semibold px-2 py-0.5 rounded-full text-white mt-1 inline-block",
-                    statusColors[source.status] || "bg-gray-400"
-                  )}
+                  className="text-xs font-semibold px-2 py-0.5 rounded-full text-white mt-1 inline-flex items-center"
+                  style={{ backgroundColor: getStatusColor(source.status) }}
                 >
-                  {statusLabels[source.status] || source.status}
+                  {source.status}
                 </span>
               </div>
             </Popup>

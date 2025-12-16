@@ -1,11 +1,8 @@
 import { AlertTriangle, Check, X } from "lucide-react";
 import { approveReport, rejectReport } from "@/lib/actions";
-import prisma from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import api from "@/lib/api";
 
-export const dynamic = "force-dynamic";
-
-// Mock data if DB fails
+// Mock data if API fails
 const mockReports = [
   {
     id: 101,
@@ -29,23 +26,23 @@ const mockReports = [
 
 async function getReports() {
   try {
-    const reports = await prisma.report.findMany({
-      include: { borehole: true },
-      orderBy: { timestamp: "desc" },
-    });
-
-    return reports.map((r) => ({
+    const res = await api.get("/reports");
+    // Map backend response to UI structure
+    return res.data.map((r: any) => ({
       id: r.id,
-      source: { name: r.borehole?.name || "Unknown Source" },
-      status: r.report_content?.includes("Broad")
+      source: {
+        name: r.water_source?.name || r.village?.name || "Unknown Source",
+      },
+      status: r.content?.includes("Broad")
         ? "broken"
-        : r.report_content?.toLowerCase() || "unknown", // Simple logic
-      note: r.report_content,
+        : r.content?.toLowerCase() || "unknown",
+      note: r.content,
       created_at: r.timestamp || new Date(),
       submitted_by: r.reporter_type || "Unknown",
-      approved: r.is_verified === 1,
+      approved: r.is_verified,
     }));
   } catch (e) {
+    console.warn("API Fetch failed:", e);
     return mockReports;
   }
 }
@@ -82,13 +79,21 @@ export default async function AdminReportsPage() {
                 </td>
                 <td className="p-4">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-bold ${
-                      report.status === "broken" || report.status === "no_water"
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      report.status?.includes("working") ||
+                      report.status?.includes("good")
+                        ? "bg-green-100 text-green-700"
+                        : report.status?.includes("low") ||
+                          report.status?.includes("maintenance")
+                        ? "bg-orange-100 text-orange-700"
+                        : report.status?.includes("dry")
                         ? "bg-red-100 text-red-700"
-                        : "bg-yellow-100 text-yellow-700"
+                        : report.status?.includes("broken")
+                        ? "bg-black text-white"
+                        : "bg-gray-100 text-gray-700" // Default
                     }`}
                   >
-                    {report.status.replace("_", " ")}
+                    {report.status?.replace("_", " ") || "Unknown"}
                   </span>
                 </td>
                 <td className="p-4 text-gray-500 text-sm max-w-xs truncate">

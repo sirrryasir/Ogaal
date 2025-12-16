@@ -13,5 +13,6 @@ router.post("/", ReportController.create); // Public/App submission (can be auth
 // For now, assume App users are logged in.
 router.post("/secure", authenticate, ReportController.create);
 router.put("/:id/verify", authenticate, authorize(["ADMIN", "GOVERNMENT", "NGO_WORKER"]), ReportController.verifyReport);
+router.delete("/:id", authenticate, authorize(["ADMIN", "GOVERNMENT", "NGO_WORKER"]), ReportController.deleteReport);
 export default router;
 //# sourceMappingURL=reportRoutes.js.map

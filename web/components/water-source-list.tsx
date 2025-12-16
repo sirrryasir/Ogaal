@@ -10,15 +10,20 @@ interface WaterSourceListProps {
 
 const statusColors: Record<string, string> = {
   working: "bg-green-100 text-green-700",
-  low: "bg-yellow-100 text-yellow-700",
-  no_water: "bg-red-100 text-red-700",
-  broken: "bg-gray-100 text-gray-700",
+  good: "bg-green-100 text-green-700",
+  low: "bg-orange-100 text-orange-700",
+  maintenance: "bg-orange-100 text-orange-700",
+  dry: "bg-red-100 text-red-700",
+  broken: "bg-black text-white",
+  critical: "bg-red-100 text-red-700",
 };
 
 const statusLabels: Record<string, string> = {
   working: "Working",
-  low: "Low",
-  no_water: "Dry",
+  good: "Working",
+  low: "Low Water",
+  maintenance: "Maintenance",
+  dry: "Dry",
   broken: "Broken",
 };
 
@@ -51,10 +56,11 @@ export default function WaterSourceList({
             <span
               className={cn(
                 "text-xs font-bold px-2 py-1 rounded-full",
-                statusColors[source.status] || "bg-gray-100 text-gray-700"
+                statusColors[source.status?.toLowerCase()] ||
+                  "bg-gray-100 text-gray-700"
               )}
             >
-              {statusLabels[source.status] || source.status}
+              {statusLabels[source.status?.toLowerCase()] || source.status}
             </span>
           </div>
         </div>

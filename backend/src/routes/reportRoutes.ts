@@ -22,4 +22,11 @@ router.put(
   ReportController.verifyReport
 );
 
+router.delete(
+  "/:id",
+  authenticate,
+  authorize(["ADMIN", "GOVERNMENT", "NGO_WORKER"]),
+  ReportController.deleteReport
+);
+
 export default router;

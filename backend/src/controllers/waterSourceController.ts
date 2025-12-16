@@ -15,7 +15,8 @@ const getAll = async (req: Request, res: Response): Promise<void> => {
     });
     res.json(sources);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("GET /water-sources error:", error);
+    res.status(500).json({ message: "Server error", error: String(error) });
   }
 };
 
@@ -62,4 +63,13 @@ export default {
   getAll,
   create,
   updateStatus,
+  deleteSource: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      await prisma.waterSource.delete({ where: { id: Number(id) } });
+      res.json({ message: "Water source deleted" });
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  },
 };
