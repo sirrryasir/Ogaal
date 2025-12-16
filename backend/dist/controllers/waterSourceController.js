@@ -14,7 +14,8 @@ const getAll = async (req, res) => {
         res.json(sources);
     }
     catch (error) {
-        res.status(500).json({ message: "Server error" });
+        console.error("GET /water-sources error:", error);
+        res.status(500).json({ message: "Server error", error: String(error) });
     }
 };
 // Create a new water source
@@ -59,5 +60,15 @@ export default {
     getAll,
     create,
     updateStatus,
+    deleteSource: async (req, res) => {
+        try {
+            const { id } = req.params;
+            await prisma.waterSource.delete({ where: { id: Number(id) } });
+            res.json({ message: "Water source deleted" });
+        }
+        catch (error) {
+            res.status(500).json({ message: "Server error" });
+        }
+    },
 };
 //# sourceMappingURL=waterSourceController.js.map

@@ -8,7 +8,7 @@ const handleUssdRequest = async (req, res) => {
     try {
         if (text === "") {
             // Main Menu
-            response = `Welcome to AquaGuard
+            response = `Welcome to Ogaal
 1. Check Water Availability
 2. Check Drought Risk
 3. Report Water Source Status
