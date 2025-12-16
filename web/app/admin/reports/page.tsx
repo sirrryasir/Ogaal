@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { AlertTriangle, Check, X } from "lucide-react";
 import { approveReport, rejectReport } from "@/lib/actions";
 import api from "@/lib/api";
