@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
 const BrandColors = require('../../../theme');
@@ -16,6 +17,23 @@ const LanguageSelectScreen: React.FC = () => {
     navigation.goBack();
   };
 
+  const languages = [
+    {
+      code: 'en' as const,
+      name: t('english'),
+      flag: '🇺🇸',
+      nativeName: 'English',
+      gradient: ['#667eea', '#764ba2'],
+    },
+    {
+      code: 'so' as const,
+      name: t('somali'),
+      // flag: '🇸🇴',
+      nativeName: 'Soomaali',
+      gradient: ['#f093fb', '#f5576c'],
+    },
+  ];
+
   return (
     <Layout>
       <View style={styles.topBar}>
@@ -26,14 +44,46 @@ const LanguageSelectScreen: React.FC = () => {
         <View style={styles.topBarRight} />
       </View>
       <View style={styles.container}>
-        <TouchableOpacity style={styles.option} onPress={() => selectLang('en')}>
-          <Typography variant="h2" style={styles.optionText}>{t('english')}</Typography>
-          {language === 'en' && <Ionicons name="checkmark" size={24} color={BrandColors.brand.blue} />}
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.option} onPress={() => selectLang('so')}>
-          <Typography variant="h2" style={styles.optionText}>{t('somali')}</Typography>
-          {language === 'so' && <Ionicons name="checkmark" size={24} color={BrandColors.brand.blue} />}
-        </TouchableOpacity>
+        <View style={styles.headerSection}>
+          <Ionicons name="language" size={60} color={BrandColors.brand.blue} style={styles.headerIcon} />
+          <Typography variant="h2" style={styles.headerTitle}>{t('chooseLanguageTitle')}</Typography>
+          <Typography variant="body" style={styles.headerSubtitle}>{t('selectPreferredLanguage')}</Typography>
+        </View>
+
+        <View style={styles.languagesSection}>
+          {languages.map((lang) => (
+            <TouchableOpacity
+              key={lang.code}
+              style={[
+                styles.languageCard,
+                language === lang.code && styles.selectedCard
+              ]}
+              onPress={() => selectLang(lang.code)}
+            >
+              <LinearGradient
+                colors={lang.gradient as any}
+                style={styles.languageGradient}
+              >
+                <View style={styles.languageContent}>
+                  <Text style={styles.flag}>{lang.flag}</Text>
+                  <View style={styles.textContainer}>
+                    <Typography variant="h3" style={styles.languageName}>
+                      {lang.name}
+                    </Typography>
+                    <Typography variant="caption" style={styles.nativeName}>
+                      {lang.nativeName}
+                    </Typography>
+                  </View>
+                  {language === lang.code && (
+                    <View style={styles.checkmarkContainer}>
+                      <Ionicons name="checkmark-circle" size={24} color="white" />
+                    </View>
+                  )}
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </Layout>
   );
@@ -68,19 +118,68 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  option: {
+  headerSection: {
+    alignItems: 'center',
+    marginBottom: 40,
+    paddingTop: 20,
+  },
+  headerIcon: {
+    marginBottom: 15,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: BrandColors.brand.blue,
+    marginBottom: 5,
+  },
+  headerSubtitle: {
+    color: BrandColors.ui.secondaryForeground,
+    textAlign: 'center',
+  },
+  languagesSection: {
+    gap: 15,
+  },
+  languageCard: {
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    overflow: 'hidden',
+  },
+  selectedCard: {
+    shadowColor: BrandColors.brand.blue,
+    shadowOpacity: 0.3,
+    elevation: 8,
+  },
+  languageGradient: {
+    borderRadius: 16,
+  },
+  languageContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: BrandColors.ui.card,
-    borderRadius: 12,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: BrandColors.ui.border,
   },
-  optionText: {
-    color: BrandColors.ui.foreground,
+  flag: {
+    fontSize: 40,
+    marginRight: 15,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  languageName: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  nativeName: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+  },
+  checkmarkContainer: {
+    marginLeft: 10,
   },
 });
 

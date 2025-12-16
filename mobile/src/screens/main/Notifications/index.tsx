@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
 const BrandColors = require('../../../theme');
+import { useTranslation } from '../../../contexts/LanguageContext';
 
 interface Notification {
   id: string;
@@ -15,6 +17,7 @@ interface Notification {
 }
 
 const NotificationsScreen: React.FC = () => {
+  const { t } = useTranslation();
   // Mock notifications data
   const notifications: Notification[] = [
     {
@@ -63,12 +66,16 @@ const NotificationsScreen: React.FC = () => {
 
   return (
     <Layout noPadding>
-      <View style={styles.topBar}>
-        <Typography variant="h1" style={styles.topBarTitle}>Notifications</Typography>
-        <View style={styles.topBarRight}>
-          <MaterialIcons name="notifications" size={24} color={BrandColors.brand.blue} />
+      <LinearGradient colors={['#0c6dff', '#0056b3']} style={styles.headerGradient}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerTop}>
+            <View style={styles.titleContainer}>
+              <Ionicons name="notifications" size={28} color="white" />
+              <Typography variant="h1" style={styles.headerTitle}>{t('notifications')}</Typography>
+            </View>
+          </View>
         </View>
-      </View>
+      </LinearGradient>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
         {notifications.length > 0 ? (
           notifications.map((notification) => (
@@ -93,8 +100,8 @@ const NotificationsScreen: React.FC = () => {
         ) : (
           <View style={styles.emptyContainer}>
             <Ionicons name="notifications-off" size={64} color={BrandColors.ui.secondaryForeground} />
-            <Typography variant="h2" style={styles.emptyTitle}>No Notifications</Typography>
-            <Typography variant="body" style={styles.emptyMessage}>You're all caught up! Check back later for updates.</Typography>
+            <Typography variant="h2" style={styles.emptyTitle}>{t('noNotifications')}</Typography>
+            <Typography variant="body" style={styles.emptyMessage}>{t('noNotificationsMessage')}</Typography>
           </View>
         )}
       </ScrollView>
@@ -103,24 +110,27 @@ const NotificationsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  topBar: {
+  headerGradient: {
+    paddingTop: 50,
+    paddingBottom: 20,
+  },
+  headerContent: {
+    paddingHorizontal: 20,
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 15,
-    backgroundColor: BrandColors.app.bodyBackground,
-    borderBottomWidth: 1,
-    borderBottomColor: BrandColors.ui.border,
   },
-  topBarTitle: {
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: BrandColors.brand.blue,
-  },
-  topBarRight: {
-    // For future icons
+    color: 'white',
+    marginLeft: 10,
   },
   scrollView: {
     flex: 1,

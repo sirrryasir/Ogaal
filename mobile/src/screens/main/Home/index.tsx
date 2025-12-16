@@ -1,13 +1,26 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Location from 'expo-location';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
 import Button from '../../../components/Button';
 import { useTranslation } from '../../../contexts/LanguageContext';
 const BrandColors = require('../../../theme');
+
+interface WaterSource {
+  id: string;
+  type: 'Borehole' | 'Well' | 'Berkad' | 'Dam';
+  name: string;
+  status: 'Working' | 'Low water' | 'Dry' | 'Broken';
+  lastUpdate: string;
+  distance?: string;
+  latitude: number;
+  longitude: number;
+  region: string;
+}
 
 interface Alert {
   id: number;
@@ -20,25 +33,68 @@ const HomeScreen: React.FC = () => {
    const { t } = useTranslation();
    const fadeAnim = useRef(new Animated.Value(0)).current;
    const slideAnim = useRef(new Animated.Value(50)).current;
+   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+   const [nearestWells, setNearestWells] = useState<WaterSource[]>([]);
 
-  // Mock data - in real app, fetch from API
-  const nearestWells = [
-    { id: 1, name: 'Well A', distance: '2.5 km', status: 'Working' },
-    { id: 2, name: 'Well B', distance: '4.1 km', status: 'Low' },
-    { id: 3, name: 'Well C', distance: '6.8 km', status: 'Dry' },
-  ];
+   // Mock data with coordinates for different regions in Somaliland
+   const waterSources: WaterSource[] = [
+     // Hargeisa/Maroodi Jeex region
+     { id: '1', type: 'Borehole', name: 'Borehole A1 - Hargeisa', status: 'Working', lastUpdate: '2 hours ago', distance: '2.5 km', latitude: 9.5624, longitude: 44.0770, region: 'Maroodi Jeex' },
+     { id: '2', type: 'Well', name: 'Well B2 - Hargeisa', status: 'Low water', lastUpdate: '1 day ago', distance: '3.1 km', latitude: 9.5650, longitude: 44.0800, region: 'Maroodi Jeex' },
+     { id: '3', type: 'Dam', name: 'Dam C3 - Hargeisa', status: 'Dry', lastUpdate: '3 days ago', distance: '5.0 km', latitude: 9.5600, longitude: 44.0750, region: 'Maroodi Jeex' },
+     { id: '4', type: 'Berkad', name: 'Berkad D4 - Hargeisa', status: 'Broken', lastUpdate: '1 week ago', distance: '1.8 km', latitude: 9.5630, longitude: 44.0780, region: 'Maroodi Jeex' },
 
-  const alerts: Alert[] = [
-    { id: 1, message: 'Water levels dropping in nearby areas', type: 'warning' },
-  ];
+     // Gebiley region
+     { id: '5', type: 'Borehole', name: 'Borehole G1 - Gebiley', status: 'Working', lastUpdate: '4 hours ago', distance: '45 km', latitude: 9.7167, longitude: 43.6167, region: 'Gebiley' },
+     { id: '6', type: 'Well', name: 'Well G2 - Gebiley', status: 'Working', lastUpdate: '6 hours ago', distance: '47 km', latitude: 9.7200, longitude: 43.6200, region: 'Gebiley' },
+     { id: '7', type: 'Berkad', name: 'Berkad G3 - Gebiley', status: 'Low water', lastUpdate: '2 days ago', distance: '46 km', latitude: 9.7150, longitude: 43.6150, region: 'Gebiley' },
+
+     // Awdal region
+     { id: '8', type: 'Borehole', name: 'Borehole A1 - Borama', status: 'Working', lastUpdate: '1 hour ago', distance: '120 km', latitude: 9.9333, longitude: 43.1833, region: 'Awdal' },
+     { id: '9', type: 'Well', name: 'Well A2 - Zeila', status: 'Low water', lastUpdate: '8 hours ago', distance: '180 km', latitude: 11.3500, longitude: 43.4667, region: 'Awdal' },
+     { id: '10', type: 'Dam', name: 'Dam A3 - Lughaya', status: 'Dry', lastUpdate: '1 week ago', distance: '150 km', latitude: 10.6833, longitude: 43.2833, region: 'Awdal' },
+
+     // Togdheer region
+     { id: '11', type: 'Borehole', name: 'Borehole T1 - Burao', status: 'Working', lastUpdate: '3 hours ago', distance: '250 km', latitude: 9.5167, longitude: 45.5333, region: 'Togdheer' },
+     { id: '12', type: 'Well', name: 'Well T2 - Burao', status: 'Working', lastUpdate: '5 hours ago', distance: '252 km', latitude: 9.5200, longitude: 45.5350, region: 'Togdheer' },
+     { id: '13', type: 'Berkad', name: 'Berkad T3 - Odweyne', status: 'Low water', lastUpdate: '1 day ago', distance: '320 km', latitude: 9.4167, longitude: 45.0667, region: 'Togdheer' },
+     { id: '14', type: 'Dam', name: 'Dam T4 - Buuhoodle', status: 'Dry', lastUpdate: '3 days ago', distance: '280 km', latitude: 8.9667, longitude: 45.5667, region: 'Togdheer' },
+   ];
+
+   const alerts: Alert[] = [
+     { id: 1, message: 'Water levels dropping in nearby areas', type: 'warning' },
+   ];
+
+   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+     const R = 6371; // Radius of the earth in km
+     const dLat = (lat2 - lat1) * Math.PI / 180;
+     const dLon = (lon2 - lon1) * Math.PI / 180;
+     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+       Math.sin(dLon/2) * Math.sin(dLon/2);
+     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+     const d = R * c; // Distance in km
+     return d;
+   };
 
   const getWellStatusColor = (status: string) => {
     switch (status) {
       case 'Working': return '#28a745'; // Green
-      case 'Low': return '#ffc107'; // Yellow
+      case 'Low water': return '#ffc107'; // Yellow
       case 'Dry': return '#dc3545'; // Red
       case 'Broken': return '#000000'; // Black
       default: return '#0f172a';
+    }
+  };
+
+  const getWellIcon = (type: string) => {
+    switch (type) {
+      case 'Borehole': return 'water';
+      case 'Well': return 'water';
+      case 'Dam': return 'business';
+      case 'Berkad': return 'nature';
+      default: return 'water';
     }
   };
 
@@ -51,6 +107,34 @@ const HomeScreen: React.FC = () => {
     // Navigate to Report Conditions
     navigation.navigate('Report' as never);
   };
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      const newLocation = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      setLocation(newLocation);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (location) {
+      const sourcesWithDistance = waterSources.map(source => ({
+        ...source,
+        distance: calculateDistance(location.latitude, location.longitude, source.latitude, source.longitude).toFixed(1) + ' km'
+      }));
+      const sorted = sourcesWithDistance.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
+      setNearestWells(sorted.slice(0, 3));
+    }
+  }, [location]);
 
   useEffect(() => {
     Animated.parallel([
@@ -69,19 +153,45 @@ const HomeScreen: React.FC = () => {
 
   return (
     <Layout noPadding>
-      <View style={styles.topBar}>
-        <Typography variant="h1" style={styles.topBarTitle}>{t('homeTitle')}</Typography>
-        <TouchableOpacity style={styles.topBarRight} onPress={() => navigation.navigate('Notifications' as never)}>
-          <MaterialIcons name="notifications" size={24} color={'#0c6dff'} />
-        </TouchableOpacity>
-      </View>
+      <LinearGradient colors={['#0c6dff', '#0056b3']} style={styles.headerGradient}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerTop}>
+            <View style={styles.titleContainer}>
+              <Ionicons name="home" size={28} color="white" />
+              <Typography variant="h1" style={styles.headerTitle}>{t('homeTitle')}</Typography>
+            </View>
+          </View>
+        </View>
+      </LinearGradient>
         <Animated.ScrollView
           style={[styles.scrollView, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
           contentContainerStyle={styles.container}
         >
         <View style={styles.welcomeSection}>
-          <Typography variant="h2" style={styles.welcomeTitle}>{t('welcomeTitle')}</Typography>
-          <Typography variant="body" style={styles.welcomeSubtitle}>{t('welcomeSubtitle')}</Typography>
+          <LinearGradient colors={['#0c6dff', '#0056b3']} style={styles.welcomeGradient}>
+            <Typography variant="h2" style={styles.welcomeTitle}>{t('welcomeTitle')}</Typography>
+            <Typography variant="body" style={styles.welcomeSubtitle}>{t('welcomeSubtitle')}</Typography>
+          </LinearGradient>
+        </View>
+
+        {/* Hero Stats */}
+        <View style={styles.heroStats}>
+          <LinearGradient colors={['#007bff', '#0056b3']} style={styles.heroGradient}>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Typography variant="h1" style={styles.statNumber}>{waterSources.filter(w => w.status === 'Working').length}</Typography>
+                <Typography variant="caption" style={styles.statLabel}>{t('working')}</Typography>
+              </View>
+              <View style={styles.statItem}>
+                <Typography variant="h1" style={styles.statNumber}>{waterSources.filter(w => w.status === 'Low water').length}</Typography>
+                <Typography variant="caption" style={styles.statLabel}>{t('low')}</Typography>
+              </View>
+              <View style={styles.statItem}>
+                <Typography variant="h1" style={styles.statNumber}>{waterSources.filter(w => w.status === 'Dry').length}</Typography>
+                <Typography variant="caption" style={styles.statLabel}>{t('dry')}</Typography>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
 
         {/* Nearest Wells */}
@@ -113,7 +223,7 @@ const HomeScreen: React.FC = () => {
                 ]}
               >
                 <View style={styles.wellInfo}>
-                  <MaterialIcons name="location-on" size={20} color={well.status === 'Broken' ? '#000000' : BrandColors.brand.blue} style={styles.wellIcon} />
+                  <MaterialIcons name={getWellIcon(well.type)} size={20} color={well.status === 'Broken' ? '#000000' : BrandColors.brand.blue} style={styles.wellIcon} />
                   <View>
                     <Typography variant="body" style={styles.wellName}>{well.name}</Typography>
                     <Typography variant="caption" style={styles.wellDistance}>{well.distance}</Typography>
@@ -196,24 +306,27 @@ const HomeScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  topBar: {
+  headerGradient: {
+    paddingTop: 50,
+    paddingBottom: 20,
+  },
+  headerContent: {
+    paddingHorizontal: 20,
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 15,
-    backgroundColor: BrandColors.app.bodyBackground,
-    borderBottomWidth: 1,
-    borderBottomColor: BrandColors.ui.border,
   },
-  topBarTitle: {
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: BrandColors.brand.blue,
-  },
-  topBarRight: {
-    // For future icons
+    color: 'white',
+    marginLeft: 10,
   },
   scrollView: {
     flex: 1,
@@ -224,17 +337,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   welcomeSection: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  welcomeGradient: {
+    borderRadius: 16,
+    padding: 20,
     alignItems: 'center',
-    marginBottom: 30,
   },
   welcomeTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: BrandColors.brand.blue,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
     marginBottom: 5,
   },
   welcomeSubtitle: {
-    color: BrandColors.ui.secondaryForeground,
+    color: 'rgba(255,255,255,0.9)',
+    textAlign: 'center',
   },
   card: {
     width: '100%',
@@ -262,17 +381,32 @@ const styles = StyleSheet.create({
     color: BrandColors.brand.blue,
   },
   heroStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20,
+    width: '100%',
+    marginBottom: 20,
   },
-  stat: {
-    flexDirection: 'row',
+  heroGradient: {
+    borderRadius: 16,
+    padding: 20,
     alignItems: 'center',
   },
-  statText: {
-    marginLeft: 5,
-    color: BrandColors.ui.foreground,
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 5,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    textTransform: 'uppercase',
   },
   wellItem: {
     flexDirection: 'row',
