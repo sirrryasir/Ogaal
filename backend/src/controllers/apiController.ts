@@ -11,10 +11,14 @@ export const getVillages = async (req: Request, res: Response) => {
   }
 };
 
-// Get all WaterSources (with Village data)
+// Get all WaterSources (with Village data), optionally filter by village_id
 export const getWaterSources = async (req: Request, res: Response) => {
   try {
+    const { village_id } = req.query;
+    const whereClause = village_id ? { village_id: Number(village_id) } : {};
+
     const sources = await prisma.waterSource.findMany({
+      where: whereClause,
       include: {
         village: true,
       },
@@ -35,7 +39,7 @@ export const getWaterSources = async (req: Request, res: Response) => {
 
 // Submit Report (Agent App)
 export const submitReport = async (req: Request, res: Response) => {
-  const { water_source_id, village_id, reporter_type, report_content } =
+  const { water_source_id, village_id, reporter_type, report_content, status } =
     req.body;
 
   try {
@@ -47,6 +51,15 @@ export const submitReport = async (req: Request, res: Response) => {
         content: report_content, // Changed from report_content to content in schema
       },
     });
+
+    // Update water source status if provided
+    if (status && water_source_id) {
+      await prisma.waterSource.update({
+        where: { id: Number(water_source_id) },
+        data: { status },
+      });
+    }
+
     res.json({ success: true, id: report.id });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
