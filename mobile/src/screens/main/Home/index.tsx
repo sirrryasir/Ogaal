@@ -168,31 +168,15 @@ const HomeScreen: React.FC = () => {
           contentContainerStyle={styles.container}
         >
         <View style={styles.welcomeSection}>
-          <LinearGradient colors={['#0c6dff', '#0056b3']} style={styles.welcomeGradient}>
-            <Typography variant="h2" style={styles.welcomeTitle}>{t('welcomeTitle')}</Typography>
-            <Typography variant="body" style={styles.welcomeSubtitle}>{t('welcomeSubtitle')}</Typography>
-          </LinearGradient>
+          <View style={styles.card}>
+            <View style={styles.welcomeContent}>
+              <Typography variant="h2" style={styles.welcomeTitle}>{t('welcomeTitle')}</Typography>
+              <Typography variant="body" style={styles.welcomeSubtitle}>{t('welcomeSubtitle')}</Typography>
+            </View>
+          </View>
         </View>
 
         {/* Hero Stats */}
-        <View style={styles.heroStats}>
-          <LinearGradient colors={['#007bff', '#0056b3']} style={styles.heroGradient}>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Typography variant="h1" style={styles.statNumber}>{waterSources.filter(w => w.status === 'Working').length}</Typography>
-                <Typography variant="caption" style={styles.statLabel}>{t('working')}</Typography>
-              </View>
-              <View style={styles.statItem}>
-                <Typography variant="h1" style={styles.statNumber}>{waterSources.filter(w => w.status === 'Low water').length}</Typography>
-                <Typography variant="caption" style={styles.statLabel}>{t('low')}</Typography>
-              </View>
-              <View style={styles.statItem}>
-                <Typography variant="h1" style={styles.statNumber}>{waterSources.filter(w => w.status === 'Dry').length}</Typography>
-                <Typography variant="caption" style={styles.statLabel}>{t('dry')}</Typography>
-              </View>
-            </View>
-          </LinearGradient>
-        </View>
 
         {/* Nearest Wells */}
         <View style={styles.card}>
@@ -345,25 +329,32 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
+  welcomeContent: {
+    padding: 20,
+    alignItems: 'center',
+  },
   welcomeTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
+    color: BrandColors.brand.blue,
     marginBottom: 5,
   },
   welcomeSubtitle: {
-    color: 'rgba(255,255,255,0.9)',
+    color: BrandColors.ui.secondaryForeground,
     textAlign: 'center',
   },
   card: {
     width: '100%',
     borderRadius: 16,
-    marginBottom: 20,
+    marginBottom: 10,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   cardGradient: {
     borderRadius: 16,
@@ -389,10 +380,15 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
+  heroContent: {
+    padding: 20,
+    alignItems: 'center',
+  },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
+    flexWrap: 'wrap',
   },
   statItem: {
     alignItems: 'center',
@@ -400,12 +396,12 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: 'white',
+    color: BrandColors.brand.blue,
     marginBottom: 5,
   },
   statLabel: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: BrandColors.ui.secondaryForeground,
     textTransform: 'uppercase',
   },
   wellItem: {
