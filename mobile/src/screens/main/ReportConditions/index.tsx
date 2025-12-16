@@ -1,23 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, TextInput, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  View, 
+  StyleSheet, 
+  ScrollView, 
+  Alert, 
+  TouchableOpacity, 
+  TextInput, 
+  Image,
+  RefreshControl,
+  Platform,
+  Animated,
+  Dimensions
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
-import Button from '../../../components/Button';
-import Input from '../../../components/Input';
-const BrandColors = require('../../../theme');
 import { useTranslation } from '../../../contexts/LanguageContext';
+import { getVillages, Village } from '../../../api/villages';
+import { getWaterSources, WaterSource } from '../../../api/waterSources';
+import { submitReport } from '../../../api/reports';
+
+const { width } = Dimensions.get('window');
 
 const ReportConditionsScreen: React.FC = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
-  const [waterSourceType, setWaterSourceType] = useState('Borehole');
-  const [villageLocation, setVillageLocation] = useState('');
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  
+  const [villages, setVillages] = useState<Village[]>([]);
+  const [selectedVillageId, setSelectedVillageId] = useState<number | null>(null);
+  const [waterSources, setWaterSources] = useState<WaterSource[]>([]);
+  const [selectedWaterSourceId, setSelectedWaterSourceId] = useState<number | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>('Working');
   const [reportDetail, setReportDetail] = useState('');
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationText, setLocationText] = useState('Fetching location...');
@@ -25,7 +45,63 @@ const ReportConditionsScreen: React.FC = () => {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
+  // Progress steps
+  const steps = [
+    { icon: 'location-on', title: 'Location', completed: selectedVillageId !== null },
+    { icon: 'water', title: 'Source', completed: selectedWaterSourceId !== null },
+    { icon: 'check-circle', title: 'Status', completed: selectedWaterSourceId !== null },
+    { icon: 'description', title: 'Details', completed: reportDetail.length > 0 },
+    { icon: 'camera-alt', title: 'Photo', completed: !!photoUri },
+  ];
+  
+  const completedSteps = steps.filter(step => step.completed).length;
+
+  // Header animations based on scroll - REDUCED HEIGHTS
+  const headerHeight = scrollY.interpolate({
+    inputRange: [0, 120],
+    outputRange: [220, 80],
+    extrapolate: 'clamp',
+  });
+
+  const headerTitleOpacity = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const headerTitleTranslateY = scrollY.interpolate({
+    inputRange: [0, 120],
+    outputRange: [0, -15],
+    extrapolate: 'clamp',
+  });
+
+  const stepsContainerOpacity = scrollY.interpolate({
+    inputRange: [0, 60],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const stepsContainerTranslateY = scrollY.interpolate({
+    inputRange: [0, 60],
+    outputRange: [0, -15],
+    extrapolate: 'clamp',
+  });
+
+  const collapsedHeaderOpacity = scrollY.interpolate({
+    inputRange: [80, 120],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const collapsedHeaderTranslateY = scrollY.interpolate({
+    inputRange: [80, 120],
+    outputRange: [15, 0],
+    extrapolate: 'clamp',
+  });
+
+  // Location effect (unchanged)
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -50,28 +126,80 @@ const ReportConditionsScreen: React.FC = () => {
     })();
   }, []);
 
+  // Villages effect (unchanged)
+  useEffect(() => {
+    const fetchVillages = async () => {
+      try {
+        const fetchedVillages = await getVillages();
+        setVillages(fetchedVillages);
+      } catch (error) {
+        console.error('Failed to fetch villages:', error);
+        Alert.alert(t('errorTitle'), 'Failed to load villages');
+      }
+    };
+    fetchVillages();
+  }, [t]);
 
+  // Water sources effect (unchanged)
+  useEffect(() => {
+    if (selectedVillageId) {
+      const fetchWaterSources = async () => {
+        try {
+          const fetchedWaterSources = await getWaterSources(selectedVillageId);
+          setWaterSources(fetchedWaterSources);
+        } catch (error) {
+          console.error('Failed to fetch water sources:', error);
+          Alert.alert(t('errorTitle'), 'Failed to load water sources');
+        }
+      };
+      fetchWaterSources();
+    } else {
+      setWaterSources([]);
+      setSelectedWaterSourceId(null);
+    }
+  }, [selectedVillageId, t]);
+
+  // Initial fade animation
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  // Submit handler (unchanged)
   const handleSubmit = async () => {
-    if (!reportDetail.trim()) {
-      Alert.alert(t('errorTitle'), t('errorMessage'));
+    if (selectedVillageId === null || selectedWaterSourceId === null || !reportDetail.trim()) {
+      Alert.alert(t('errorTitle'), 'Please select a village, water source, and enter report details');
       return;
     }
 
     setSubmitting(true);
-    // Simulate submit
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
-    Alert.alert(t('successTitle'), t('successMessage'));
-    // Reset form
-    setWaterSourceType('Borehole');
-    setVillageLocation('');
-    setReportDetail('');
-    setLocation(null);
-    setLocationText('Fetching location...');
-    setLoadingLocation(true);
-    setPhotoUri(null);
-    setSubmitting(false);
+    try {
+      await submitReport({
+        village_id: selectedVillageId,
+        water_source_id: selectedWaterSourceId,
+        reporter_type: 'App',
+        report_content: reportDetail,
+        status: selectedStatus,
+      });
+      Alert.alert(t('successTitle'), t('successMessage'));
+      // Reset form
+      setSelectedVillageId(null);
+      setSelectedWaterSourceId(null);
+      setSelectedStatus('Working');
+      setReportDetail('');
+      setPhotoUri(null);
+    } catch (error) {
+      console.error('Failed to submit report:', error);
+      Alert.alert(t('errorTitle'), 'Failed to submit report');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
+  // Photo handlers (unchanged)
   const handleAttachPhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permission.granted === false) {
@@ -117,55 +245,193 @@ const ReportConditionsScreen: React.FC = () => {
     }
   };
 
-  const steps = [
-    { icon: 'water', title: 'Source Type', completed: waterSourceType !== 'Borehole' },
-    { icon: 'location', title: 'Location', completed: villageLocation.length > 0 },
-    { icon: 'document-text', title: 'Details', completed: reportDetail.length > 0 },
-    { icon: 'camera', title: 'Photo', completed: !!photoUri },
-  ];
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  };
 
-  const completedSteps = steps.filter(step => step.completed).length;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Working': return '#10b981';
+      case 'Low Water': return '#f59e0b';
+      case 'Dry': return '#ef4444';
+      case 'Broken': return '#ef4444';
+      case 'Other': return '#8b5cf6';
+      default: return '#6b7280';
+    }
+  };
 
   return (
-    <Layout noPadding>
-      <LinearGradient colors={['#0c6dff', '#0056b3']} style={styles.headerGradient}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerTop}>
-            <View style={styles.titleContainer}>
-              <Ionicons name="create" size={28} color="white" />
-              <Typography variant="h1" style={styles.headerTitle}>{t('reportConditionsTitle')}</Typography>
-            </View>
-            <View style={styles.progressContainer}>
-              <Typography variant="caption" style={styles.progressText}>
-                {completedSteps}/{steps.length} Complete
-              </Typography>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${(completedSteps / steps.length) * 100}%` }]} />
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.stepsContainer}>
-            {steps.map((step, index) => (
-              <View key={index} style={styles.stepItem}>
-                <View style={[styles.stepIcon, step.completed && styles.stepCompleted]}>
-                  <Ionicons name={step.icon as any} size={16} color={step.completed ? "white" : "#0c6dff"} />
+    <Layout style={styles.container} noPadding>
+      {/* Collapsible Header - REDUCED HEIGHT */}
+      <Animated.View style={[styles.headerContainer, { height: headerHeight }]}>
+        <LinearGradient 
+          colors={['#0c6dff', '#4f46e5']} 
+          style={styles.headerBackground}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          {/* Expanded Header Content - COMPACT */}
+          <Animated.View 
+            style={[
+              styles.expandedContent,
+              {
+                opacity: headerTitleOpacity,
+                transform: [{ translateY: headerTitleTranslateY }]
+              }
+            ]}
+          >
+            <View style={styles.headerTopRow}>
+              <TouchableOpacity 
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+                activeOpacity={0.7}
+              >
+                <Feather name="arrow-left" size={20} color="white" />
+              </TouchableOpacity>
+              
+              <View style={styles.titleContainer}>
+                <View style={styles.titleIcon}>
+                  <Ionicons name="create" size={18} color="white" />
                 </View>
-                <Typography variant="caption" style={[styles.stepText, step.completed && styles.stepTextCompleted]}>
-                  {step.title}
+                <Typography variant="h1" style={styles.headerTitle}>
+                  Report Conditions
                 </Typography>
               </View>
-            ))}
-          </View>
-        </View>
-      </LinearGradient>
+              
+              <View style={styles.progressBadge}>
+                <Typography variant="caption" style={styles.progressBadgeText}>
+                  {completedSteps}/{steps.length}
+                </Typography>
+              </View>
+            </View>
+            
+            {/* Progress Steps - COMPACT */}
+            <Animated.View 
+              style={[
+                styles.stepsContainer,
+                {
+                  opacity: stepsContainerOpacity,
+                  transform: [{ translateY: stepsContainerTranslateY }]
+                }
+              ]}
+            >
+              <View style={styles.progressBar}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { width: `${(completedSteps / steps.length) * 100}%` }
+                  ]} 
+                />
+              </View>
+              
+              <View style={styles.stepsRow}>
+                {steps.map((step, index) => (
+                  <View key={index} style={styles.stepItem}>
+                    <View style={[
+                      styles.stepCircle,
+                      step.completed && styles.stepCircleCompleted,
+                      { backgroundColor: step.completed ? '#10b981' : 'rgba(255, 255, 255, 0.1)' }
+                    ]}>
+                      <MaterialIcons 
+                        name={step.icon as any} 
+                        size={14} 
+                        color={step.completed ? 'white' : 'rgba(255, 255, 255, 0.6)'} 
+                      />
+                    </View>
+                    <Typography variant="caption" style={[
+                      styles.stepLabel,
+                      step.completed && styles.stepLabelCompleted
+                    ]}>
+                      {step.title}
+                    </Typography>
+                  </View>
+                ))}
+              </View>
+            </Animated.View>
+          </Animated.View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.welcomeCard}>
-          <LinearGradient colors={['#f0f7ff', '#ffffff']} style={styles.welcomeGradient}>
+          {/* Collapsed Header Content - COMPACT */}
+          <Animated.View 
+            style={[
+              styles.collapsedContent,
+              {
+                opacity: collapsedHeaderOpacity,
+                transform: [{ translateY: collapsedHeaderTranslateY }]
+              }
+            ]}
+          >
+            <View style={styles.collapsedBar}>
+              <TouchableOpacity 
+                style={styles.collapsedBackButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Feather name="arrow-left" size={18} color="white" />
+              </TouchableOpacity>
+              
+              <View style={styles.collapsedTitle}>
+                <Ionicons name="create" size={18} color="white" />
+                <Typography variant="h3" style={styles.collapsedTitleText}>
+                  Report {completedSteps > 0 && `(${completedSteps}/${steps.length})`}
+                </Typography>
+              </View>
+              
+              <View style={styles.collapsedProgress}>
+                <View style={styles.collapsedProgressBar}>
+                  <View 
+                    style={[
+                      styles.collapsedProgressFill, 
+                      { width: `${(completedSteps / steps.length) * 100}%` }
+                    ]} 
+                  />
+                </View>
+              </View>
+            </View>
+          </Animated.View>
+          
+          {/* Bottom Curve */}
+          <View style={styles.headerCurve} />
+        </LinearGradient>
+      </Animated.View>
+
+      {/* Main Content */}
+      <Animated.ScrollView
+        style={[styles.scrollView, { opacity: fadeAnim }]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#0c6dff"
+            colors={['#0c6dff']}
+            progressBackgroundColor="#ffffff"
+          />
+        }
+      >
+        {/* Add spacer for header height - REDUCED */}
+        <View style={styles.headerSpacer} />
+        
+        {/* Welcome Card */}
+        <View style={styles.welcomeSection}>
+          <LinearGradient
+            colors={['#f0f7ff', '#ffffff']}
+            style={styles.welcomeCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
             <View style={styles.welcomeContent}>
-              <Ionicons name="heart" size={24} color={BrandColors.brand.blue} />
-              <Typography variant="h3" style={styles.welcomeTitle}>Help Your Community</Typography>
+              <View style={styles.welcomeIcon}>
+                <Ionicons name="water" size={28} color="#0c6dff" />
+              </View>
+              <Typography variant="h3" style={styles.welcomeTitle}>
+                Help Your Community
+              </Typography>
               <Typography variant="body" style={styles.welcomeText}>
                 Your reports help improve drought monitoring and support affected communities with better decision-making.
               </Typography>
@@ -173,102 +439,265 @@ const ReportConditionsScreen: React.FC = () => {
           </LinearGradient>
         </View>
 
-        <View style={styles.formContainer}>
-          {/* Water Source Type */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIcon}>
-                <Ionicons name="water" size={20} color="white" />
+        {/* Form Sections */}
+        <View style={styles.formSection}>
+          {/* Village Selection */}
+          <View style={styles.formCard}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardIcon}>
+                <Ionicons name="location" size={18} color="#0c6dff" />
               </View>
-              <Typography variant="h3" style={styles.sectionTitle}>{t('waterSourceType')}</Typography>
+              <View style={styles.cardTitleContainer}>
+                <Typography variant="h3" style={styles.cardTitle}>
+                  Select Village
+                </Typography>
+                <Typography variant="caption" style={styles.cardSubtitle}>
+                  Choose your location
+                </Typography>
+              </View>
             </View>
-            <View style={styles.pickerContainer}>
+            
+            <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={waterSourceType}
-                onValueChange={(itemValue: string) => setWaterSourceType(itemValue)}
+                selectedValue={selectedVillageId}
+                onValueChange={(itemValue: number | null) => setSelectedVillageId(itemValue)}
                 style={styles.picker}
               >
-                <Picker.Item label="🏭 Borehole" value="Borehole" />
-                <Picker.Item label="🏞️ Well" value="Well" />
-                <Picker.Item label="🌊 Berkad" value="Berkad" />
-                <Picker.Item label="🏗️ Dam" value="Dam" />
+                <Picker.Item 
+                  label="Select a village..." 
+                  value={null} 
+                  color="#94a3b8"
+                />
+                {villages.map((village) => (
+                  <Picker.Item 
+                    key={village.id} 
+                    label={village.name} 
+                    value={village.id} 
+                    color="#0f172a"
+                  />
+                ))}
               </Picker>
             </View>
           </View>
 
-          {/* Location */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIcon}>
-                <Ionicons name="location" size={20} color="white" />
+          {/* Water Source Selection */}
+          {selectedVillageId && (
+            <View style={styles.formCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardIcon}>
+                  <Ionicons name="water" size={18} color="#0c6dff" />
+                </View>
+                <View style={styles.cardTitleContainer}>
+                  <Typography variant="h3" style={styles.cardTitle}>
+                    Water Source
+                  </Typography>
+                  <Typography variant="caption" style={styles.cardSubtitle}>
+                    Select from available sources
+                  </Typography>
+                </View>
               </View>
-              <Typography variant="h3" style={styles.sectionTitle}>{t('villageLocation')}</Typography>
+              
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  selectedValue={selectedWaterSourceId}
+                  onValueChange={(itemValue: number | null) => setSelectedWaterSourceId(itemValue)}
+                  style={styles.picker}
+                >
+                  <Picker.Item 
+                    label="Select a water source..." 
+                    value={null} 
+                    color="#94a3b8"
+                  />
+                  {waterSources.map((source) => (
+                    <Picker.Item 
+                      key={source.id} 
+                      label={`${source.name} (${source.type})`} 
+                      value={source.id} 
+                      color="#0f172a"
+                    />
+                  ))}
+                </Picker>
+              </View>
             </View>
-            <Input
-              placeholder="Enter village or location name"
-              value={villageLocation}
-              onChangeText={setVillageLocation}
-            />
-          </View>
+          )}
+
+          {/* Status Selection */}
+          {selectedWaterSourceId && (
+            <View style={styles.formCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardIcon}>
+                  <Ionicons name="checkmark-circle" size={18} color={getStatusColor(selectedStatus)} />
+                </View>
+                <View style={styles.cardTitleContainer}>
+                  <Typography variant="h3" style={styles.cardTitle}>
+                    Current Status
+                  </Typography>
+                  <Typography variant="caption" style={styles.cardSubtitle}>
+                    What's the current condition?
+                  </Typography>
+                </View>
+              </View>
+              
+              <View style={styles.statusOptions}>
+                {['Working', 'Low Water', 'Dry', 'Broken', 'Other'].map((status) => (
+                  <TouchableOpacity
+                    key={status}
+                    style={[
+                      styles.statusButton,
+                      selectedStatus === status && [
+                        styles.statusButtonSelected,
+                        { backgroundColor: getStatusColor(status) + '20', borderColor: getStatusColor(status) }
+                      ]
+                    ]}
+                    onPress={() => setSelectedStatus(status)}
+                  >
+                    <View style={[
+                      styles.statusIcon,
+                      { backgroundColor: selectedStatus === status ? getStatusColor(status) : 'transparent' }
+                    ]}>
+                      <Feather 
+                        name="check" 
+                        size={14} 
+                        color={selectedStatus === status ? 'white' : 'transparent'} 
+                      />
+                    </View>
+                    <Typography variant="body" style={[
+                      styles.statusText,
+                      { color: selectedStatus === status ? getStatusColor(status) : '#64748b' }
+                    ]}>
+                      {status === 'Low Water' ? 'Water Level Low' : 
+                       status === 'Broken' ? 'Pump Broken / No Access' : 
+                       status === 'Other' ? 'Other Issue' : status}
+                    </Typography>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
 
           {/* Report Details */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIcon}>
-                <Ionicons name="document-text" size={20} color="white" />
+          <View style={styles.formCard}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardIcon}>
+                <Ionicons name="document-text" size={18} color="#0c6dff" />
               </View>
-              <Typography variant="h3" style={styles.sectionTitle}>{t('reportDetail')}</Typography>
+              <View style={styles.cardTitleContainer}>
+                <Typography variant="h3" style={styles.cardTitle}>
+                  Report Details
+                </Typography>
+                <Typography variant="caption" style={styles.cardSubtitle}>
+                  Describe what you observed
+                </Typography>
+              </View>
             </View>
-            <TextInput
-              style={styles.descriptionInput}
-              placeholder="Describe the water source condition (e.g., borehole is dry, well has low water)"
-              value={reportDetail}
-              onChangeText={setReportDetail}
-              multiline
-              numberOfLines={4}
-              placeholderTextColor={BrandColors.ui.mutedForeground}
-            />
+            
+            <View style={styles.textAreaContainer}>
+              <TextInput
+                style={styles.textArea}
+                placeholder="Describe the water source condition (e.g., borehole is dry, well has low water, pump is broken)"
+                placeholderTextColor="#94a3b8"
+                value={reportDetail}
+                onChangeText={setReportDetail}
+                multiline
+                numberOfLines={6}
+                textAlignVertical="top"
+              />
+              <View style={styles.charCount}>
+                <Typography variant="caption" style={styles.charCountText}>
+                  {reportDetail.length}/500
+                </Typography>
+              </View>
+            </View>
           </View>
 
-          {/* GPS Location */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIcon}>
-                <Ionicons name="navigate" size={20} color="white" />
+          {/* Location Display */}
+          <View style={styles.formCard}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardIcon}>
+                <Ionicons name="navigate" size={18} color="#0c6dff" />
               </View>
-              <Typography variant="h3" style={styles.sectionTitle}>GPS Location</Typography>
+              <View style={styles.cardTitleContainer}>
+                <Typography variant="h3" style={styles.cardTitle}>
+                  GPS Location
+                </Typography>
+                <Typography variant="caption" style={styles.cardSubtitle}>
+                  Auto-detected location
+                </Typography>
+              </View>
             </View>
-            <View style={styles.locationDisplay}>
-              <Ionicons name={loadingLocation ? "refresh" : "location"} size={20} color={BrandColors.brand.blue} />
-              <Typography variant="body" style={styles.locationText}>
-                {locationText}
-              </Typography>
+            
+            <View style={styles.locationCard}>
+              <View style={styles.locationContent}>
+                <Ionicons 
+                  name={loadingLocation ? "refresh" : "location"} 
+                  size={18} 
+                  color="#0c6dff" 
+                />
+                <View style={styles.locationTextContainer}>
+                  <Typography variant="body" style={styles.locationText}>
+                    {locationText}
+                  </Typography>
+                  {location && (
+                    <Typography variant="caption" style={styles.locationAccuracy}>
+                      Accuracy: ~10 meters
+                    </Typography>
+                  )}
+                </View>
+              </View>
             </View>
           </View>
 
           {/* Photo Upload */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIcon}>
-                <Ionicons name="camera" size={20} color="white" />
+          <View style={styles.formCard}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardIcon}>
+                <Ionicons name="camera" size={18} color="#0c6dff" />
               </View>
-              <Typography variant="h3" style={styles.sectionTitle}>{t('photoOptional')}</Typography>
+              <View style={styles.cardTitleContainer}>
+                <Typography variant="h3" style={styles.cardTitle}>
+                  Add Photo (Optional)
+                </Typography>
+                <Typography variant="caption" style={styles.cardSubtitle}>
+                  Upload photo evidence
+                </Typography>
+              </View>
             </View>
-
+            
             {photoUri ? (
-              <View style={styles.photoPreview}>
+              <View style={styles.photoPreviewContainer}>
                 <Image source={{ uri: photoUri }} style={styles.photoImage} />
-                <TouchableOpacity style={styles.removePhotoButton} onPress={() => setPhotoUri(null)}>
-                  <Ionicons name="close-circle" size={24} color="#dc3545" />
+                <TouchableOpacity 
+                  style={styles.removePhotoButton}
+                  onPress={() => setPhotoUri(null)}
+                >
+                  <Ionicons name="close-circle" size={24} color="#ef4444" />
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity style={styles.photoUpload} onPress={handleAttachPhoto} disabled={uploading}>
-                <LinearGradient colors={['#f093fb', '#f5576c']} style={styles.photoGradient}>
-                  <Ionicons name={uploading ? "hourglass" : "camera"} size={32} color="white" />
-                  <Typography variant="body" style={styles.photoText}>
-                    {uploading ? t('uploading') : 'Add Photo'}
-                  </Typography>
+              <TouchableOpacity 
+                style={styles.photoUploadButton}
+                onPress={handleAttachPhoto}
+                disabled={uploading}
+              >
+                <LinearGradient
+                  colors={['#f093fb', '#f5576c']}
+                  style={styles.photoUploadGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  {uploading ? (
+                    <Feather name="loader" size={28} color="white" style={styles.uploadingIcon} />
+                  ) : (
+                    <>
+                      <Ionicons name="camera" size={36} color="white" />
+                      <Typography variant="body" style={styles.photoUploadText}>
+                        Tap to Add Photo
+                      </Typography>
+                      <Typography variant="caption" style={styles.photoUploadHint}>
+                        Optional but helpful
+                      </Typography>
+                    </>
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
             )}
@@ -276,68 +705,138 @@ const ReportConditionsScreen: React.FC = () => {
         </View>
 
         {/* Submit Button */}
-        <View style={styles.submitContainer}>
-          <LinearGradient colors={completedSteps === steps.length ? ['#28a745', '#20c997'] : ['#007bff', '#0056b3']} style={styles.submitGradient}>
-            <TouchableOpacity
-              style={styles.submitTouchable}
-              onPress={handleSubmit}
-              disabled={submitting || completedSteps < steps.length}
-            >
-              <Ionicons name={submitting ? "hourglass" : "send"} size={24} color="white" style={styles.submitIcon} />
+        <TouchableOpacity
+          style={[
+            styles.submitButton,
+            (submitting || completedSteps < steps.length) && styles.submitButtonDisabled
+          ]}
+          onPress={handleSubmit}
+          disabled={submitting || completedSteps < steps.length}
+          activeOpacity={0.9}
+        >
+          <LinearGradient
+            colors={completedSteps === steps.length ? ['#10b981', '#059669'] : ['#0c6dff', '#4f46e5']}
+            style={styles.submitGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <View style={styles.submitContent}>
+              {submitting ? (
+                <Feather name="loader" size={22} color="white" style={styles.submitIcon} />
+              ) : (
+                <Ionicons 
+                  name="send" 
+                  size={22} 
+                  color="white" 
+                  style={styles.submitIcon} 
+                />
+              )}
               <Typography variant="h3" style={styles.submitText}>
-                {submitting ? t('submitting') : completedSteps === steps.length ? 'Submit Report' : `Complete ${steps.length - completedSteps} More Steps`}
+                {submitting ? 'Submitting...' : 
+                 completedSteps === steps.length ? 'Submit Report' : 
+                 `Complete ${steps.length - completedSteps} More Steps`}
               </Typography>
-            </TouchableOpacity>
+            </View>
           </LinearGradient>
-        </View>
-      </ScrollView>
+        </TouchableOpacity>
+      </Animated.ScrollView>
     </Layout>
   );
 };
 
 const styles = StyleSheet.create({
-  headerGradient: {
-    paddingTop: 50,
-    paddingBottom: 25,
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
   },
-  headerContent: {
+  // Header Container - REDUCED
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    overflow: 'hidden',
+  },
+  headerBackground: {
+    flex: 1,
+  },
+  expandedContent: {
+    flex: 1,
+    paddingTop: Platform.OS === 'ios' ? 35 : 15, // REDUCED from 50
+    paddingBottom: 16, // REDUCED from 24
     paddingHorizontal: 20,
   },
-  headerTop: {
+  headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16, // REDUCED from 24
+  },
+  backButton: {
+    width: 36, // REDUCED from 40
+    height: 36, // REDUCED from 40
+    borderRadius: 10, // REDUCED from 12
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  titleIcon: {
+    width: 30, // REDUCED from 32
+    height: 30, // REDUCED from 32
+    borderRadius: 15, // REDUCED from 16
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8, // REDUCED from 10
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20, // REDUCED from 24
+    fontWeight: '800',
     color: 'white',
-    marginLeft: 10,
+    letterSpacing: -0.3,
   },
-  progressContainer: {
-    alignItems: 'flex-end',
+  progressBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 46, // REDUCED from 50
+    height: 26, // REDUCED from 28
+    borderRadius: 13, // REDUCED from 14
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  progressText: {
-    color: 'rgba(255,255,255,0.8)',
-    marginBottom: 5,
+  progressBadgeText: {
+    color: 'white',
+    fontSize: 11, // REDUCED from 12
+    fontWeight: '700',
+  },
+  stepsContainer: {
+    marginTop: 4, // REDUCED from 8
   },
   progressBar: {
-    width: 80,
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 2,
+    marginBottom: 12, // REDUCED from 16
+    overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: 'white',
+    backgroundColor: '#10b981',
     borderRadius: 2,
   },
-  stepsContainer: {
+  stepsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -345,212 +844,362 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  stepIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+  stepCircle: {
+    width: 32, // REDUCED from 36
+    height: 32, // REDUCED from 36
+    borderRadius: 16, // REDUCED from 18
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 4, // REDUCED from 6
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  stepCompleted: {
-    backgroundColor: '#28a745',
-    borderColor: '#28a745',
+  stepCircleCompleted: {
+    borderColor: '#10b981',
   },
-  stepText: {
-    color: 'rgba(255,255,255,0.6)',
+  stepLabel: {
     fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontWeight: '500',
     textAlign: 'center',
   },
-  stepTextCompleted: {
+  stepLabelCompleted: {
     color: 'white',
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
+  // Collapsed Header - REDUCED
+  collapsedContent: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 35 : 15, // REDUCED from 50/30
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+  },
+  collapsedBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 40, // REDUCED from 50
+  },
+  collapsedBackButton: {
+    width: 34, // REDUCED from 36
+    height: 34, // REDUCED from 36
+    borderRadius: 17, // REDUCED from 18
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10, // REDUCED from 12
+  },
+  collapsedTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  collapsedTitleText: {
+    fontSize: 16, // REDUCED from 18
+    fontWeight: '700',
+    color: 'white',
+    marginLeft: 8, // REDUCED from 10
+    letterSpacing: -0.3,
+  },
+  collapsedProgress: {
+    width: 50, // REDUCED from 60
+  },
+  collapsedProgressBar: {
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  collapsedProgressFill: {
+    height: '100%',
+    backgroundColor: '#10b981',
+    borderRadius: 2,
+  },
+  headerCurve: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 20,
+    backgroundColor: '#f8fafc',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  // Scroll View
   scrollView: {
     flex: 1,
   },
-  contentContainer: {
-    padding: 20,
+  scrollContent: {
     paddingBottom: 40,
   },
-  welcomeCard: {
-    marginBottom: 25,
+  headerSpacer: {
+    height: 220, // REDUCED from 300 to match new header height
   },
-  welcomeGradient: {
-    borderRadius: 16,
-    padding: 20,
+  // Welcome Section
+  welcomeSection: {
+    paddingHorizontal: 20,
+    marginBottom: 20, // REDUCED from 24
+  },
+  welcomeCard: {
+    borderRadius: 18, // REDUCED from 20
+    padding: 20, // REDUCED from 24
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
   },
   welcomeContent: {
     alignItems: 'center',
   },
+  welcomeIcon: {
+    width: 56, // REDUCED from 64
+    height: 56, // REDUCED from 64
+    borderRadius: 28, // REDUCED from 32
+    backgroundColor: 'rgba(12, 109, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14, // REDUCED from 16
+    borderWidth: 1,
+    borderColor: 'rgba(12, 109, 255, 0.2)',
+  },
   welcomeTitle: {
-    color: BrandColors.brand.blue,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 8,
+    fontSize: 18, // REDUCED from 20
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 6, // REDUCED from 8
     textAlign: 'center',
   },
   welcomeText: {
-    color: BrandColors.ui.foreground,
+    fontSize: 14,
+    color: '#64748b',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
   },
-  formContainer: {
-    gap: 20,
+  // Form Section
+  formSection: {
+    paddingHorizontal: 20,
+    gap: 16, // REDUCED from 20
   },
-  sectionCard: {
-    backgroundColor: BrandColors.ui.card,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: BrandColors.ui.border,
+  formCard: {
+    backgroundColor: 'white',
+    borderRadius: 18, // REDUCED from 20
+    padding: 16, // REDUCED from 20
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
-  sectionHeader: {
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 16, // REDUCED from 20
   },
-  sectionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: BrandColors.brand.blue,
+  cardIcon: {
+    width: 36, // REDUCED from 40
+    height: 36, // REDUCED from 40
+    borderRadius: 18, // REDUCED from 20
+    backgroundColor: 'rgba(12, 109, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: BrandColors.ui.foreground,
-    marginLeft: 12,
-  },
-  pickerContainer: {
-    marginTop: 5,
-  },
-  picker: {
-    height: 50,
-    color: BrandColors.ui.foreground,
-    backgroundColor: BrandColors.ui.input,
+    marginRight: 10, // REDUCED from 12
     borderWidth: 1,
-    borderColor: BrandColors.ui.border,
-    borderRadius: 12,
-    paddingHorizontal: 10,
+    borderColor: 'rgba(12, 109, 255, 0.2)',
   },
-  inputField: {
-    borderWidth: 1,
-    borderColor: BrandColors.ui.border,
-    borderRadius: 12,
-    padding: 15,
-    color: BrandColors.ui.foreground,
-    fontSize: 16,
-    backgroundColor: BrandColors.ui.input,
-  },
-  descriptionInput: {
-    borderWidth: 1,
-    borderColor: BrandColors.ui.border,
-    borderRadius: 12,
-    padding: 15,
-    color: BrandColors.ui.foreground,
-    fontSize: 16,
-    minHeight: 100,
-    textAlignVertical: 'top',
-    backgroundColor: BrandColors.ui.input,
-  },
-  locationDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: BrandColors.ui.muted,
-    padding: 15,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: BrandColors.ui.border,
-  },
-  locationText: {
-    marginLeft: 10,
-    color: BrandColors.ui.foreground,
+  cardTitleContainer: {
     flex: 1,
   },
-  photoPreview: {
-    position: 'relative',
+  cardTitle: {
+    fontSize: 15, // REDUCED from 16
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 2,
+  },
+  cardSubtitle: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  // Picker Styles
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 10, // REDUCED from 12
+    overflow: 'hidden',
+    backgroundColor: '#f8fafc',
+  },
+  picker: {
+    height: 46, // REDUCED from 50
+    color: '#0f172a',
+    backgroundColor: '#f8fafc',
+  },
+  // Status Options
+  statusOptions: {
+    gap: 8, // REDUCED from 10
+  },
+  statusButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    padding: 14, // REDUCED from 16
+    borderRadius: 10, // REDUCED from 12
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+  },
+  statusButtonSelected: {
+    borderWidth: 2,
+  },
+  statusIcon: {
+    width: 22, // REDUCED from 24
+    height: 22, // REDUCED from 24
+    borderRadius: 11, // REDUCED from 12
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10, // REDUCED from 12
+    borderWidth: 2,
+    borderColor: 'currentColor',
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // Text Area
+  textAreaContainer: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 10, // REDUCED from 12
+    overflow: 'hidden',
+    backgroundColor: '#f8fafc',
+  },
+  textArea: {
+    minHeight: 110, // REDUCED from 120
+    padding: 14, // REDUCED from 16
+    fontSize: 14,
+    color: '#0f172a',
+    textAlignVertical: 'top',
+  },
+  charCount: {
+    paddingHorizontal: 14, // REDUCED from 16
+    paddingVertical: 10, // REDUCED from 12
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
+    alignItems: 'flex-end',
+  },
+  charCountText: {
+    fontSize: 12,
+    color: '#94a3b8',
+    fontWeight: '500',
+  },
+  // Location Card
+  locationCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 10, // REDUCED from 12
+    padding: 14, // REDUCED from 16
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  locationContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationTextContainer: {
+    flex: 1,
+    marginLeft: 10, // REDUCED from 12
+  },
+  locationText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0f172a',
+    marginBottom: 4,
+  },
+  locationAccuracy: {
+    fontSize: 12,
+    color: '#94a3b8',
+  },
+  // Photo Upload
+  photoPreviewContainer: {
+    position: 'relative',
+    borderRadius: 10, // REDUCED from 12
+    overflow: 'hidden',
   },
   photoImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: BrandColors.ui.border,
+    height: 180, // REDUCED from 200
+    borderRadius: 10, // REDUCED from 12
   },
   removePhotoButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: 10, // REDUCED from 12
+    right: 10, // REDUCED from 12
     backgroundColor: 'white',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
+    width: 40, // REDUCED from 44
+    height: 40, // REDUCED from 44
+    borderRadius: 20, // REDUCED from 22
     justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  photoUpload: {
-    alignItems: 'center',
-  },
-  photoGradient: {
-    width: '100%',
-    padding: 30,
-    borderRadius: 16,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 4,
   },
-  photoText: {
+  photoUploadButton: {
+    borderRadius: 10, // REDUCED from 12
+    overflow: 'hidden',
+  },
+  photoUploadGradient: {
+    padding: 36, // REDUCED from 40
+    alignItems: 'center',
+  },
+  uploadingIcon: {
+    marginBottom: 10, // REDUCED from 12
+  },
+  photoUploadText: {
     color: 'white',
-    fontWeight: 'bold',
-    marginTop: 10,
+    fontSize: 15, // REDUCED from 16
+    fontWeight: '700',
+    marginTop: 10, // REDUCED from 12
+    marginBottom: 4,
   },
-  submitContainer: {
-    marginTop: 10,
+  photoUploadHint: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+  },
+  // Submit Button
+  submitButton: {
+    marginTop: 20, // REDUCED from 24
+    marginHorizontal: 20,
+    borderRadius: 14, // REDUCED from 16
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 10,
+    overflow: 'hidden',
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
   },
   submitGradient: {
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    padding: 18, // REDUCED from 20
+    borderRadius: 14, // REDUCED from 16
   },
-  submitTouchable: {
+  submitContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
   },
   submitIcon: {
-    marginRight: 10,
+    marginRight: 10, // REDUCED from 12
   },
   submitText: {
     color: 'white',
-    fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 16, // REDUCED from 18
+    fontWeight: '700',
   },
 });
 
