@@ -1,29 +1,8 @@
-export const dynamic = 'force-dynamic';
-import { AlertTriangle, Check, X } from "lucide-react";
+export const dynamic = "force-dynamic";
+import { AlertTriangle, Check } from "lucide-react";
 import { approveReport, rejectReport } from "@/lib/actions";
 import api from "@/lib/api";
-
-// Mock data if API fails
-const mockReports = [
-  {
-    id: 101,
-    source: { name: "Central Borehole" },
-    status: "broken",
-    note: "Pump is making noise",
-    created_at: new Date(),
-    submitted_by: "Ahmed",
-    approved: false,
-  },
-  {
-    id: 102,
-    source: { name: "Village Well 1" },
-    status: "low",
-    note: "Water level dropping fast",
-    created_at: new Date(),
-    submitted_by: "Fadumo",
-    approved: false,
-  },
-];
+import DeleteButton from "@/components/DeleteButton";
 
 async function getReports() {
   try {
@@ -44,7 +23,7 @@ async function getReports() {
     }));
   } catch (e) {
     console.warn("API Fetch failed:", e);
-    return mockReports;
+    return [];
   }
 }
 
@@ -116,16 +95,12 @@ export default async function AdminReportsPage() {
                         <Check className="w-4 h-4" />
                       </button>
                     </form>
-                    <form
+                    <DeleteButton
                       action={async () => {
                         "use server";
                         await rejectReport(report.id);
                       }}
-                    >
-                      <button className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </form>
+                    />
                   </div>
                 </td>
               </tr>

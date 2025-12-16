@@ -1,11 +1,16 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import { addSource, deleteSource } from "@/lib/actions";
-import { getWaterSources } from "@/lib/data";
-import { Plus, Trash2, MapPin } from "lucide-react";
+import { deleteSource } from "@/lib/actions";
+import { getWaterSources, getVillages } from "@/lib/data";
+import { MapPin } from "lucide-react";
+import AddSourceDialog from "./add-source-dialog";
+import DeleteButton from "@/components/DeleteButton";
 
 export default async function AdminSourcesPage() {
-  const sources = await getWaterSources();
+  const [sources, villages] = await Promise.all([
+    getWaterSources(),
+    getVillages(),
+  ]);
 
   return (
     <div>
@@ -13,10 +18,7 @@ export default async function AdminSourcesPage() {
         <h1 className="text-2xl font-bold text-gray-900">
           Manage Water Sources
         </h1>
-        <button className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold transition-colors">
-          <Plus className="w-4 h-4" />
-          <span>Add Source</span>
-        </button>
+        <AddSourceDialog villages={villages} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -38,23 +40,19 @@ export default async function AdminSourcesPage() {
             <div className="flex flex-col items-end space-y-2">
               <span
                 className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${
-                  source.status === "working"
+                  source.status === "working" || source.status === "Working"
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-700"
                 }`}
               >
                 {source.status.replace("_", " ")}
               </span>
-              <form
+              <DeleteButton
                 action={async () => {
                   "use server";
                   await deleteSource(source.id);
                 }}
-              >
-                <button className="text-red-400 hover:text-red-600 p-1">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </form>
+              />
             </div>
           </div>
         ))}
