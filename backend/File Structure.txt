@@ -1,0 +1,99 @@
+BARWAAXO-AI/
+│
+├── backend/                  # Node.js authentication API
+│   ├── src/
+│   │   ├── app.ts
+│   │   ├── server.ts
+│   │   ├── controllers/
+│   │   │   └── authController.ts
+│   │   ├── models/
+│   │   │   └── authModel.ts
+│   │   ├── routes/
+│   │   │   └── authRoutes.ts
+│   │   ├── config/
+│   │   │   └── prisma.ts
+│   ├── prisma/
+│   │   ├── schema.prisma
+│   │   ├── migrations/
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── Readme.MD
+│   └── SETUP_STEPS.md
+│
+├── ai-engine/                # My part — AI training, notebooks, experiments
+│   ├── notebooks/
+│   │   ├── 01_data_ingestion.ipynb
+│   │   ├── 02_feature_engineering.ipynb
+│   │   ├── 03_spi_calculation.ipynb
+│   │   ├── 04_model_training_xgb.ipynb
+│   │   ├── 05_evaluation_explainability.ipynb
+│   ├── datasets/
+│   │   ├── raw/
+│   │   │   ├── chirps/
+│   │   │   ├── nasa_power/
+│   │   │   ├── ndvi/
+│   │   │   ├── nadfor_reports/
+│   │   ├── processed/
+│   │   │   ├── features.parquet
+│   │   │   ├── labels.parquet
+│   ├── scripts/
+│   │   ├── ingest_chirps.py
+│   │   ├── ingest_nasa.py
+│   │   ├── ingest_ndvi.py
+│   │   ├── build_features.py
+│   │   ├── train_model.py
+│   ├── environment.yml
+│   └── README.md
+│
+├── mobile-app/               # Flutter app for national early-warning system
+│   ├── lib/
+│   │   ├── main.dart
+│   │   ├── screens/
+│   │   │   ├── dashboard.dart
+│   │   │   ├── region_detail.dart
+│   │   │   ├── alerts_page.dart
+│   │   │   ├── sensor_simulation.dart
+│   │   ├── services/
+│   │   │   ├── api_service.dart
+│   │   ├── widgets/
+│   │   │   ├── risk_card.dart
+│   │   │   ├── map_view.dart
+│   └── pubspec.yaml
+│
+├── web-dashboard/            # Admin Dashboard for ministries & judges
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── MapDashboard.jsx
+│   │   │   ├── RegionProfile.jsx
+│   │   │   ├── Analytics.jsx
+│   │   ├── components/
+│   │   │   ├── RiskMap.jsx
+│   │   │   ├── RiskIndicator.jsx
+│   │   ├── api/
+│   │   │   ├── client.js
+│   └── package.json
+│
+├── iot-sensors/              # (Virtual) affordable IoT prototypes
+│   ├── firmware/
+│   │   ├── moisture_sensor.ino
+│   │   ├── temp_humidity.ino
+│   ├── simulation/
+│   │   ├── soil_moisture_virtual.py
+│   │   ├── weather_station_virtual.py
+│
+├── devops/
+│   ├── docker-compose.yml
+│   ├── airflow/
+│   │   ├── dags/
+│   │   │   ├── daily_ingest.py
+│   │   │   ├── weekly_predict.py
+│   ├── nginx/
+│   │   ├── default.conf
+│
+└── docs/                     # pitch documents
+    ├── proposal.md
+    ├── architecture.md
+    ├── ai_system_design.md
+    ├── system_scope.md
+    ├── team_roles.md
+    ├── pitch_script.md
