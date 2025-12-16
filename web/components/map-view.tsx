@@ -130,73 +130,75 @@ export default function MapView({
   }, []);
 
   return (
-    <MapContainer
-      center={defaultCenter}
-      zoom={13}
-      className="w-full h-full z-0"
-      zoomControl={false}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+    <div className="relative w-full h-full">
+      <MapContainer
+        center={defaultCenter}
+        zoom={13}
+        className="w-full h-full z-0"
+        zoomControl={false}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
-      {userLocation && (
-        <Marker position={userLocation} icon={userIcon}>
-          <Popup>
-            <div className="text-xs font-semibold">Your Location</div>
-          </Popup>
-        </Marker>
-      )}
-
-      {sources.map((source) => {
-        const distance = userLocation
-          ? calculateDistance(
-              userLocation[0],
-              userLocation[1],
-              source.lat,
-              source.lng
-            ).toFixed(1)
-          : null;
-
-        return (
-          <Marker
-            key={source.id}
-            position={[source.lat, source.lng]}
-            icon={createStatusIcon(source.status)}
-            eventHandlers={{
-              click: () => onSelectSource(source),
-            }}
-          >
+        {userLocation && (
+          <Marker position={userLocation} icon={userIcon}>
             <Popup>
-              <div className="p-1">
-                <h3 className="font-bold text-sm">{source.name}</h3>
-                <p className="text-xs text-gray-500">{source.village}</p>
-                {distance && (
-                  <p className="text-xs font-medium text-blue-600 mt-1">
-                    {distance} km away
-                  </p>
-                )}
-                <span
-                  className="text-xs font-semibold px-2 py-0.5 rounded-full text-white mt-1 inline-flex items-center"
-                  style={{ backgroundColor: getStatusColor(source.status) }}
-                >
-                  {source.status}
-                </span>
-              </div>
+              <div className="text-xs font-semibold">Your Location</div>
             </Popup>
           </Marker>
-        );
-      })}
+        )}
 
-      {selectedSourceId && sources.find((s) => s.id === selectedSourceId) && (
-        <MapController
-          center={[
-            sources.find((s) => s.id === selectedSourceId)!.lat,
-            sources.find((s) => s.id === selectedSourceId)!.lng,
-          ]}
-        />
-      )}
-    </MapContainer>
+        {sources.map((source) => {
+          const distance = userLocation
+            ? calculateDistance(
+                userLocation[0],
+                userLocation[1],
+                source.lat,
+                source.lng
+              ).toFixed(1)
+            : null;
+
+          return (
+            <Marker
+              key={source.id}
+              position={[source.lat, source.lng]}
+              icon={createStatusIcon(source.status)}
+              eventHandlers={{
+                click: () => onSelectSource(source),
+              }}
+            >
+              <Popup>
+                <div className="p-1">
+                  <h3 className="font-bold text-sm">{source.name}</h3>
+                  <p className="text-xs text-gray-500">{source.village}</p>
+                  {distance && (
+                    <p className="text-xs font-medium text-blue-600 mt-1">
+                      {distance} km away
+                    </p>
+                  )}
+                  <span
+                    className="text-xs font-semibold px-2 py-0.5 rounded-full text-white mt-1 inline-flex items-center"
+                    style={{ backgroundColor: getStatusColor(source.status) }}
+                  >
+                    {source.status}
+                  </span>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+
+        {selectedSourceId && sources.find((s) => s.id === selectedSourceId) && (
+          <MapController
+            center={[
+              sources.find((s) => s.id === selectedSourceId)!.lat,
+              sources.find((s) => s.id === selectedSourceId)!.lng,
+            ]}
+          />
+        )}
+      </MapContainer>
+    </div>
   );
 }

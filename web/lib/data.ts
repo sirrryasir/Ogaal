@@ -13,6 +13,10 @@ export interface WaterSource {
 export async function getWaterSources(): Promise<WaterSource[]> {
   try {
     const res = await api.get("/water-sources");
+    if (!res.data || !Array.isArray(res.data)) {
+      console.warn("API returned invalid data format:", res.data);
+      return [];
+    }
     return res.data.map((b: any) => ({
       id: b.id,
       name: b.name,
@@ -24,8 +28,9 @@ export async function getWaterSources(): Promise<WaterSource[]> {
         ? new Date(b.last_maintained)
         : new Date(),
     }));
-  } catch (error) {
-    console.error("API Fetch failed:", error);
+  } catch (error: any) {
+    console.error("API Fetch failed:", error?.message || error);
+    // Return empty array on error to prevent infinite loading
     return [];
   }
 }

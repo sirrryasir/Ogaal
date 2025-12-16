@@ -24,19 +24,36 @@ export default function WaterSourcesPage() {
   );
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    
     async function fetchSources() {
       try {
         const data = await getWaterSources();
-        setSources(data);
-      } catch (err) {
+        if (!cancelled) {
+          setSources(data);
+          setError(null);
+        }
+      } catch (err: any) {
         console.error("Failed to fetch sources", err);
+        if (!cancelled) {
+          setSources([]); // Set empty array on error
+          setError(err?.message || "Failed to load water sources. Please check your connection.");
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
+    
     fetchSources();
+    
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -117,8 +134,18 @@ export default function WaterSourcesPage() {
 
           <div className="p-4 md:p-6 pb-20">
             {loading ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+              <div className="flex flex-col justify-center items-center py-10">
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
+                <p className="text-sm text-gray-500">Loading water sources...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col justify-center items-center py-10">
+                <p className="text-red-600 font-medium mb-2">Error loading data</p>
+                <p className="text-sm text-gray-500 text-center">{error}</p>
+              </div>
+            ) : sources.length === 0 ? (
+              <div className="flex flex-col justify-center items-center py-10">
+                <p className="text-gray-500 font-medium">No water sources found</p>
               </div>
             ) : (
               <WaterSourceList
