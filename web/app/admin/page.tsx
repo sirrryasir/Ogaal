@@ -1,22 +1,68 @@
 "use client";
 
-import { getWaterSources } from "@/lib/data";
-import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getDashboardStats, DashboardStats } from "@/lib/data";
+import { Loader2, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminDashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchStats() {
+    setLoading(true);
+    const data = await getDashboardStats();
+    setStats(data);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  if (loading || !stats) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="text-gray-500">Welcome back, Admin.</p>
+      <header className="mb-8 flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Dashboard Overview
+          </h1>
+          <p className="text-gray-500">Real-time water security monitoring.</p>
+        </div>
+        <button
+          onClick={fetchStats}
+          className="flex items-center space-x-2 text-sm text-blue-600 hover:text-blue-800 font-semibold"
+        >
+          <RefreshCcw className="w-4 h-4" />
+          <span>Refresh Data</span>
+        </button>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {[
-          { label: "Total Sources", val: "42", color: "bg-blue-500" },
-          { label: "Pending Reports", val: "12", color: "bg-orange-500" },
-          { label: "Critical Zones", val: "3", color: "bg-red-500" },
+          {
+            label: "Total Sources",
+            val: stats.totalSources,
+            color: "bg-blue-500",
+          },
+          {
+            label: "Pending Reports",
+            val: stats.pendingReports,
+            color: "bg-orange-500",
+          },
+          {
+            label: "Critical Zones",
+            val: stats.criticalZones,
+            color: "bg-red-500",
+          },
         ].map((stat, i) => (
           <div
             key={i}
@@ -37,34 +83,48 @@ export default function AdminDashboardPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
-          <button className="text-blue-600 text-sm font-bold hover:underline">
-            View All
-          </button>
+          <Link
+            href="/admin/reports"
+            className="text-blue-600 text-sm font-bold hover:underline"
+          >
+            View All Reports
+          </Link>
         </div>
         <div className="space-y-4">
-          {[1, 2, 3].map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
-            >
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                  AH
+          {stats.recentReports.length === 0 ? (
+            <p className="text-center text-gray-400 py-4">No recent activity</p>
+          ) : (
+            stats.recentReports.map((report: any) => (
+              <div
+                key={report.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                    {report.reporter_type === "USSD" ? "SMS" : "WEB"}
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">
+                      Report: {report.water_source?.name || "Unknown Source"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {report.village?.name} •{" "}
+                      {new Date(report.timestamp).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-gray-900 text-sm">
-                    Ahmed Hassan submitting a report
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Village Central Well • 2 mins ago
-                  </p>
-                </div>
+                <span
+                  className={`px-3 py-1 text-xs font-bold rounded-full ${
+                    report.is_verified
+                      ? "bg-green-100 text-green-700"
+                      : "bg-yellow-100 text-yellow-700"
+                  }`}
+                >
+                  {report.is_verified ? "Verified" : "Pending"}
+                </span>
               </div>
-              <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">
-                Review
-              </span>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
