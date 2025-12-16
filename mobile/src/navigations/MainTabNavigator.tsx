@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DroughtStatusDashboard from '../screens/main/Home/index';
 import WaterSourcesMap from '../screens/main/WaterSourcesMap/index';
 import ReportConditions from '../screens/main/ReportConditions/index';
+import NotificationsScreen from '../screens/main/Notifications/index';
 import SettingsScreen from '../screens/main/Settings/index';
 import { useTranslation } from '../contexts/LanguageContext';
 
@@ -24,6 +25,8 @@ const MainTabNavigator = () => {
             iconName = 'water';
           } else if (route.name === 'Report') {
             iconName = 'create';
+          } else if (route.name === 'Notifications') {
+            iconName = 'notifications';
           } else if (route.name === 'Settings') {
             iconName = 'settings';
           }
@@ -53,6 +56,14 @@ const MainTabNavigator = () => {
         name="Report"
         component={ReportConditions}
         options={{ title: t('report') }}
+      />
+      <Tab.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{
+          title: t('notifications'),
+          tabBarBadge: 2, // Number of unread notifications
+        }}
       />
       <Tab.Screen
         name="Settings"

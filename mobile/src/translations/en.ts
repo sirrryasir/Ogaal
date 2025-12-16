@@ -85,4 +85,26 @@ export default {
   noActiveAlerts: 'No active alerts',
   viewWaterSourcesMap: 'View Water Sources Map',
   reportConditions: 'Report Conditions',
+  // Map Screen
+  statusLegend: 'Status Legend:',
+  working: 'Working',
+  low: 'Low',
+  dry: 'Dry',
+  broken: 'Broken',
+  region: 'Region:',
+  // Notifications
+  notifications: 'Notifications',
+  noNotifications: 'No Notifications',
+  noNotificationsMessage: 'You\'re all caught up! Check back later for updates.',
+  // Settings
+  appPreferences: 'App Preferences',
+  customizeExperience: 'Customize your experience',
+  settingsSubtitle: 'Language, app info, and preferences',
+  tapToChange: '(Tap to change)',
+  aboutSubtitle: 'About Barwaaqo\nVersion, mission, and partners',
+  chooseLanguage: 'Choose your preferred language',
+  learnMoreAboutApp: 'Learn more about the app',
+  // Language Select
+  chooseLanguageTitle: 'Choose Language',
+  selectPreferredLanguage: 'Select your preferred language',
 };

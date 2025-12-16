@@ -85,4 +85,26 @@ export default {
   noActiveAlerts: 'Ma jiraan digniin firfircoon',
   viewWaterSourcesMap: 'Eeg Khariidada Ilaha Biyaha',
   reportConditions: 'Warbixin Xaaladaha',
+  // Map Screen
+  statusLegend: 'Halbeegga Xaaladda:',
+  working: 'Shaqeeya',
+  low: 'Hooseeya',
+  dry: 'Qallalan',
+  broken: 'Jaban',
+  region: 'Gobolka:',
+  // Notifications
+  notifications: 'Ogeysiisyada',
+  noNotifications: 'Ma jiraan Ogeysiisyo',
+  noNotificationsMessage: 'Wax walba waad la socotaa! Dib u eeg goor dambe si aad u hesho warar cusub.',
+  // Settings
+  appPreferences: 'Doorashooyinka App-ka',
+  customizeExperience: 'Habee khibraddaada',
+  settingsSubtitle: 'Luqadda, macluumaadka app-ka, iyo doorashooyinka',
+  tapToChange: '(Taabo si aad u beddesho)',
+  aboutSubtitle: 'Ku saabsan Barwaaqo\nNooca, hadafka, iyo la-hawlgalayaasha',
+  chooseLanguage: 'Dooro luqadda aad doorbidayso',
+  learnMoreAboutApp: 'Wax badan ka baro app-ka',
+  // Language Select
+  chooseLanguageTitle: 'Dooro Luqadda',
+  selectPreferredLanguage: 'Dooro luqadda aad doorbidayso',
 };

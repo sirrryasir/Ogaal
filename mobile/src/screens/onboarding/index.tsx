@@ -237,7 +237,9 @@ const OnboardingScreen: React.FC = () => {
                     }) }
                   ]
                 }}>
-                  <MaterialIcons name={item.icon as any} size={120} color={'#0c6dff'} />
+                  <View style={styles.iconContainer}>
+                    <MaterialIcons name={item.icon as any} size={80} color={'#ffffff'} />
+                  </View>
                 </Animated.View>
                 <Animated.View style={{ opacity: textAnimValues[index] }}>
                   <Typography variant="h1" style={styles.title}>
@@ -362,10 +364,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  illustration: {
-    width: 250,
-    height: 200,
-    resizeMode: 'contain',
+  iconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#0c6dff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
   },
   languageContainer: {
     flexDirection: 'row',
