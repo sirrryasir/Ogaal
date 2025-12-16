@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { addSource, deleteSource } from "@/lib/actions";
 import { getWaterSources } from "@/lib/data";
 import { Plus, Trash2, MapPin } from "lucide-react";
