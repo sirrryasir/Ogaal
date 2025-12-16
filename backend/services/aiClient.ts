@@ -45,3 +45,19 @@ export async function getWaterSourceDecisions(sources: WaterSource[]): Promise<D
   const data: DecisionResponse[] = await response.json();
   return data;
 }
+
+export async function callAIFailureCountdown(payload: any[]) {
+  const response = await fetch("http://localhost:8000/api/failure-countdown", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`AI Failure Countdown error: ${response.status} - ${await response.text()}`);
+  }
+
+  return response.json();
+}

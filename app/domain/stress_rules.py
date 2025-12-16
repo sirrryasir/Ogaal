@@ -1,11 +1,17 @@
-def calculate_stress_level(data: dict) -> str:
-    broken_ratio = 1 - (data["working_sources"] / data["total_water_sources"])
+def calculate_stress_level(rainfall: float, population: int, supply: float):
+    demand = population * 0.05
+    stress_index = demand / max(supply, 1)
 
-    if broken_ratio >= 0.75 or data["reports_last_7_days"] >= 7:
-        return "CRITICAL"
-    elif broken_ratio >= 0.5:
-        return "HIGH"
-    elif broken_ratio >= 0.25:
-        return "MEDIUM"
+    if stress_index < 0.5:
+        return stress_index, "Low"
+    elif stress_index < 1:
+        return stress_index, "Medium"
     else:
-        return "LOW"
+        return stress_index, "High"
+
+    if stress_index < 0.5:
+        return stress_index, "LOW"
+    elif stress_index < 1:
+        return stress_index, "MEDIUM"
+    else:
+        return stress_index, "HIGH"

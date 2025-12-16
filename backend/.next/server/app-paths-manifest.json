@@ -1,4 +1,3 @@
 {
-  "/api/investment-priorities/route": "app/api/investment-priorities/route.js",
-  "/not-found": "app/not-found.js"
+  "/api/stress-acceleration/route": "app/api/stress-acceleration/route.js"
 }

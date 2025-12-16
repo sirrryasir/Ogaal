@@ -67,3 +67,27 @@ export async function computeWaterSourceDecisions() {
 
   return decisions;
 }
+
+
+export async function getFailureCountdownData() {
+  const rows = await query(`
+    SELECT
+      ws.id AS water_source_id,
+      ws.current_capacity_liters AS remaining_usable_water_liters,
+      COALESCE(du.total_extracted_liters, 0) AS daily_usage_liters,
+      0 AS refill_rate_liters_per_day
+    FROM water_sources ws
+    LEFT JOIN LATERAL (
+      SELECT *
+      FROM daily_usage
+      WHERE water_source_id = ws.id
+      ORDER BY usage_date DESC
+      LIMIT 1
+    ) du ON TRUE
+  `);
+
+  return rows;
+}
+
+
+

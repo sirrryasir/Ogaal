@@ -7,4 +7,4 @@ router = APIRouter(prefix="/ai", tags=["Water Stress"])
 
 @router.post("/water-stress", response_model=WaterStressOutput)
 def assess_water_stress(payload: WaterStressInput):
-    return evaluate_water_stress(payload.dict())
+    return evaluate_water_stress(payload)
