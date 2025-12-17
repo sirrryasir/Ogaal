@@ -146,7 +146,7 @@ const ReportPage = () => {
               </option>
               {filteredSources.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} ({s.type})
+                  {s.name} ({s.status})
                 </option>
               ))}
             </select>
