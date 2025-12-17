@@ -76,13 +76,13 @@ export default function AdminLayout({
     { href: "/admin", label: "Overview", icon: LayoutDashboard },
     { href: "/admin/reports", label: "Approvals", icon: FileText },
     { href: "/admin/sources", label: "Water Sources", icon: Droplet },
-    { href: "/admin/database", label: "Database", icon: Database }
+    { href: "/admin/database", label: "Database", icon: Database },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="min-h-screen bg-gray-100 flex -mt-20">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex-shrink-0 fixed h-full z-10 hidden md:flex flex-col">
+      <aside className="w-64 bg-white border-r border-gray-200 flex-shrink-0 fixed h-full top-0 left-0 z-10 hidden md:flex flex-col">
         <div className="p-6 border-b border-gray-100">
           <Link href="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
@@ -128,13 +128,15 @@ export default function AdminLayout({
             className="flex items-center space-x-3 px-4 py-3 w-full text-left rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
             <LogOut className="w-5 h-5" />
-            <span>Sign Out</span>
+            <span>Log Out</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 p-8 overflow-y-auto">{children}</main>
+      <main className="flex-1 md:ml-64 p-8 overflow-y-auto pt-8">
+        {children}
+      </main>
     </div>
   );
 }
