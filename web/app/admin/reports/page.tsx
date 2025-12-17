@@ -99,6 +99,7 @@ export default async function AdminReportsPage() {
                       action={async () => {
                         "use server";
                         await rejectReport(report.id);
+                        return { success: true };
                       }}
                     />
                   </div>
