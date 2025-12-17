@@ -12,12 +12,15 @@ import {
   Settings,
   Menu,
   X,
+  PieChart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useAppStore } from "@/lib/store";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/", icon: Home },
+  { label: "Analytics", href: "/analytics", icon: Droplet },
   { label: "Map", href: "/water-sources", icon: MapPin },
   { label: "Report", href: "/report", icon: Activity },
   { label: "Admin", href: "/admin", icon: Droplets },
@@ -26,6 +29,13 @@ const NAV_ITEMS = [
 export default function Navigation() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return (
     <>
