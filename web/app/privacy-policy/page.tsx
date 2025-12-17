@@ -1,6 +1,9 @@
+import Footer from "../../components/footer";
+
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="py-12 px-4 flex-1">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-slate-100 p-8 md:p-12">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-slate-900 mb-4">Privacy Policy</h1>
@@ -163,6 +166,8 @@ export default function PrivacyPolicy() {
           </section>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }
