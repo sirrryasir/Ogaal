@@ -11,20 +11,30 @@ export const getVillages = async (req: Request, res: Response) => {
   }
 };
 
-// Get all WaterSources (with Village data)
+// Get all WaterSources (with Village and District data)
 export const getWaterSources = async (req: Request, res: Response) => {
   try {
     const sources = await prisma.waterSource.findMany({
       include: {
-        village: true,
+        village: {
+          include: {
+            district: {
+              include: {
+                region: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    // Map to flat structure
+    // Map to flat structure with district info
     const flatSources = sources.map((b: any) => ({
       ...b,
-      village_name: b.village.name,
-      drought_risk_level: b.village.drought_risk_level,
+      village_name: b.village?.name || "Unknown",
+      district_name: b.village?.district?.name || "Unknown",
+      region_name: b.village?.district?.region?.name || "Unknown",
+      drought_risk_level: b.village?.drought_risk_level,
     }));
 
     res.json(flatSources);
