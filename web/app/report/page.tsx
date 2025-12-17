@@ -9,6 +9,7 @@ import {
   WaterSource,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import Footer from "@/components/footer";
 
 const ReportPage = () => {
   const router = useRouter();
@@ -94,7 +95,8 @@ const ReportPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="flex-1 flex items-center justify-center p-4">
       <div className="bg-white max-w-md w-full rounded-xl shadow-lg border border-slate-100 p-6">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-slate-900">Submit Report</h1>
@@ -240,6 +242,8 @@ const ReportPage = () => {
         </form>
       </div>
     </div>
+    <Footer />
+  </div>
   );
 };
 
