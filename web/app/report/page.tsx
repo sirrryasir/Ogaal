@@ -8,6 +8,7 @@ import {
   Village,
   WaterSource,
 } from "@/lib/data";
+import { cn } from "@/lib/utils";
 
 const ReportPage = () => {
   const router = useRouter();
@@ -154,21 +155,55 @@ const ReportPage = () => {
 
           {/* Status Selection (Fixed Options) */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-2 text-center">
               Current Status
             </label>
-            <select
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({ ...formData, status: e.target.value })
-              }
-            >
-              <option value="Working">Water Available (Working)</option>
-              <option value="Low Water">Water Level Low</option>
-              <option value="Broken">Pump Broken / No Access</option>
-              <option value="Other">Other Issue</option>
-            </select>
+            <div className="grid grid-cols-1 gap-3">
+              {[
+                {
+                  value: "Working",
+                  label: "Water Available (Working)",
+                  color: "border-green-200 bg-green-50 text-green-800",
+                },
+                {
+                  value: "Low Water",
+                  label: "Water Level Low",
+                  color: "border-yellow-200 bg-yellow-50 text-yellow-800",
+                },
+                {
+                  value: "Broken",
+                  label: "Pump Broken / No Access",
+                  color: "border-red-200 bg-red-50 text-red-800",
+                },
+                {
+                  value: "Other",
+                  label: "Other Issue",
+                  color: "border-gray-200 bg-gray-50 text-gray-800",
+                },
+              ].map((option) => (
+                <label key={option.value} className="relative cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="status"
+                    value={option.value}
+                    checked={formData.status === option.value}
+                    onChange={(e) =>
+                      setFormData({ ...formData, status: e.target.value })
+                    }
+                    className="peer sr-only"
+                  />
+                  <div
+                    className={cn(
+                      "p-4 rounded-xl border-2 transition-all text-center font-medium",
+                      "hover:shadow-md peer-checked:ring-2 peer-checked:ring-offset-1 peer-checked:ring-blue-500 peer-checked:border-transparent",
+                      option.color
+                    )}
+                  >
+                    {option.label}
+                  </div>
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* Description */}
