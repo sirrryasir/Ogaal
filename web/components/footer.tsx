@@ -13,8 +13,7 @@ export default function Footer() {
               Ogaal
             </span>
             <p className="max-w-sm leading-relaxed mb-6">
-              Building digital infrastructure for water security in the Horn of
-              Africa. Open source and community driven.
+              A centralized Water Source Reporting & Monitoring Platform. Access to clean and functional water sources is critical for communities in Somaliland.
             </p>
             <div className="flex space-x-4">
               <Link
@@ -77,7 +76,7 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <Link href="#" className="hover:text-white transition">
+                <Link href="/documentation" className="hover:text-white transition">
                   Documentation
                 </Link>
               </li>
@@ -158,10 +157,8 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="mt-12 pt-8 border-t border-gray-800 text-center md:text-left flex flex-col md:flex-row justify-between items-center">
           <p>&copy; 2025 Ogaal Somaliland. All rights reserved.</p>
-          <div className="mt-2 md:mt-0 flex items-center space-x-6 text-sm opacity-75">
-            <span>Built with Next.js 16 & Tailwind</span>
-            <span className="hidden md:block">•</span>
-            <span>Open Source</span>
+          <div className="mt-2 md:mt-0 text-sm opacity-75">
+            <span>Built by OgaalTeam</span>
           </div>
         </div>
       </div>
