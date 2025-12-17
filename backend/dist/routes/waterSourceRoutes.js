@@ -7,6 +7,6 @@ router.get("/", WaterSourceController.getAll);
 // Protected write
 router.post("/", authenticate, authorize(["ADMIN", "GOVERNMENT", "NGO_WORKER"]), WaterSourceController.create);
 router.put("/:id/status", authenticate, authorize(["ADMIN", "GOVERNMENT", "NGO_WORKER"]), WaterSourceController.updateStatus);
-router.delete("/:id", authenticate, authorize(["ADMIN", "GOVERNMENT", "NGO_WORKER"]), WaterSourceController.deleteSource);
+router.delete("/:id", WaterSourceController.deleteSource);
 export default router;
 //# sourceMappingURL=waterSourceRoutes.js.map

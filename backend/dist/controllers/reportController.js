@@ -20,17 +20,40 @@ const getAll = async (req, res) => {
 // Create a new report
 const create = async (req, res) => {
     try {
-        const { water_source_id, content, reporter_type } = req.body;
-        // user_id might come from authenticated user in req.user, but for now optional or passed
-        // Assuming simple creation for now
+        const { village_id, water_source_id, content, reporter_type } = req.body;
+        console.log("Raw req.body:", JSON.stringify(req.body, null, 2));
+        console.log("Extracted data:", {
+            village_id,
+            water_source_id,
+            content,
+            reporter_type,
+        });
+        console.log("Content type:", typeof content, "Content value:", JSON.stringify(content));
+        // Validate required fields
+        if (!village_id || !water_source_id || !content || content.trim() === "") {
+            console.log("Validation failed:", {
+                village_id: !!village_id,
+                water_source_id: !!water_source_id,
+                content: !!content,
+                contentTrimmed: content?.trim(),
+            });
+            res.status(400).json({
+                message: "Missing required fields: village_id, water_source_id, and content are required",
+            });
+            return;
+        }
+        const trimmedContent = content.trim();
+        console.log("Creating report with trimmed content:", trimmedContent);
         const report = await prisma.report.create({
             data: {
+                village_id: Number(village_id),
                 water_source_id: Number(water_source_id),
-                content,
+                content: trimmedContent,
                 reporter_type: reporter_type || "App",
                 timestamp: new Date(),
             },
         });
+        console.log("Report created successfully:", report);
         res.status(201).json(report);
     }
     catch (error) {
