@@ -24,20 +24,37 @@ const create = async (req: Request, res: Response): Promise<void> => {
   try {
     const { village_id, water_source_id, content, reporter_type } = req.body;
 
-    console.log('Raw req.body:', JSON.stringify(req.body, null, 2));
-    console.log('Extracted data:', { village_id, water_source_id, content, reporter_type });
-    console.log('Content type:', typeof content, 'Content value:', JSON.stringify(content));
+    console.log("Raw req.body:", JSON.stringify(req.body, null, 2));
+    console.log("Extracted data:", {
+      village_id,
+      water_source_id,
+      content,
+      reporter_type,
+    });
+    console.log(
+      "Content type:",
+      typeof content,
+      "Content value:",
+      JSON.stringify(content)
+    );
 
     // Validate required fields
-    if (!village_id || !water_source_id || !content || content.trim() === '') {
-      console.log('Validation failed:', { village_id: !!village_id, water_source_id: !!water_source_id, content: !!content, contentTrimmed: content?.trim() });
-      return res.status(400).json({
-        message: "Missing required fields: village_id, water_source_id, and content are required"
+    if (!village_id || !water_source_id || !content || content.trim() === "") {
+      console.log("Validation failed:", {
+        village_id: !!village_id,
+        water_source_id: !!water_source_id,
+        content: !!content,
+        contentTrimmed: content?.trim(),
       });
+      res.status(400).json({
+        message:
+          "Missing required fields: village_id, water_source_id, and content are required",
+      });
+      return;
     }
 
     const trimmedContent = content.trim();
-    console.log('Creating report with trimmed content:', trimmedContent);
+    console.log("Creating report with trimmed content:", trimmedContent);
 
     const report = await prisma.report.create({
       data: {
@@ -49,7 +66,7 @@ const create = async (req: Request, res: Response): Promise<void> => {
       },
     });
 
-    console.log('Report created successfully:', report);
+    console.log("Report created successfully:", report);
     res.status(201).json(report);
   } catch (error) {
     console.error("Error creating report:", error);
