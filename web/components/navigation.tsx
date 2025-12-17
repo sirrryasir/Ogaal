@@ -37,6 +37,9 @@ export default function Navigation() {
 
   if (!mounted) return null;
 
+  // Hide navigation on admin dashboard
+  if (pathname?.startsWith("/admin")) return null;
+
   return (
     <>
       {/* Desktop Header */}
