@@ -187,12 +187,12 @@ export default function Home() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <Link href="#" className="hover:text-white transition">
+                <Link href="/privacy-policy" className="hover:text-white transition">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-white transition">
+                <Link href="/terms-of-service" className="hover:text-white transition">
                   Terms of Service
                 </Link>
               </li>
