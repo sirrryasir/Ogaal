@@ -296,12 +296,12 @@ const NotificationsScreen: React.FC = () => {
                 )}
               </View>
               
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.headerAction}
                 onPress={handleMarkAllAsRead}
                 disabled={unreadCount === 0}
               >
-                <Feather name="check-all" size={20} color="white" />
+                <Feather name="check-circle" size={20} color="white" />
               </TouchableOpacity>
             </View>
             
@@ -346,12 +346,12 @@ const NotificationsScreen: React.FC = () => {
                 </Typography>
               </View>
               
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.collapsedAction}
                 onPress={handleMarkAllAsRead}
                 disabled={unreadCount === 0}
               >
-                <Feather name="check-all" size={18} color="white" />
+                <Feather name="check-circle" size={18} color="white" />
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -361,8 +361,8 @@ const NotificationsScreen: React.FC = () => {
         </LinearGradient>
       </Animated.View>
 
-      {/* Filter Tabs - Animated to appear in collapsed header */}
-      <Animated.View 
+      {/* Filter Tabs - Fixed positioning to prevent overlap */}
+      <Animated.View
         style={[
           styles.filterContainer,
           {
@@ -371,8 +371,8 @@ const NotificationsScreen: React.FC = () => {
           }
         ]}
       >
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterScroll}
         >
@@ -426,41 +426,6 @@ const NotificationsScreen: React.FC = () => {
       >
         {/* Add spacer for header height */}
         <View style={styles.headerSpacer} />
-        
-        {/* Static Filter Tabs (visible when header is expanded) */}
-        <View style={styles.staticFilterContainer}>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterScroll}
-          >
-            {['All', 'Unread', 'Alert', 'Update'].map(filter => (
-              <TouchableOpacity
-                key={filter}
-                style={[
-                  styles.filterButton,
-                  activeFilter === filter && styles.filterButtonActive
-                ]}
-                onPress={() => setActiveFilter(filter as any)}
-                activeOpacity={0.7}
-              >
-                <Typography variant="caption" style={[
-                  styles.filterText,
-                  activeFilter === filter && styles.filterTextActive
-                ]}>
-                  {filter}
-                </Typography>
-                {filter === 'Unread' && unreadCount > 0 && (
-                  <View style={styles.filterBadge}>
-                    <Typography variant="caption" style={styles.filterBadgeText}>
-                      {unreadCount}
-                    </Typography>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
 
         {/* Refresh Info */}
         {refreshing && (
@@ -757,19 +722,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   headerSpacer: {
-    height: 180, // Matches initial header height
-  },
-  // Filter Tabs - Static (in scroll view)
-  staticFilterContainer: {
-    backgroundColor: 'white',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    height: 220, // Accounts for header + filter tabs
   },
   // Filter Tabs - Animated (in header when collapsed)
   filterContainer: {
@@ -786,7 +739,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    zIndex: 999,
+    zIndex: 500, // Lower than header but higher than content
   },
   filterScroll: {
     paddingHorizontal: 20,
@@ -861,7 +814,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
     overflow: 'hidden',
-    minHeight: 120, // Fixed minimum height
+    minHeight: 140, // Increased minimum height to prevent content overflow
     paddingBottom: 5,
   },
   unreadCard: {
@@ -962,6 +915,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 40, // Fixed message container height
     marginBottom: 8,
+    justifyContent: 'flex-start', // Ensure content starts at top
   },
   notificationMessage: {
     fontSize: 13,

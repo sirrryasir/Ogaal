@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  Dimensions, 
-  TouchableOpacity, 
-  ScrollView, 
-  Animated, 
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  ScrollView,
+  Animated,
   ImageBackground,
-  Platform 
+  Platform,
+  Text,
+  Easing
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
@@ -15,7 +17,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Layout from '../../components/Layout';
 import Typography from '../../components/Typography';
 import Button from '../../components/Button';
-import Logo from '../../components/Logo';
 import { useTranslation } from '../../contexts/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
@@ -24,60 +25,10 @@ interface OnboardingItem {
   title: string;
   subtitle: string;
   icon: string;
-  gradient: string[];
+  gradient: readonly [string, string];
   illustration?: string;
 }
 
-const getOnboardingData = (lang: string): OnboardingItem[] => {
-  if (lang === 'so') {
-    return [
-      {
-        title: 'Ujeedo',
-        subtitle: 'Raadi ceelasha u dhow oo arag haddii biyuhu diyaar yihiin ka hor intaadan dhaqaaqin.',
-        icon: 'location-on',
-        gradient: ['#0c6dff', '#8a2be2'],
-        illustration: '📍'
-      },
-      {
-        title: 'Sida ay u shaqeyso',
-        subtitle: 'Ceelasha waxaa lagu muujiyaa khariidad toos ah. Midabada waxay muujinayaan shaqeynaya, hooseeya, ama qalalan.',
-        icon: 'map',
-        gradient: ['#8a2be2', '#ff6b6b'],
-        illustration: '🗺️'
-      },
-      {
-        title: 'Doorka bulshada',
-        subtitle: 'Ka warbixi xaaladda ceelka si aad u caawiso dadka kale. Cusbooneysiinta la xaqiijiyay waxay badbaadinayaan qof walba.',
-        icon: 'people',
-        gradient: ['#ff6b6b', '#00d4ff'],
-        illustration: '🤝'
-      },
-    ];
-  }
-  return [
-    {
-      title: 'Find Nearby Wells',
-      subtitle: 'Locate water sources in your area and check real-time availability before traveling.',
-      icon: 'location-on',
-      gradient: ['#0c6dff', '#8a2be2'],
-      illustration: '📍'
-    },
-    {
-      title: 'Real-time Status',
-      subtitle: 'Interactive map shows working, low, or dry wells with color-coded indicators for easy identification.',
-      icon: 'map',
-      gradient: ['#8a2be2', '#ff6b6b'],
-      illustration: '🗺️'
-    },
-    {
-      title: 'Community Driven',
-      subtitle: 'Contribute by reporting well conditions. Verified updates ensure reliable information for everyone.',
-      icon: 'people',
-      gradient: ['#ff6b6b', '#00d4ff'],
-      illustration: '🤝'
-    },
-  ];
-};
 
 const OnboardingScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -85,12 +36,17 @@ const OnboardingScreen: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
-  const data = useMemo(() => getOnboardingData(language), [language]);
+  const data = useMemo(() => (t('onboarding') as any).slides as OnboardingItem[], [language]);
   
   // Animation values
   const scrollX = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Background animations
+  const backgroundFadeAnim = useRef(new Animated.Value(0)).current;
+  const backgroundRotateAnim = useRef(new Animated.Value(0)).current;
+  const backgroundGradientAnim = useRef(new Animated.Value(0)).current;
   
   // Individual slide animations
   const iconScale = useRef(data.map(() => new Animated.Value(0))).current;
@@ -211,6 +167,30 @@ const OnboardingScreen: React.FC = () => {
 
     // Animate first slide
     animateSlide(0);
+
+    // Background animations
+    Animated.parallel([
+      Animated.timing(backgroundFadeAnim, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.loop(
+        Animated.timing(backgroundRotateAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      ),
+      Animated.timing(backgroundGradientAnim, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: true,
+        easing: Easing.inOut(Easing.sin),
+      }),
+    ]).start();
   }, []);
 
   useEffect(() => {
@@ -219,10 +199,15 @@ const OnboardingScreen: React.FC = () => {
     animateSlide(0);
   }, [language]);
 
-  // Animated background based on scroll
-  const backgroundColor = scrollX.interpolate({
-    inputRange: data.map((_, i) => i * width),
-    outputRange: data.map(item => item.gradient[0] + '20'), // Add transparency
+  // Background animation interpolates
+  const backgroundRotateInterpolate = backgroundRotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const backgroundGradientInterpolate = backgroundGradientAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
   });
 
   const renderIndicators = () => {
@@ -262,40 +247,108 @@ const OnboardingScreen: React.FC = () => {
   };
 
   return (
-    <Layout style={styles.container} noPadding={true} statusBarStyle="light">
-      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor }]} />
-      
-      {/* Animated background circles */}
-      <View style={styles.backgroundCircles}>
-        {[...Array(3)].map((_, i) => (
-          <Animated.View
-            key={i}
-            style={[
-              styles.circle,
-              {
-                backgroundColor: data[currentIndex].gradient[0] + '10',
-                transform: [
-                  {
-                    scale: scrollX.interpolate({
-                      inputRange: data.map((_, idx) => idx * width),
-                      outputRange: data.map((_, idx) => (idx === i ? 1.5 : 1)),
-                    }),
-                  },
-                ],
-              },
-            ]}
+    <Layout style={styles.container} noPadding={true}>
+      <LinearGradient
+        colors={['#f0f7ff', '#e0f2fe', '#dbeafe']}
+        style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        {/* Animated background elements */}
+        <Animated.View
+          style={[
+            styles.floatingCircle,
+            styles.circle1,
+            {
+              opacity: backgroundFadeAnim,
+              transform: [{ rotate: backgroundRotateInterpolate }]
+            }
+          ]}
+        />
+
+        <Animated.View
+          style={[
+            styles.floatingCircle,
+            styles.circle2,
+            {
+              opacity: backgroundFadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 0.3]
+              })
+            }
+          ]}
+        />
+
+        <Animated.View
+          style={[
+            styles.floatingCircle,
+            styles.circle3,
+            {
+              opacity: backgroundFadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 0.2]
+              })
+            }
+          ]}
+        />
+
+        {/* Animated gradient overlay */}
+        <Animated.View style={[styles.animatedOverlay, {
+          opacity: backgroundGradientAnim.interpolate({
+            inputRange: [0, 0.5, 1],
+            outputRange: [0, 0.3, 0]
+          })
+        }]}>
+          <LinearGradient
+            colors={['rgba(12, 109, 255, 0.2)', 'rgba(138, 43, 226, 0.2)', 'transparent']}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
           />
-        ))}
-      </View>
+        </Animated.View>
+
+        {/* Decorative AI particles */}
+        <View style={styles.particlesContainer}>
+          {[...Array(6)].map((_, index) => {
+            const angle = (index * 60) * Math.PI / 180;
+            const radius = 150;
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+
+            return (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.particle,
+                  {
+                    left: x + 200, // Center offset
+                    top: y + 200,  // Center offset
+                    opacity: backgroundFadeAnim.interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: [0, 0.5, 1]
+                    }),
+                    transform: [
+                      {
+                        translateY: backgroundFadeAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [20, 0]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              >
+                <Text style={styles.particleText}>water</Text>
+              </Animated.View>
+            );
+          })}
+        </View>
+      </LinearGradient>
 
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Logo size="small" />
-          </View>
-          
-          <View style={styles.headerRight}>
+          <View style={styles.headerLeft}>
             {/* Language Selector */}
             <View style={styles.languageContainer}>
               <TouchableOpacity
@@ -304,17 +357,17 @@ const OnboardingScreen: React.FC = () => {
                 accessibilityLabel="Select language"
                 accessibilityRole="button"
               >
-                <Ionicons name="language" size={20} color="#fff" style={styles.languageIcon} />
+                <Ionicons name="language" size={20} color="#000" style={styles.languageIcon} />
                 <Typography variant="body" style={styles.dropdownText}>
                   {language === 'en' ? t('english') : t('somali')}
                 </Typography>
-                <MaterialIcons 
-                  name={showDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                  size={20} 
-                  color="#fff" 
+                <MaterialIcons
+                  name={showDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"}
+                  size={20}
+                  color="#000"
                 />
               </TouchableOpacity>
-              
+
               {showDropdown && (
                 <View style={styles.dropdown}>
                   <LinearGradient
@@ -342,7 +395,9 @@ const OnboardingScreen: React.FC = () => {
                 </View>
               )}
             </View>
+          </View>
 
+          <View style={styles.headerRight}>
             {/* Skip Button */}
             <TouchableOpacity
               onPress={handleSkip}
@@ -351,9 +406,9 @@ const OnboardingScreen: React.FC = () => {
               accessibilityRole="button"
             >
               <Typography variant="body" style={styles.skipText}>
-                Skip
+                {t('skip')}
               </Typography>
-              <MaterialIcons name="arrow-forward" size={16} color="#fff" />
+              <MaterialIcons name="arrow-forward" size={16} color="#000" />
             </TouchableOpacity>
           </View>
         </View>
@@ -463,13 +518,13 @@ const OnboardingScreen: React.FC = () => {
               style={styles.buttonGradient}
             >
               <Button
-                title={currentIndex === data.length - 1 ? 'Start Exploring' : 'Continue'}
+                title={currentIndex === data.length - 1 ? t('startExploring') : t('continue')}
                 onPress={handleNext}
                 size="large"
                 style={styles.button}
                 textStyle={styles.buttonText}
                 icon={
-                  currentIndex === data.length - 1 ? 
+                  currentIndex === data.length - 1 ?
                   <MaterialIcons name="explore" size={20} color="#fff" style={styles.buttonIcon} /> :
                   <MaterialIcons name="arrow-forward" size={20} color="#fff" style={styles.buttonIcon} />
                 }
@@ -482,9 +537,9 @@ const OnboardingScreen: React.FC = () => {
           {currentIndex < data.length - 1 && (
             <View style={styles.swipeHint}>
               <Typography variant="caption" style={styles.swipeHintText}>
-                Swipe to continue
+                {t('swipeToContinue')}
               </Typography>
-              <MaterialIcons name="swipe" size={16} color="rgba(255,255,255,0.7)" />
+              <MaterialIcons name="swipe" size={20} color="rgba(0,0,0,0.7)" />
             </View>
           )}
         </View>
@@ -501,15 +556,61 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  backgroundCircles: {
+  gradient: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  circle: {
+  floatingCircle: {
     position: 'absolute',
-    borderRadius: 500,
-    opacity: 0.1,
+    borderRadius: 1000, // Large enough to be circle
+    pointerEvents: 'none',
+  },
+  circle1: {
+    width: 300,
+    height: 300,
+    backgroundColor: 'rgba(12, 109, 255, 0.08)',
+    top: '10%',
+    left: '-10%',
+  },
+  circle2: {
+    width: 200,
+    height: 200,
+    backgroundColor: 'rgba(138, 43, 226, 0.06)',
+    bottom: '15%',
+    right: '-5%',
+  },
+  circle3: {
+    width: 150,
+    height: 150,
+    backgroundColor: 'rgba(0, 212, 255, 0.05)',
+    top: '60%',
+    left: '70%',
+  },
+  animatedOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+    pointerEvents: 'none',
+  },
+  particlesContainer: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    zIndex: 1,
+    pointerEvents: 'none',
+  },
+  particle: {
+    position: 'absolute',
+    backgroundColor: 'rgba(12, 109, 255, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(12, 109, 255, 0.2)',
+  },
+  particleText: {
+    fontSize: 10,
+    color: '#0c6dff',
+    fontWeight: '600',
+    opacity: 0.8,
   },
   header: {
     flexDirection: 'row',
@@ -523,6 +624,11 @@ const styles = StyleSheet.create({
   logoContainer: {
     opacity: 0.9,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -534,17 +640,23 @@ const styles = StyleSheet.create({
   dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    gap: 8,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   languageIcon: {
-    marginRight: 4,
   },
   dropdownText: {
-    color: '#fff',
+    color: '#333',
     fontWeight: '600',
     fontSize: 14,
   },
@@ -583,14 +695,21 @@ const styles = StyleSheet.create({
   skipButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    gap: 6,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   skipText: {
-    color: '#fff',
+    color: '#333',
     fontWeight: '600',
     fontSize: 14,
   },
@@ -650,7 +769,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    color: '#fff',
+    color: '#000',
     fontSize: 32,
     fontWeight: '800',
     textAlign: 'center',
@@ -664,7 +783,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(0,0,0,0.85)',
     fontSize: 16,
     lineHeight: 24,
     textAlign: 'center',
@@ -701,6 +820,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     height: 56,
     borderRadius: 25,
+    paddingHorizontal: 50,
   },
   buttonText: {
     color: '#fff',
@@ -719,8 +839,8 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   swipeHintText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
+    color: 'rgba(0,0,0,0.7)',
+    fontSize: 16,
     letterSpacing: 0.5,
   },
 });

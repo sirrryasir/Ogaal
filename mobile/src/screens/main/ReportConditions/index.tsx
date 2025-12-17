@@ -49,11 +49,11 @@ const ReportConditionsScreen: React.FC = () => {
 
   // Progress steps
   const steps = [
-    { icon: 'location-on', title: 'Location', completed: selectedVillageId !== null },
-    { icon: 'water', title: 'Source', completed: selectedWaterSourceId !== null },
-    { icon: 'check-circle', title: 'Status', completed: selectedWaterSourceId !== null },
-    { icon: 'description', title: 'Details', completed: reportDetail.length > 0 },
-    { icon: 'camera-alt', title: 'Photo', completed: !!photoUri },
+    { icon: 'location-on', title: t('stepLocation'), completed: selectedVillageId !== null },
+    { icon: 'water', title: t('stepSource'), completed: selectedWaterSourceId !== null },
+    { icon: 'check-circle', title: t('stepStatus'), completed: selectedWaterSourceId !== null },
+    { icon: 'description', title: t('stepDetails'), completed: reportDetail.length > 0 },
+    { icon: 'camera-alt', title: t('stepPhoto'), completed: !!photoUri },
   ];
   
   const completedSteps = steps.filter(step => step.completed).length;
@@ -106,7 +106,7 @@ const ReportConditionsScreen: React.FC = () => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setLocationText('Location permission denied');
+        setLocationText(t('locationPermissionDenied'));
         setLoadingLocation(false);
         return;
       }
@@ -119,7 +119,7 @@ const ReportConditionsScreen: React.FC = () => {
         });
         setLocationText(`${locationData.coords.latitude.toFixed(4)}, ${locationData.coords.longitude.toFixed(4)}`);
       } catch (error) {
-        setLocationText('Unable to fetch location');
+        setLocationText(t('unableToFetchLocation'));
       } finally {
         setLoadingLocation(false);
       }
@@ -134,7 +134,7 @@ const ReportConditionsScreen: React.FC = () => {
         setVillages(fetchedVillages);
       } catch (error) {
         console.error('Failed to fetch villages:', error);
-        Alert.alert(t('errorTitle'), 'Failed to load villages');
+        Alert.alert(t('errorTitle'), t('errorMessage'));
       }
     };
     fetchVillages();
@@ -149,7 +149,7 @@ const ReportConditionsScreen: React.FC = () => {
           setWaterSources(fetchedWaterSources);
         } catch (error) {
           console.error('Failed to fetch water sources:', error);
-          Alert.alert(t('errorTitle'), 'Failed to load water sources');
+          Alert.alert(t('errorTitle'), t('errorMessage'));
         }
       };
       fetchWaterSources();
@@ -171,7 +171,7 @@ const ReportConditionsScreen: React.FC = () => {
   // Submit handler (unchanged)
   const handleSubmit = async () => {
     if (selectedVillageId === null || selectedWaterSourceId === null || !reportDetail.trim()) {
-      Alert.alert(t('errorTitle'), 'Please select a village, water source, and enter report details');
+      Alert.alert(t('errorTitle'), t('errorMessage'));
       return;
     }
 
@@ -193,13 +193,33 @@ const ReportConditionsScreen: React.FC = () => {
       setPhotoUri(null);
     } catch (error) {
       console.error('Failed to submit report:', error);
-      Alert.alert(t('errorTitle'), 'Failed to submit report');
+      Alert.alert(t('errorTitle'), t('errorMessage'));
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Photo handlers (unchanged)
+  // Photo handlers
+  const handleTakePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (permission.granted === false) {
+      Alert.alert(t('permissionDenied'), t('cameraPermissionRequired'));
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      uploadToUploadcare(uri);
+    }
+  };
+
   const handleAttachPhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permission.granted === false) {
@@ -295,7 +315,7 @@ const ReportConditionsScreen: React.FC = () => {
                   <Ionicons name="create" size={18} color="white" />
                 </View>
                 <Typography variant="h1" style={styles.headerTitle}>
-                  Report Conditions
+                  {t('reportConditionsTitle')}
                 </Typography>
               </View>
               
@@ -372,7 +392,7 @@ const ReportConditionsScreen: React.FC = () => {
               <View style={styles.collapsedTitle}>
                 <Ionicons name="create" size={18} color="white" />
                 <Typography variant="h3" style={styles.collapsedTitleText}>
-                  Report {completedSteps > 0 && `(${completedSteps}/${steps.length})`}
+                  {t('reportConditionsTitle')} {completedSteps > 0 && `(${completedSteps}/${steps.length})`}
                 </Typography>
               </View>
               
@@ -430,10 +450,10 @@ const ReportConditionsScreen: React.FC = () => {
                 <Ionicons name="water" size={28} color="#0c6dff" />
               </View>
               <Typography variant="h3" style={styles.welcomeTitle}>
-                Help Your Community
+                {t('helpCommunity')}
               </Typography>
               <Typography variant="body" style={styles.welcomeText}>
-                Your reports help improve drought monitoring and support affected communities with better decision-making.
+                {t('helpCommunityText')}
               </Typography>
             </View>
           </LinearGradient>
@@ -449,10 +469,10 @@ const ReportConditionsScreen: React.FC = () => {
               </View>
               <View style={styles.cardTitleContainer}>
                 <Typography variant="h3" style={styles.cardTitle}>
-                  Select Village
+                  {t('selectVillage')}
                 </Typography>
                 <Typography variant="caption" style={styles.cardSubtitle}>
-                  Choose your location
+                  {t('chooseLocation')}
                 </Typography>
               </View>
             </View>
@@ -463,9 +483,9 @@ const ReportConditionsScreen: React.FC = () => {
                 onValueChange={(itemValue: number | null) => setSelectedVillageId(itemValue)}
                 style={styles.picker}
               >
-                <Picker.Item 
-                  label="Select a village..." 
-                  value={null} 
+                <Picker.Item
+                  label={t('selectVillagePlaceholder')}
+                  value={null}
                   color="#94a3b8"
                 />
                 {villages.map((village) => (
@@ -489,10 +509,10 @@ const ReportConditionsScreen: React.FC = () => {
                 </View>
                 <View style={styles.cardTitleContainer}>
                   <Typography variant="h3" style={styles.cardTitle}>
-                    Water Source
+                    {t('waterSource')}
                   </Typography>
                   <Typography variant="caption" style={styles.cardSubtitle}>
-                    Select from available sources
+                    {t('selectFromAvailable')}
                   </Typography>
                 </View>
               </View>
@@ -503,9 +523,9 @@ const ReportConditionsScreen: React.FC = () => {
                   onValueChange={(itemValue: number | null) => setSelectedWaterSourceId(itemValue)}
                   style={styles.picker}
                 >
-                  <Picker.Item 
-                    label="Select a water source..." 
-                    value={null} 
+                  <Picker.Item
+                    label={t('selectWaterSourcePlaceholder')}
+                    value={null}
                     color="#94a3b8"
                   />
                   {waterSources.map((source) => (
@@ -530,10 +550,10 @@ const ReportConditionsScreen: React.FC = () => {
                 </View>
                 <View style={styles.cardTitleContainer}>
                   <Typography variant="h3" style={styles.cardTitle}>
-                    Current Status
+                    {t('currentStatus')}
                   </Typography>
                   <Typography variant="caption" style={styles.cardSubtitle}>
-                    What's the current condition?
+                    {t('currentCondition')}
                   </Typography>
                 </View>
               </View>
@@ -565,9 +585,11 @@ const ReportConditionsScreen: React.FC = () => {
                       styles.statusText,
                       { color: selectedStatus === status ? getStatusColor(status) : '#64748b' }
                     ]}>
-                      {status === 'Low Water' ? 'Water Level Low' : 
-                       status === 'Broken' ? 'Pump Broken / No Access' : 
-                       status === 'Other' ? 'Other Issue' : status}
+                      {status === 'Working' ? t('working') :
+                       status === 'Low Water' ? t('waterLevelLow') :
+                       status === 'Dry' ? t('dry') :
+                       status === 'Broken' ? t('pumpBroken') :
+                       status === 'Other' ? t('otherIssue') : status}
                     </Typography>
                   </TouchableOpacity>
                 ))}
@@ -583,10 +605,10 @@ const ReportConditionsScreen: React.FC = () => {
               </View>
               <View style={styles.cardTitleContainer}>
                 <Typography variant="h3" style={styles.cardTitle}>
-                  Report Details
+                  {t('reportDetails')}
                 </Typography>
                 <Typography variant="caption" style={styles.cardSubtitle}>
-                  Describe what you observed
+                  {t('describeObserved')}
                 </Typography>
               </View>
             </View>
@@ -594,7 +616,7 @@ const ReportConditionsScreen: React.FC = () => {
             <View style={styles.textAreaContainer}>
               <TextInput
                 style={styles.textArea}
-                placeholder="Describe the water source condition (e.g., borehole is dry, well has low water, pump is broken)"
+                placeholder={t('reportPlaceholder')}
                 placeholderTextColor="#94a3b8"
                 value={reportDetail}
                 onChangeText={setReportDetail}
@@ -618,10 +640,10 @@ const ReportConditionsScreen: React.FC = () => {
               </View>
               <View style={styles.cardTitleContainer}>
                 <Typography variant="h3" style={styles.cardTitle}>
-                  GPS Location
+                  {t('gpsLocation')}
                 </Typography>
                 <Typography variant="caption" style={styles.cardSubtitle}>
-                  Auto-detected location
+                  {t('autoDetected')}
                 </Typography>
               </View>
             </View>
@@ -639,7 +661,7 @@ const ReportConditionsScreen: React.FC = () => {
                   </Typography>
                   {location && (
                     <Typography variant="caption" style={styles.locationAccuracy}>
-                      Accuracy: ~10 meters
+                      {t('accuracy')}
                     </Typography>
                   )}
                 </View>
@@ -655,10 +677,10 @@ const ReportConditionsScreen: React.FC = () => {
               </View>
               <View style={styles.cardTitleContainer}>
                 <Typography variant="h3" style={styles.cardTitle}>
-                  Add Photo (Optional)
+                  {t('addPhotoOptional')}
                 </Typography>
                 <Typography variant="caption" style={styles.cardSubtitle}>
-                  Upload photo evidence
+                  {t('uploadPhotoEvidence')}
                 </Typography>
               </View>
             </View>
@@ -674,32 +696,55 @@ const ReportConditionsScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity 
-                style={styles.photoUploadButton}
-                onPress={handleAttachPhoto}
-                disabled={uploading}
-              >
-                <LinearGradient
-                  colors={['#f093fb', '#f5576c']}
-                  style={styles.photoUploadGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+              <View style={styles.photoOptionsContainer}>
+                <TouchableOpacity
+                  style={styles.photoOptionButton}
+                  onPress={handleTakePhoto}
+                  disabled={uploading}
                 >
-                  {uploading ? (
-                    <Feather name="loader" size={28} color="white" style={styles.uploadingIcon} />
-                  ) : (
-                    <>
-                      <Ionicons name="camera" size={36} color="white" />
-                      <Typography variant="body" style={styles.photoUploadText}>
-                        Tap to Add Photo
-                      </Typography>
-                      <Typography variant="caption" style={styles.photoUploadHint}>
-                        Optional but helpful
-                      </Typography>
-                    </>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
+                  <LinearGradient
+                    colors={['#f093fb', '#f5576c']}
+                    style={styles.photoOptionGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    {uploading ? (
+                      <Feather name="loader" size={24} color="white" style={styles.uploadingIcon} />
+                    ) : (
+                      <>
+                        <Ionicons name="camera" size={28} color="white" />
+                        <Typography variant="body" style={styles.photoOptionText}>
+                          {t('takePhoto')}
+                        </Typography>
+                      </>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.photoOptionButton}
+                  onPress={handleAttachPhoto}
+                  disabled={uploading}
+                >
+                  <LinearGradient
+                    colors={['#4f46e5', '#7c3aed']}
+                    style={styles.photoOptionGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    {uploading ? (
+                      <Feather name="loader" size={24} color="white" style={styles.uploadingIcon} />
+                    ) : (
+                      <>
+                        <Ionicons name="images" size={28} color="white" />
+                        <Typography variant="body" style={styles.photoOptionText}>
+                          {t('chooseFromGallery')}
+                        </Typography>
+                      </>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         </View>
@@ -732,9 +777,9 @@ const ReportConditionsScreen: React.FC = () => {
                 />
               )}
               <Typography variant="h3" style={styles.submitText}>
-                {submitting ? 'Submitting...' : 
-                 completedSteps === steps.length ? 'Submit Report' : 
-                 `Complete ${steps.length - completedSteps} More Steps`}
+                {submitting ? t('submitting') :
+                 completedSteps === steps.length ? t('submitReport') :
+                 t('completeMoreSteps').replace('{count}', (steps.length - completedSteps).toString())}
               </Typography>
             </View>
           </LinearGradient>
@@ -1147,27 +1192,28 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  photoUploadButton: {
+  photoOptionsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  photoOptionButton: {
+    flex: 1,
     borderRadius: 10, // REDUCED from 12
     overflow: 'hidden',
   },
-  photoUploadGradient: {
-    padding: 36, // REDUCED from 40
+  photoOptionGradient: {
+    padding: 24,
     alignItems: 'center',
   },
   uploadingIcon: {
     marginBottom: 10, // REDUCED from 12
   },
-  photoUploadText: {
+  photoOptionText: {
     color: 'white',
-    fontSize: 15, // REDUCED from 16
+    fontSize: 14,
     fontWeight: '700',
-    marginTop: 10, // REDUCED from 12
-    marginBottom: 4,
-  },
-  photoUploadHint: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 12,
+    marginTop: 8,
+    textAlign: 'center',
   },
   // Submit Button
   submitButton: {

@@ -12,16 +12,16 @@ const AboutScreen: React.FC = () => {
   const { t } = useTranslation();
 
   const features = [
-    { icon: 'location-on', text: t('feature1'), color: '#0c6dff' },
+    { icon: 'location', text: t('feature1'), color: '#0c6dff' },
     { icon: 'map', text: t('feature2'), color: '#8b5cf6' },
     { icon: 'people', text: t('feature3'), color: '#10b981' },
-    { icon: 'report', text: t('feature4'), color: '#f59e0b' },
+    { icon: 'document-text', text: t('feature4'), color: '#f59e0b' },
   ];
 
   const socialLinks = [
-    { icon: 'globe', label: 'Website', color: '#0c6dff', url: 'https://ogaal.ai' },
-    { icon: 'mail', label: 'Email', color: '#ef4444', url: 'mailto:support@ogaal.ai' },
-    { icon: 'phone', label: 'Phone', color: '#10b981', url: 'tel:+1234567890' },
+    { icon: 'globe-outline', label: 'Website', color: '#0c6dff', url: 'https://ogaal.ai' },
+    { icon: 'mail-outline', label: 'Email', color: '#ef4444', url: 'mailto:salmanabdikadir01@gmail.com' },
+    { icon: 'call-outline', label: 'Phone', color: '#10b981', url: 'tel:+252636819294' },
   ];
 
   const handleSocialPress = (url: string) => {
@@ -119,7 +119,7 @@ const AboutScreen: React.FC = () => {
                   end={{ x: 1, y: 1 }}
                 >
                   <View style={[styles.featureIconContainer, { backgroundColor: feature.color + '15' }]}>
-                    <MaterialIcons name={feature.icon as any} size={24} color={feature.color} />
+                    <Ionicons name={feature.icon as any} size={24} color={feature.color} />
                   </View>
                   <Typography variant="body" style={styles.featureText}>
                     {feature.text}
@@ -160,7 +160,7 @@ const AboutScreen: React.FC = () => {
                   activeOpacity={0.7}
                 >
                   <View style={[styles.socialIcon, { backgroundColor: link.color + '15' }]}>
-                    <MaterialIcons name={link.icon as any} size={20} color={link.color} />
+                    <Ionicons name={link.icon as any} size={20} color={link.color} />
                   </View>
                   <Typography variant="caption" style={styles.socialLabel}>
                     {link.label}
@@ -168,6 +168,18 @@ const AboutScreen: React.FC = () => {
                 </TouchableOpacity>
               ))}
             </View>
+          </View>
+        </View>
+
+        {/* Developer Section */}
+        <View style={styles.developerSection}>
+          <Typography variant="h2" style={styles.sectionTitle}>
+            About the Developer
+          </Typography>
+          <View style={styles.developerCard}>
+            <Typography variant="body" style={styles.developerText}>
+              This app was developed by Salman Abdikadir, dedicated to improving water resource management in Somaliland through innovative technology solutions.
+            </Typography>
           </View>
         </View>
 
@@ -314,6 +326,29 @@ const styles = StyleSheet.create({
   contactSection: {
     paddingHorizontal: 20,
     marginBottom: 32,
+  },
+  developerSection: {
+    paddingHorizontal: 20,
+    marginBottom: 32,
+  },
+  developerCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  developerText: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#334155',
+    textAlign: 'center',
+    fontWeight: '400',
   },
   sectionTitle: {
     fontSize: 22,
