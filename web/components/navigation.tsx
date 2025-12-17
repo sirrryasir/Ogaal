@@ -12,12 +12,14 @@ import {
   Settings,
   Menu,
   X,
+  PieChart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/", icon: Home },
+  { label: "Analytics", href: "/analytics", icon: Droplet },
   { label: "Map", href: "/water-sources", icon: MapPin },
   { label: "Report", href: "/report", icon: Activity },
   { label: "Admin", href: "/admin", icon: Droplets },
