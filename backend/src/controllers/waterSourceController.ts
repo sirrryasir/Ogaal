@@ -12,7 +12,11 @@ const getAll = async (req: Request, res: Response): Promise<void> => {
     const district = (req.query.district as string) || "";
     const status = (req.query.status as string) || "";
 
+
     const skip = (page - 1) * limit;
+
+    console.log("DEBUG: GET /water-sources query:", { page, limit, search, region, district, status });
+
 
     // Build filter object
     const whereClause: any = {};

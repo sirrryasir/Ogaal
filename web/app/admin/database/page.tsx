@@ -48,6 +48,8 @@ export default function DatabasePage() {
     totalPages: 1,
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [openActionId, setOpenActionId] = useState<number | null>(null);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -55,9 +57,17 @@ export default function DatabasePage() {
   const [district, setDistrict] = useState("");
   const [status, setStatus] = useState("");
 
+  // Close actions menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setOpenActionId(null);
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, []);
+
   // Fetch data
   const fetchData = async (page = 1) => {
     setLoading(true);
+    setError("");
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -74,11 +84,45 @@ export default function DatabasePage() {
         setData(response.data.data);
         setMeta(response.data.meta);
       } else if (Array.isArray(response.data)) {
-        // Fallback if backend wasn't updated or returns array
-        setData(response.data);
+        // Fallback: Client-side pagination and filtering
+        let filtered = response.data;
+
+        // Client-side filtering if backend didn't do it (double check)
+        if (search) {
+          const lowerSearch = search.toLowerCase();
+          filtered = filtered.filter(
+            (item: any) =>
+              item.name?.toLowerCase().includes(lowerSearch) ||
+              item.type?.toLowerCase().includes(lowerSearch) ||
+              item.village?.name?.toLowerCase().includes(lowerSearch)
+          );
+        }
+        if (region) {
+          filtered = filtered.filter(
+            (item: any) => item.village?.district?.region?.name === region
+          );
+        }
+        if (status) {
+          filtered = filtered.filter(
+            (item: any) => item.status?.toLowerCase() === status.toLowerCase()
+          );
+        }
+
+        const total = filtered.length;
+        const startIndex = (page - 1) * 10;
+        const paginatedData = filtered.slice(startIndex, startIndex + 10);
+
+        setData(paginatedData);
+        setMeta({
+          total,
+          page,
+          limit: 10,
+          totalPages: Math.ceil(total / 10),
+        });
       }
     } catch (error) {
       console.error("Failed to fetch data", error);
+      setError("Failed to load data. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -95,6 +139,18 @@ export default function DatabasePage() {
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= meta.totalPages) {
       fetchData(newPage);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this water source?")) return;
+
+    try {
+      await api.delete(`/water-sources/${id}`);
+      fetchData(meta.page); // Refresh current page
+    } catch (error) {
+      console.error("Delete failed", error);
+      alert("Failed to delete water source");
     }
   };
 
@@ -231,8 +287,21 @@ export default function DatabasePage() {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl border border-red-100 flex items-center justify-between">
+            <span>{error}</span>
+            <button
+              onClick={() => fetchData(1)}
+              className="text-sm font-medium hover:underline"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Data Table */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden min-h-[400px]">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -372,10 +441,39 @@ export default function DatabasePage() {
                             : "Never"}
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-right">
-                        <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
+                      <td className="py-4 px-6 text-right relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenActionId(
+                              openActionId === item.id ? null : item.id
+                            );
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                        >
                           <MoreHorizontal className="w-5 h-5" />
                         </button>
+
+                        {/* Actions Dropdown */}
+                        {openActionId === item.id && (
+                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden ring-1 ring-black/5">
+                            <button
+                              onClick={() =>
+                                alert("Details view to be implemented")
+                              }
+                              className="w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left flex items-center gap-2"
+                            >
+                              <span>View Details</span>
+                            </button>
+                            <div className="h-px bg-gray-50"></div>
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 text-left flex items-center gap-2"
+                            >
+                              <span>Delete Source</span>
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -389,7 +487,7 @@ export default function DatabasePage() {
             <p className="text-sm text-gray-500">
               Showing{" "}
               <span className="font-medium text-gray-900">
-                {(meta.page - 1) * meta.limit + 1}
+                {meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1}
               </span>{" "}
               to{" "}
               <span className="font-medium text-gray-900">
