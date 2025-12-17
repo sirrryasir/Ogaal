@@ -12,11 +12,11 @@ import {
   Animated,
   Dimensions
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
+import * as ImagePicker from 'expo-image-picker';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
@@ -43,7 +43,7 @@ const ReportConditionsScreen: React.FC = () => {
   const [locationText, setLocationText] = useState('Fetching location...');
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -53,7 +53,6 @@ const ReportConditionsScreen: React.FC = () => {
     { icon: 'water', title: t('stepSource'), completed: selectedWaterSourceId !== null },
     { icon: 'check-circle', title: t('stepStatus'), completed: selectedWaterSourceId !== null },
     { icon: 'description', title: t('stepDetails'), completed: reportDetail.length > 0 },
-    { icon: 'camera-alt', title: t('stepPhoto'), completed: !!photoUri },
   ];
   
   const completedSteps = steps.filter(step => step.completed).length;
@@ -168,7 +167,7 @@ const ReportConditionsScreen: React.FC = () => {
     }).start();
   }, []);
 
-  // Submit handler (unchanged)
+  // Submit handler
   const handleSubmit = async () => {
     if (selectedVillageId === null || selectedWaterSourceId === null || !reportDetail.trim()) {
       Alert.alert(t('errorTitle'), t('errorMessage'));
@@ -177,12 +176,19 @@ const ReportConditionsScreen: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await submitReport({
+      console.log('Submitting report with data:', {
         village_id: selectedVillageId,
         water_source_id: selectedWaterSourceId,
-        reporter_type: 'App',
-        report_content: reportDetail,
+        content: reportDetail,
         status: selectedStatus,
+      });
+
+      await submitReport({
+        village_id: selectedVillageId!,
+        water_source_id: selectedWaterSourceId,
+        content: reportDetail,
+        status: selectedStatus,
+        reporter_type: 'App',
       });
       Alert.alert(t('successTitle'), t('successMessage'));
       // Reset form
@@ -190,7 +196,7 @@ const ReportConditionsScreen: React.FC = () => {
       setSelectedWaterSourceId(null);
       setSelectedStatus('Working');
       setReportDetail('');
-      setPhotoUri(null);
+      // Keep photoUri and selectedImage for UI design purposes
     } catch (error) {
       console.error('Failed to submit report:', error);
       Alert.alert(t('errorTitle'), t('errorMessage'));
@@ -198,6 +204,8 @@ const ReportConditionsScreen: React.FC = () => {
       setSubmitting(false);
     }
   };
+
+
 
   // Photo handlers
   const handleTakePhoto = async () => {
@@ -208,15 +216,19 @@ const ReportConditionsScreen: React.FC = () => {
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
 
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      uploadToUploadcare(uri);
+      const asset = result.assets[0];
+      setPhotoUri(asset.uri);
+      setSelectedImage({
+        uri: asset.uri,
+        type: 'image/jpeg',
+        name: `photo-${Date.now()}.jpg`,
+      });
     }
   };
 
@@ -228,40 +240,19 @@ const ReportConditionsScreen: React.FC = () => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
 
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      uploadToUploadcare(uri);
-    }
-  };
-
-  const uploadToUploadcare = async (uri: string) => {
-    setUploading(true);
-    const formData = new FormData();
-    formData.append('UPLOADCARE_PUB_KEY', 'db5971bb8db82d86a6b6');
-    formData.append('file', {
-      uri,
-      type: 'image/jpeg',
-      name: 'photo.jpg',
-    } as any);
-
-    try {
-      const response = await fetch('https://upload.uploadcare.com/base/', {
-        method: 'POST',
-        body: formData,
+      const asset = result.assets[0];
+      setPhotoUri(asset.uri);
+      setSelectedImage({
+        uri: asset.uri,
+        type: asset.type || 'image/jpeg',
+        name: asset.fileName || `photo-${Date.now()}.jpg`,
       });
-      const data = await response.json();
-      setPhotoUri(`https://ucarecdn.com/${data.file}/`);
-      Alert.alert(t('successTitle'), t('uploadSuccess'));
-    } catch (error) {
-      Alert.alert(t('errorTitle'), t('uploadError'));
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -541,61 +532,91 @@ const ReportConditionsScreen: React.FC = () => {
             </View>
           )}
 
-          {/* Status Selection */}
-          {selectedWaterSourceId && (
-            <View style={styles.formCard}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardIcon}>
-                  <Ionicons name="checkmark-circle" size={18} color={getStatusColor(selectedStatus)} />
-                </View>
-                <View style={styles.cardTitleContainer}>
-                  <Typography variant="h3" style={styles.cardTitle}>
-                    {t('currentStatus')}
-                  </Typography>
-                  <Typography variant="caption" style={styles.cardSubtitle}>
-                    {t('currentCondition')}
-                  </Typography>
-                </View>
-              </View>
-              
-              <View style={styles.statusOptions}>
-                {['Working', 'Low Water', 'Dry', 'Broken', 'Other'].map((status) => (
-                  <TouchableOpacity
-                    key={status}
-                    style={[
-                      styles.statusButton,
-                      selectedStatus === status && [
-                        styles.statusButtonSelected,
-                        { backgroundColor: getStatusColor(status) + '20', borderColor: getStatusColor(status) }
-                      ]
-                    ]}
-                    onPress={() => setSelectedStatus(status)}
-                  >
-                    <View style={[
-                      styles.statusIcon,
-                      { backgroundColor: selectedStatus === status ? getStatusColor(status) : 'transparent' }
-                    ]}>
-                      <Feather 
-                        name="check" 
-                        size={14} 
-                        color={selectedStatus === status ? 'white' : 'transparent'} 
-                      />
-                    </View>
-                    <Typography variant="body" style={[
-                      styles.statusText,
-                      { color: selectedStatus === status ? getStatusColor(status) : '#64748b' }
-                    ]}>
-                      {status === 'Working' ? t('working') :
-                       status === 'Low Water' ? t('waterLevelLow') :
-                       status === 'Dry' ? t('dry') :
-                       status === 'Broken' ? t('pumpBroken') :
-                       status === 'Other' ? t('otherIssue') : status}
-                    </Typography>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
+{/* Status Selection */}
+{selectedWaterSourceId && (
+  <View style={styles.formCard}>
+    {/* Header */}
+    <View style={styles.cardHeader}>
+      <View style={styles.cardIcon}>
+        <Ionicons
+          name="checkmark-circle"
+          size={18}
+          color={getStatusColor(selectedStatus)}
+        />
+      </View>
+
+      <View style={styles.cardTitleContainer}>
+        <Typography variant="h3" style={styles.cardTitle}>
+          {t('currentStatus')}
+        </Typography>
+        <Typography variant="caption" style={styles.cardSubtitle}>
+          {t('currentCondition')}
+        </Typography>
+      </View>
+    </View>
+
+    {/* Status Options */}
+    <View style={styles.statusOptions}>
+      {['Working', 'Low Water', 'Dry', 'Broken', 'Other'].map((status) => (
+        <TouchableOpacity
+          key={status}
+          style={[
+            styles.statusButton,
+            selectedStatus === status && [
+              styles.statusButtonSelected,
+              {
+                backgroundColor: getStatusColor(status) + '20',
+                borderColor: getStatusColor(status),
+              },
+            ],
+          ]}
+          onPress={() => setSelectedStatus(status)}
+          activeOpacity={0.8}
+        >
+          <View
+            style={[
+              styles.statusIcon,
+              {
+                backgroundColor:
+                  selectedStatus === status
+                    ? getStatusColor(status)
+                    : 'transparent',
+                borderColor: getStatusColor(status),
+              },
+            ]}
+          >
+            {selectedStatus === status && (
+              <Feather name="check" size={14} color="white" />
+            )}
+          </View>
+
+          <Typography
+            variant="body"
+            style={[
+              styles.statusText,
+              {
+                color:
+                  selectedStatus === status
+                    ? getStatusColor(status)
+                    : '#64748b',
+              },
+            ]}
+          >
+            {status === 'Working'
+              ? t('working')
+              : status === 'Low Water'
+              ? t('waterLevelLow')
+              : status === 'Dry'
+              ? t('dry')
+              : status === 'Broken'
+              ? t('pumpBroken')
+              : t('otherIssue')}
+          </Typography>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
+)}
 
           {/* Report Details */}
           <View style={styles.formCard}>
@@ -630,6 +651,74 @@ const ReportConditionsScreen: React.FC = () => {
                 </Typography>
               </View>
             </View>
+          </View>
+
+          {/* Photo Upload */}
+          <View style={styles.formCard}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardIcon}>
+                <Ionicons name="camera" size={18} color="#0c6dff" />
+              </View>
+              <View style={styles.cardTitleContainer}>
+                <Typography variant="h3" style={styles.cardTitle}>
+                  {t('addPhotoOptional')}
+                </Typography>
+                <Typography variant="caption" style={styles.cardSubtitle}>
+                  {t('uploadPhotoEvidence')}
+                </Typography>
+              </View>
+            </View>
+
+            {photoUri ? (
+              <View style={styles.photoPreviewContainer}>
+                <Image source={{ uri: photoUri }} style={styles.photoImage} />
+                <TouchableOpacity
+                  style={styles.removePhotoButton}
+                  onPress={() => {
+                    setPhotoUri(null);
+                    setSelectedImage(null);
+                  }}
+                >
+                  <Ionicons name="close-circle" size={24} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.photoOptionsContainer}>
+                <TouchableOpacity
+                  style={styles.photoOptionButton}
+                  onPress={handleTakePhoto}
+                >
+                  <LinearGradient
+                    colors={['#f093fb', '#f5576c']}
+                    style={styles.photoOptionGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Ionicons name="camera" size={28} color="white" />
+                    <Typography variant="body" style={styles.photoOptionText}>
+                      {t('takePhoto')}
+                    </Typography>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.photoOptionButton}
+                  onPress={handleAttachPhoto}
+                >
+                  <LinearGradient
+                    colors={['#4f46e5', '#7c3aed']}
+                    style={styles.photoOptionGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Ionicons name="images" size={28} color="white" />
+                    <Typography variant="body" style={styles.photoOptionText}>
+                      {t('chooseFromGallery')}
+                    </Typography>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* Location Display */}
@@ -669,84 +758,6 @@ const ReportConditionsScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Photo Upload */}
-          <View style={styles.formCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardIcon}>
-                <Ionicons name="camera" size={18} color="#0c6dff" />
-              </View>
-              <View style={styles.cardTitleContainer}>
-                <Typography variant="h3" style={styles.cardTitle}>
-                  {t('addPhotoOptional')}
-                </Typography>
-                <Typography variant="caption" style={styles.cardSubtitle}>
-                  {t('uploadPhotoEvidence')}
-                </Typography>
-              </View>
-            </View>
-            
-            {photoUri ? (
-              <View style={styles.photoPreviewContainer}>
-                <Image source={{ uri: photoUri }} style={styles.photoImage} />
-                <TouchableOpacity 
-                  style={styles.removePhotoButton}
-                  onPress={() => setPhotoUri(null)}
-                >
-                  <Ionicons name="close-circle" size={24} color="#ef4444" />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.photoOptionsContainer}>
-                <TouchableOpacity
-                  style={styles.photoOptionButton}
-                  onPress={handleTakePhoto}
-                  disabled={uploading}
-                >
-                  <LinearGradient
-                    colors={['#f093fb', '#f5576c']}
-                    style={styles.photoOptionGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  >
-                    {uploading ? (
-                      <Feather name="loader" size={24} color="white" style={styles.uploadingIcon} />
-                    ) : (
-                      <>
-                        <Ionicons name="camera" size={28} color="white" />
-                        <Typography variant="body" style={styles.photoOptionText}>
-                          {t('takePhoto')}
-                        </Typography>
-                      </>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.photoOptionButton}
-                  onPress={handleAttachPhoto}
-                  disabled={uploading}
-                >
-                  <LinearGradient
-                    colors={['#4f46e5', '#7c3aed']}
-                    style={styles.photoOptionGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                  >
-                    {uploading ? (
-                      <Feather name="loader" size={24} color="white" style={styles.uploadingIcon} />
-                    ) : (
-                      <>
-                        <Ionicons name="images" size={28} color="white" />
-                        <Typography variant="body" style={styles.photoOptionText}>
-                          {t('chooseFromGallery')}
-                        </Typography>
-                      </>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
         </View>
 
         {/* Submit Button */}
@@ -1165,6 +1176,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94a3b8',
   },
+  // Submit Button
+  submitButton: {
+    marginTop: 20, // REDUCED from 24
+    marginHorizontal: 20,
+    borderRadius: 14, // REDUCED from 16
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 10,
+    overflow: 'hidden',
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitGradient: {
+    padding: 18, // REDUCED from 20
+    borderRadius: 14, // REDUCED from 16
+  },
+  submitContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitIcon: {
+    marginRight: 10, // REDUCED from 12
+  },
+  submitText: {
+    color: 'white',
+    fontSize: 16, // REDUCED from 18
+    fontWeight: '700',
+  },
   // Photo Upload
   photoPreviewContainer: {
     position: 'relative',
@@ -1205,47 +1248,12 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
   },
-  uploadingIcon: {
-    marginBottom: 10, // REDUCED from 12
-  },
   photoOptionText: {
     color: 'white',
     fontSize: 14,
     fontWeight: '700',
     marginTop: 8,
     textAlign: 'center',
-  },
-  // Submit Button
-  submitButton: {
-    marginTop: 20, // REDUCED from 24
-    marginHorizontal: 20,
-    borderRadius: 14, // REDUCED from 16
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 10,
-    overflow: 'hidden',
-  },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  submitGradient: {
-    padding: 18, // REDUCED from 20
-    borderRadius: 14, // REDUCED from 16
-  },
-  submitContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitIcon: {
-    marginRight: 10, // REDUCED from 12
-  },
-  submitText: {
-    color: 'white',
-    fontSize: 16, // REDUCED from 18
-    fontWeight: '700',
   },
 });
 

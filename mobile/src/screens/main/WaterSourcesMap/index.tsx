@@ -292,7 +292,6 @@ const WaterSourcesMapScreen: React.FC = () => {
     }
     const js = `addRoute(${location.latitude}, ${location.longitude}, ${source.latitude}, ${source.longitude});`;
     webViewRef.current?.injectJavaScript(js);
-    setShowFixedDetails(false);
   };
 
   const handleMapReady = () => {
