@@ -23,7 +23,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <OfflineBanner />
         <Navigation />
-        <main className="pt-20 min-h-screen bg-gray-50">{children}</main>
+        <main className="min-h-screen">{children}</main>
       </body>
     </html>
   );

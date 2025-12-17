@@ -36,11 +36,11 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-blue-700 text-white min-h-[600px] flex items-center justify-center">
+      <div className="relative overflow-hidden bg-blue-700 text-white min-h-[600px] flex items-center justify-center mt-16 md:mt-20">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516937941348-c09645f8b927?q=80&w=2670&auto=format&fit=crop')] bg-cover bg-center opacity-30 mix-blend-overlay"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-blue-900/90"></div>
 
-        <div className="relative max-w-5xl mx-auto px-6 text-center z-10 pt-20">
+        <div className="relative max-w-5xl mx-auto px-6 text-center z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}

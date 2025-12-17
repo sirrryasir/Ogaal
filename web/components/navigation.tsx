@@ -36,7 +36,7 @@ export default function Navigation() {
           "fixed top-0 left-0 right-0 z-50 hidden md:flex items-center justify-between px-6 py-4 transition-all duration-300",
           "bg-white/80 backdrop-blur-md shadow-sm"
         )}
-        initial={{ y: -100 }}
+        initial={{ y: 0 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5 }}
       >
