@@ -51,6 +51,7 @@ export default async function AdminSourcesPage() {
                 action={async () => {
                   "use server";
                   await deleteSource(source.id);
+                  return { success: true };
                 }}
               />
             </div>
