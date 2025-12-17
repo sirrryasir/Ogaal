@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  ChevronRight, 
+import {
+  ChevronRight,
   ChevronDown,
-  MapPin, 
-  Droplet, 
+  MapPin,
+  Droplet,
   Search,
   Download,
   BarChart3,
@@ -25,229 +25,7 @@ import {
   Filter as FilterIcon
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-
-// Mock hierarchical data for all Somaliland regions
-const SOMALILAND_REGIONS = [
-  {
-    region: "Maroodi-Jeex",
-    totalSources: 420,
-    avgStatus: 78,
-    districts: [
-      {
-        name: "Hargeisa",
-        totalSources: 250,
-        avgStatus: 82,
-        villages: [
-          { 
-            name: "Jigjiga Yar", 
-            totalSources: 120, 
-            avgStatus: 85,
-            functional: 98, 
-            needsRepair: 15, 
-            nonFunctional: 7,
-            sources: [
-              { id: 1, source_name: "Jigjiga Yar Borehole 1", water_source_type: "Borehole", status: "functional", lat: 9.5621, lng: 44.0650 },
-              { id: 2, source_name: "Jigjiga Yar Well 1", water_source_type: "Dug Well", status: "needs_repair", lat: 9.5623, lng: 44.0652 },
-              { id: 3, source_name: "Jigjiga Yar Berkad", water_source_type: "Berkad", status: "functional", lat: 9.5625, lng: 44.0654 }
-            ]
-          },
-          { 
-            name: "Mohamed Mooge", 
-            totalSources: 90, 
-            avgStatus: 74,
-            functional: 67, 
-            needsRepair: 16, 
-            nonFunctional: 7,
-            sources: [
-              { id: 4, source_name: "Mooge Primary School Well", water_source_type: "Dug Well", status: "functional", lat: 9.5681, lng: 44.0670 },
-              { id: 5, source_name: "Mooge Community Borehole", water_source_type: "Borehole", status: "alaw_water", lat: 9.5683, lng: 44.0672 }
-            ]
-          },
-          { 
-            name: "26 June", 
-            totalSources: 210, 
-            avgStatus: 77,
-            functional: 162, 
-            needsRepair: 32, 
-            nonFunctional: 16,
-            sources: [
-              { id: 6, source_name: "26 June Dam", water_source_type: "Dam", status: "functional", lat: 9.5701, lng: 44.0690 },
-              { id: 7, source_name: "June Hand Pump", water_source_type: "Hand Pump", status: "contaminated", lat: 9.5703, lng: 44.0692 }
-            ]
-          }
-        ]
-      },
-      {
-        name: "Gabiley",
-        totalSources: 170,
-        avgStatus: 79,
-        villages: [
-          { 
-            name: "Allaybaday", 
-            totalSources: 95, 
-            avgStatus: 85,
-            functional: 81, 
-            needsRepair: 10, 
-            nonFunctional: 4,
-            sources: [
-              { id: 8, source_name: "Allaybaday Spring", water_source_type: "Spring", status: "functional", lat: 9.7000, lng: 43.8500 }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    region: "Togdheer",
-    totalSources: 315,
-    avgStatus: 72,
-    districts: [
-      {
-        name: "Burao",
-        totalSources: 220,
-        avgStatus: 70,
-        villages: [
-          { 
-            name: "Burao Central", 
-            totalSources: 85, 
-            avgStatus: 75,
-            functional: 64, 
-            needsRepair: 15, 
-            nonFunctional: 6,
-            sources: [
-              { id: 9, source_name: "Burao Main Borehole", water_source_type: "Borehole", status: "functional", lat: 9.5200, lng: 45.5300 }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    region: "Gabiley",
-    totalSources: 280,
-    avgStatus: 85,
-    districts: [
-      {
-        name: "Gabiley",
-        totalSources: 280,
-        avgStatus: 85,
-        villages: [
-          { 
-            name: "Gabiley Town", 
-            totalSources: 150, 
-            avgStatus: 88,
-            functional: 132, 
-            needsRepair: 12, 
-            nonFunctional: 6,
-            sources: [
-              { id: 10, source_name: "Gabiley Main Well", water_source_type: "Dug Well", status: "functional", lat: 9.7100, lng: 43.6200 }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    region: "Awdal",
-    totalSources: 195,
-    avgStatus: 68,
-    districts: [
-      {
-        name: "Borama",
-        totalSources: 195,
-        avgStatus: 68,
-        villages: [
-          { 
-            name: "Borama City", 
-            totalSources: 120, 
-            avgStatus: 65,
-            functional: 78, 
-            needsRepair: 30, 
-            nonFunctional: 12,
-            sources: [
-              { id: 11, source_name: "Borama Hospital Borehole", water_source_type: "Borehole", status: "alaw_water", lat: 9.9400, lng: 43.1800 }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    region: "Saaxil",
-    totalSources: 145,
-    avgStatus: 82,
-    districts: [
-      {
-        name: "Berbera",
-        totalSources: 145,
-        avgStatus: 82,
-        villages: [
-          { 
-            name: "Berbera Port", 
-            totalSources: 75, 
-            avgStatus: 85,
-            functional: 64, 
-            needsRepair: 8, 
-            nonFunctional: 3,
-            sources: [
-              { id: 12, source_name: "Port Desalination Plant", water_source_type: "Desalination", status: "functional", lat: 10.4300, lng: 45.0100 }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    region: "Sanaag",
-    totalSources: 125,
-    avgStatus: 62,
-    districts: [
-      {
-        name: "Erigavo",
-        totalSources: 125,
-        avgStatus: 62,
-        villages: [
-          { 
-            name: "Erigavo Town", 
-            totalSources: 80, 
-            avgStatus: 60,
-            functional: 48, 
-            needsRepair: 20, 
-            nonFunctional: 12,
-            sources: [
-              { id: 13, source_name: "Erigavo Mountain Spring", water_source_type: "Spring", status: "contaminated", lat: 10.6200, lng: 47.3700 }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    region: "Sool",
-    totalSources: 110,
-    avgStatus: 58,
-    districts: [
-      {
-        name: "Las Anod",
-        totalSources: 110,
-        avgStatus: 58,
-        villages: [
-          { 
-            name: "Las Anod City", 
-            totalSources: 70, 
-            avgStatus: 55,
-            functional: 38, 
-            needsRepair: 25, 
-            nonFunctional: 7,
-            sources: [
-              { id: 14, source_name: "Las Anod Community Well", water_source_type: "Dug Well", status: "needs_repair", lat: 8.4800, lng: 47.3600 }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-];
+import api from "../../../lib/api";
 
 // Water source types with icons
 const WATER_SOURCE_TYPES = {
@@ -296,6 +74,11 @@ const STATUS_CONFIG = {
 };
 
 export default function DashboardPage() {
+  // State for hierarchical data
+  const [somalilandRegions, setSomalilandRegions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [selectedVillage, setSelectedVillage] = useState<string | null>(null);
@@ -307,20 +90,38 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get('/admin/water-sources');
+        setSomalilandRegions(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching water sources:', err);
+        setError('Failed to load water sources data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   // Get current view data
-  const currentRegion = selectedRegion ? SOMALILAND_REGIONS.find(r => r.region === selectedRegion) : null;
+  const currentRegion = selectedRegion ? somalilandRegions.find(r => r.region === selectedRegion) : null;
   const currentDistrict = selectedDistrict ? currentRegion?.districts.find(d => d.name === selectedDistrict) : null;
   const currentVillage = selectedVillage ? currentDistrict?.villages.find(v => v.name === selectedVillage) : null;
 
   // Prepare chart data
-  const regionChartData = SOMALILAND_REGIONS.map(region => ({
+  const regionChartData = somalilandRegions.map(region => ({
     name: region.region,
     sources: region.totalSources,
     status: region.avgStatus
   }));
 
   // Calculate status distribution
-  const statusDistribution = SOMALILAND_REGIONS.reduce((acc, region) => {
+  const statusDistribution = somalilandRegions.reduce((acc, region) => {
     region.districts.forEach(district => {
       district.villages.forEach(village => {
         acc.functional += village.functional;
@@ -339,12 +140,12 @@ export default function DashboardPage() {
 
   // Calculate overall stats
   const overallStats = {
-    totalSources: SOMALILAND_REGIONS.reduce((sum, region) => sum + region.totalSources, 0),
-    avgStatus: Math.round(SOMALILAND_REGIONS.reduce((sum, region) => sum + region.avgStatus, 0) / SOMALILAND_REGIONS.length),
-    totalVillages: SOMALILAND_REGIONS.reduce((sum, region) => 
+    totalSources: somalilandRegions.reduce((sum, region) => sum + region.totalSources, 0),
+    avgStatus: somalilandRegions.length > 0 ? Math.round(somalilandRegions.reduce((sum, region) => sum + region.avgStatus, 0) / somalilandRegions.length) : 0,
+    totalVillages: somalilandRegions.reduce((sum, region) =>
       sum + region.districts.reduce((dSum, district) => dSum + district.villages.length, 0), 0
     ),
-    totalDistricts: SOMALILAND_REGIONS.reduce((sum, region) => sum + region.districts.length, 0)
+    totalDistricts: somalilandRegions.reduce((sum, region) => sum + region.districts.length, 0)
   };
 
   // Toggle functions with proper state management
@@ -443,6 +244,28 @@ export default function DashboardPage() {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 md:p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading water sources data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 md:p-6 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
@@ -451,7 +274,7 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Somaliland Water Sources Dashboard</h1>
-              <p className="text-gray-600">Monitoring {overallStats.totalSources} water sources across {SOMALILAND_REGIONS.length} regions</p>
+              <p className="text-gray-600">Monitoring {overallStats.totalSources} water sources across {somalilandRegions.length} regions</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -520,7 +343,7 @@ export default function DashboardPage() {
                   <Droplet className="w-6 h-6 text-blue-500" />
                 </div>
               </div>
-              <div className="mt-2 text-xs text-gray-500">Across {SOMALILAND_REGIONS.length} regions</div>
+              <div className="mt-2 text-xs text-gray-500">Across {somalilandRegions.length} regions</div>
             </div>
             
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
@@ -668,7 +491,7 @@ export default function DashboardPage() {
             {/* Region Cards with Expand/Collapse */}
             {!selectedRegion ? (
               // All Regions View
-              SOMALILAND_REGIONS.map(region => (
+              somalilandRegions.map(region => (
                 <div key={region.region} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                   {/* Region Header - Clickable */}
                   <div 
