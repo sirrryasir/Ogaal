@@ -6,9 +6,8 @@ import {
   LayoutDashboard,
   FileText,
   Droplet,
-  AlertOctagon,
+  Database,
   LogOut,
-  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
@@ -77,6 +76,7 @@ export default function AdminLayout({
     { href: "/admin", label: "Overview", icon: LayoutDashboard },
     { href: "/admin/reports", label: "Approvals", icon: FileText },
     { href: "/admin/sources", label: "Water Sources", icon: Droplet },
+    { href: "/admin/database", label: "Database", icon: Database }
   ];
 
   return (
