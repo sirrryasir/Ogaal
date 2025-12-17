@@ -39,16 +39,17 @@ export const getWaterSources = async (req: Request, res: Response) => {
 
 // Submit Report (Agent App)
 export const submitReport = async (req: Request, res: Response) => {
-  const { water_source_id, village_id, reporter_type, report_content, status } =
+  const { water_source_id, village_id, reporter_type, content, status } =
     req.body;
 
   try {
     const report = await prisma.report.create({
       data: {
-        water_source_id: Number(water_source_id),
-        village_id: Number(village_id),
+        water_source: { connect: { id: Number(water_source_id) } },
+        village: { connect: { id: Number(village_id) } },
         reporter_type,
-        content: report_content, // Changed from report_content to content in schema
+        content: content,
+        status: status, // Store the report status
       },
     });
 
