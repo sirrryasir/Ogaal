@@ -28,7 +28,7 @@ const LanguageSelectScreen: React.FC = () => {
     {
       code: 'so' as const,
       name: t('somali'),
-      flag: '🇸🇴',
+      // flag: '🇸🇴',
       nativeName: 'Soomaali',
       gradient: ['#f093fb', '#f5576c'],
       description: 'Native language',

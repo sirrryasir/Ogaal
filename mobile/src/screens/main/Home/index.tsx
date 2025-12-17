@@ -1,14 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  Animated, 
-  TouchableOpacity, 
+import {
+  View,
+  StyleSheet,
+  Animated,
+  TouchableOpacity,
   ScrollView,
   Dimensions,
   RefreshControl,
   StatusBar,
-  Platform
+  Platform,
+  Modal,
+  TextInput,
+  FlatList
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
@@ -63,6 +66,9 @@ const HomeScreen: React.FC = () => {
   const [nearestWells, setNearestWells] = useState<WaterSource[]>([]);
   const [stats, setStats] = useState<StatItem[]>([]);
   const [greeting, setGreeting] = useState('');
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<WaterSource[]>([]);
 
   // Mock data
   const waterSources: WaterSource[] = [
@@ -80,10 +86,11 @@ const HomeScreen: React.FC = () => {
     { id: 3, message: 'Emergency repair in progress', type: 'critical', time: '1 day ago' },
   ];
 
+
   // Header animations based on scroll
   const headerHeight = scrollY.interpolate({
     inputRange: [0, 150],
-    outputRange: [280, 100],
+    outputRange: [120, 100],
     extrapolate: 'clamp',
   });
 
@@ -99,17 +106,6 @@ const HomeScreen: React.FC = () => {
     extrapolate: 'clamp',
   });
 
-  const statsOpacity = scrollY.interpolate({
-    inputRange: [0, 80],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  const statsTranslateY = scrollY.interpolate({
-    inputRange: [0, 80],
-    outputRange: [0, -30],
-    extrapolate: 'clamp',
-  });
 
   const collapsedHeaderOpacity = scrollY.interpolate({
     inputRange: [100, 150],
@@ -126,9 +122,9 @@ const HomeScreen: React.FC = () => {
   // Calculate time-based greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return t('goodMorning');
+    if (hour < 18) return t('goodAfternoon');
+    return t('goodEvening');
   };
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -154,10 +150,10 @@ const HomeScreen: React.FC = () => {
 
   const getWellIcon = (type: string) => {
     switch (type) {
-      case 'Borehole': return 'water-pump';
+      case 'Borehole': return 'settings';
       case 'Well': return 'water';
-      case 'Dam': return 'dam';
-      case 'Berkad': return 'water-tank';
+      case 'Dam': return 'waves';
+      case 'Berkad': return 'local-drink';
       default: return 'water';
     }
   };
@@ -183,7 +179,54 @@ const HomeScreen: React.FC = () => {
   const handleViewWaterSources = () => navigation.navigate('WaterSources' as never);
   const handleReportImpact = () => navigation.navigate('Report' as never);
   const handleViewAllWells = () => navigation.navigate('WaterSources' as never);
-  const handleViewAllAlerts = () => navigation.navigate('Alerts' as never);
+  const handleViewAllAlerts = () => navigation.navigate('Notifications' as never);
+
+  const translateType = (type: string) => {
+    switch (type) {
+      case 'Borehole': return t('borehole');
+      case 'Well': return t('well');
+      case 'Dam': return t('dam');
+      case 'Berkad': return t('berkad');
+      default: return type;
+    }
+  };
+
+  const translateStatus = (status: string) => {
+    switch (status) {
+      case 'Working': return t('workingStatus');
+      case 'Low water': return t('lowWaterStatus');
+      case 'Dry': return t('dryStatus');
+      case 'Broken': return t('brokenStatus');
+      default: return status;
+    }
+  };
+
+  const handleSearch = () => {
+    setSearchModalVisible(true);
+  };
+
+  const handleSearchQuery = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      const filtered = waterSources.filter(source =>
+        source.name.toLowerCase().includes(query.toLowerCase()) ||
+        source.type.toLowerCase().includes(query.toLowerCase()) ||
+        source.region.toLowerCase().includes(query.toLowerCase()) ||
+        source.status.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(filtered);
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const handleSearchResultPress = (source: WaterSource) => {
+    setSearchModalVisible(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    // Navigate to water sources map with selected source
+    navigation.navigate('WaterSources' as never);
+  };
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -244,10 +287,10 @@ const HomeScreen: React.FC = () => {
       const avgDistance = sorted.slice(0, 5).reduce((acc, w) => acc + parseFloat(w.distance), 0) / 5;
 
       setStats([
-        { label: 'Working Wells', value: workingWells.toString(), icon: 'check-circle', color: '#10b981', change: '+2' },
-        { label: 'Total Sources', value: totalWells.toString(), icon: 'water', color: '#0c6dff' },
-        { label: 'Low Water', value: lowWaterWells.toString(), icon: 'warning', color: '#f59e0b', change: '+1' },
-        { label: 'Avg. Distance', value: avgDistance.toFixed(1) + 'km', icon: 'location-on', color: '#8b5cf6' },
+        { label: t('workingWells'), value: workingWells.toString(), icon: 'check-circle', color: '#10b981', change: '+2' },
+        { label: t('totalSources'), value: totalWells.toString(), icon: 'water', color: '#0c6dff' },
+        { label: t('lowWater'), value: lowWaterWells.toString(), icon: 'warning', color: '#f59e0b', change: '+1' },
+        { label: t('avgDistance'), value: avgDistance.toFixed(1) + 'km', icon: 'location-on', color: '#8b5cf6' },
       ]);
     }
   }, [location]);
@@ -258,12 +301,7 @@ const HomeScreen: React.FC = () => {
       
       {/* Collapsible Header */}
       <Animated.View style={[styles.headerContainer, { height: headerHeight }]}>
-        <LinearGradient 
-          colors={['#0c6dff', '#4f46e5', '#8b5cf6']} 
-          style={styles.headerGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+        <View style={[styles.headerGradient, { backgroundColor: '#0c6dff' }]}>
           {/* Background Pattern */}
           <View style={styles.headerPattern}>
             {[...Array(20)].map((_, i) => (
@@ -283,7 +321,7 @@ const HomeScreen: React.FC = () => {
           </View>
 
           {/* Expanded Header Content */}
-          <Animated.View 
+          <Animated.View
             style={[
               styles.expandedContent,
               {
@@ -294,69 +332,24 @@ const HomeScreen: React.FC = () => {
           >
             <View style={styles.topBar}>
               <View style={styles.greetingContainer}>
-                <Typography variant="h1" style={styles.greeting}>
-                  {greeting} 👋
-                </Typography>
+                <View style={styles.greetingRow}>
+                  <Typography variant="h1" style={styles.greeting}>
+                    {greeting}
+                  </Typography>
+                  <Ionicons name="hand-left" size={28} color="white" style={styles.greetingIcon} />
+                </View>
                 <Typography variant="body" style={styles.location}>
-                  {location ? 'Hargeisa, Somaliland' : 'Locating...'}
+                  {location ? t('currentLocation') : t('locating')}
                 </Typography>
               </View>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={styles.notificationButton}
-                onPress={() => navigation.navigate('Notifications' as never)}
+                onPress={handleSearch}
               >
-                <Ionicons name="notifications-outline" size={24} color="white" />
-                {alerts.length > 0 && (
-                  <View style={styles.notificationBadge}>
-                    <Typography variant="caption" style={styles.badgeText}>
-                      {alerts.length}
-                    </Typography>
-                  </View>
-                )}
+                <Ionicons name="search-outline" size={24} color="white" />
               </TouchableOpacity>
             </View>
-
-            {/* Stats Cards */}
-            <Animated.View 
-              style={[
-                styles.statsContainer,
-                {
-                  opacity: statsOpacity,
-                  transform: [{ translateY: statsTranslateY }]
-                }
-              ]}
-            >
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.statsScroll}
-              >
-                {stats.map((stat, index) => (
-                  <View key={index} style={styles.statCard}>
-                    <View style={[styles.statIcon, { backgroundColor: stat.color + '30' }]}>
-                      <MaterialIcons name={stat.icon as any} size={22} color={stat.color} />
-                    </View>
-                    <View style={styles.statContent}>
-                      <Typography variant="h2" style={styles.statValue}>
-                        {stat.value}
-                      </Typography>
-                      <Typography variant="caption" style={styles.statLabel}>
-                        {stat.label}
-                      </Typography>
-                    </View>
-                    {stat.change && (
-                      <View style={styles.statChange}>
-                        <Feather name="trending-up" size={12} color="white" />
-                        <Typography variant="caption" style={styles.changeText}>
-                          {stat.change}
-                        </Typography>
-                      </View>
-                    )}
-                  </View>
-                ))}
-              </ScrollView>
-            </Animated.View>
           </Animated.View>
 
           {/* Collapsed Header Content */}
@@ -373,22 +366,15 @@ const HomeScreen: React.FC = () => {
               <View style={styles.collapsedTitle}>
                 <MaterialIcons name="home" size={24} color="white" />
                 <Typography variant="h3" style={styles.collapsedTitleText}>
-                  Dashboard
+                  {t('dashboard')}
                 </Typography>
               </View>
-              <TouchableOpacity style={styles.collapsedNotificationButton}>
-                <Ionicons name="notifications-outline" size={22} color="white" />
-                {alerts.length > 0 && (
-                  <View style={styles.collapsedNotificationBadge}>
-                    <Typography variant="caption" style={styles.badgeText}>
-                      {alerts.length}
-                    </Typography>
-                  </View>
-                )}
+              <TouchableOpacity style={styles.collapsedNotificationButton} onPress={handleSearch}>
+                <Ionicons name="search-outline" size={22} color="white" />
               </TouchableOpacity>
             </View>
           </Animated.View>
-        </LinearGradient>
+        </View>
       </Animated.View>
 
       {/* Main Content */}
@@ -413,14 +399,50 @@ const HomeScreen: React.FC = () => {
       >
         {/* Content starts below header */}
         <View style={styles.contentSpacer} />
-        
+
+        {/* Stats Cards */}
+        <View style={styles.statsSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.statsScroll}
+          >
+            {stats.map((stat, index) => (
+              <View
+                key={index}
+                style={[styles.statCard, { borderLeftColor: stat.color, borderLeftWidth: 4 }]}
+              >
+                <View style={[styles.statIcon, { backgroundColor: stat.color + '20' }]}>
+                  <MaterialIcons name={stat.icon as any} size={24} color={stat.color} />
+                </View>
+                <View style={styles.statContent}>
+                  <Typography variant="h2" style={[styles.statValue, { color: '#0f172a' }]}>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="caption" style={[styles.statLabel, { color: '#64748b' }]}>
+                    {stat.label}
+                  </Typography>
+                </View>
+                {stat.change && (
+                  <View style={[styles.statChange, { backgroundColor: stat.color + '20' }]}>
+                    <Feather name="trending-up" size={12} color={stat.color} />
+                    <Typography variant="caption" style={[styles.changeText, { color: stat.color }]}>
+                      {stat.change}
+                    </Typography>
+                  </View>
+                )}
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+
         {/* Nearest Wells Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleContainer}>
               <MaterialIcons name="location-on" size={24} color="#0c6dff" />
               <Typography variant="h3" style={styles.sectionTitle}>
-                Nearest Water Sources
+                {t('nearestWaterSources')}
               </Typography>
             </View>
             <TouchableOpacity 
@@ -428,7 +450,7 @@ const HomeScreen: React.FC = () => {
               onPress={handleViewAllWells}
             >
               <Typography variant="body" style={styles.viewAllText}>
-                View All
+                {t('viewAll')}
               </Typography>
               <MaterialIcons name="arrow-forward" size={16} color="#0c6dff" />
             </TouchableOpacity>
@@ -465,12 +487,12 @@ const HomeScreen: React.FC = () => {
                         color={getWellStatusColor(well.status, well.waterLevel)} 
                       />
                       <Typography variant="caption" style={styles.wellTypeText}>
-                        {well.type}
+                        {translateType(well.type)}
                       </Typography>
                     </View>
                     <View style={[styles.statusBadge, { backgroundColor: getWellStatusColor(well.status, well.waterLevel) + '15' }]}>
                       <Typography variant="caption" style={[styles.statusText, { color: getWellStatusColor(well.status, well.waterLevel) }]}>
-                        {well.status}
+                        {translateStatus(well.status)}
                       </Typography>
                     </View>
                   </View>
@@ -494,29 +516,6 @@ const HomeScreen: React.FC = () => {
                     </View>
                   </View>
 
-                  {well.waterLevel !== undefined && (
-                    <View style={styles.waterLevelContainer}>
-                      <View style={styles.waterLevelLabel}>
-                        <Typography variant="caption" style={styles.waterLevelText}>
-                          Water Level
-                        </Typography>
-                        <Typography variant="caption" style={styles.waterLevelPercent}>
-                          {well.waterLevel}%
-                        </Typography>
-                      </View>
-                      <View style={styles.progressBar}>
-                        <Animated.View 
-                          style={[
-                            styles.progressFill,
-                            { 
-                              width: `${well.waterLevel}%`,
-                              backgroundColor: getWellStatusColor(well.status, well.waterLevel)
-                            }
-                          ]}
-                        />
-                      </View>
-                    </View>
-                  )}
                 </View>
               </Animated.View>
             ))}
@@ -529,7 +528,7 @@ const HomeScreen: React.FC = () => {
             <View style={styles.sectionTitleContainer}>
               <MaterialIcons name="notifications" size={24} color="#f59e0b" />
               <Typography variant="h3" style={styles.sectionTitle}>
-                Recent Alerts
+                {t('recentAlerts')}
               </Typography>
             </View>
             <TouchableOpacity 
@@ -537,7 +536,7 @@ const HomeScreen: React.FC = () => {
               onPress={handleViewAllAlerts}
             >
               <Typography variant="body" style={[styles.viewAllText, { color: '#f59e0b' }]}>
-                View All
+                {t('viewAll')}
               </Typography>
               <MaterialIcons name="arrow-forward" size={16} color="#f59e0b" />
             </TouchableOpacity>
@@ -573,7 +572,7 @@ const HomeScreen: React.FC = () => {
                       color={getAlertColor(alert.type)} 
                     />
                     <Typography variant="caption" style={[styles.alertTypeText, { color: getAlertColor(alert.type) }]}>
-                      {alert.type.charAt(0).toUpperCase() + alert.type.slice(1)}
+                      {t(alert.type)}
                     </Typography>
                   </View>
                   <Typography variant="caption" style={styles.alertTime}>
@@ -591,7 +590,7 @@ const HomeScreen: React.FC = () => {
         {/* Quick Actions */}
         <View style={styles.actionsSection}>
           <Typography variant="h3" style={styles.actionsTitle}>
-            Quick Actions
+            {t('quickActions')}
           </Typography>
           <View style={styles.actionsGrid}>
             <TouchableOpacity 
@@ -606,7 +605,7 @@ const HomeScreen: React.FC = () => {
               >
                 <MaterialIcons name="map" size={32} color="white" />
                 <Typography variant="body" style={styles.actionText}>
-                  View Map
+                  {t('viewMap')}
                 </Typography>
                 <View style={styles.actionArrow}>
                   <MaterialIcons name="arrow-forward" size={20} color="white" />
@@ -626,7 +625,7 @@ const HomeScreen: React.FC = () => {
               >
                 <MaterialIcons name="report" size={32} color="white" />
                 <Typography variant="body" style={styles.actionText}>
-                  Report Issues
+                  {t('reportIssues')}
                 </Typography>
                 <View style={styles.actionArrow}>
                   <MaterialIcons name="arrow-forward" size={20} color="white" />
@@ -636,9 +635,131 @@ const HomeScreen: React.FC = () => {
           </View>
         </View>
 
+
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
       </Animated.ScrollView>
+
+      {/* Search Modal */}
+      <Modal
+        visible={searchModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setSearchModalVisible(false)}
+      >
+        <View style={styles.searchModalContainer}>
+          <View style={styles.searchHeader}>
+            <TouchableOpacity
+              style={styles.searchBackButton}
+              onPress={() => setSearchModalVisible(false)}
+            >
+              <Ionicons name="arrow-back" size={24} color="#0f172a" />
+            </TouchableOpacity>
+            <Typography variant="h3" style={styles.searchTitle}>
+              {t('searchWaterSources')}
+            </Typography>
+            <View style={styles.searchSpacer} />
+          </View>
+
+          <View style={styles.searchInputContainer}>
+            <Ionicons name="search" size={20} color="#64748b" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t('searchPlaceholder')}
+              placeholderTextColor="#94a3b8"
+              value={searchQuery}
+              onChangeText={handleSearchQuery}
+              autoFocus
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                }}
+              >
+                <Ionicons name="close-circle" size={20} color="#64748b" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <FlatList
+            data={searchResults}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.searchResultItem}
+                onPress={() => handleSearchResultPress(item)}
+              >
+                <View style={styles.searchResultContent}>
+                  <View style={styles.searchResultHeader}>
+                    <View style={styles.searchResultType}>
+                      <MaterialIcons
+                        name={getWellIcon(item.type) as any}
+                        size={18}
+                        color={getWellStatusColor(item.status, item.waterLevel)}
+                      />
+                      <Typography variant="caption" style={styles.searchResultTypeText}>
+                        {translateType(item.type)}
+                      </Typography>
+                    </View>
+                    <View style={[styles.searchResultStatus, { backgroundColor: getWellStatusColor(item.status, item.waterLevel) + '15' }]}>
+                      <Typography variant="caption" style={[styles.searchResultStatusText, { color: getWellStatusColor(item.status, item.waterLevel) }]}>
+                        {translateStatus(item.status)}
+                      </Typography>
+                    </View>
+                  </View>
+
+                  <Typography variant="body" style={styles.searchResultName}>
+                    {item.name}
+                  </Typography>
+
+                  <View style={styles.searchResultDetails}>
+                    <View style={styles.searchResultDetail}>
+                      <MaterialIcons name="location-on" size={14} color="#64748b" />
+                      <Typography variant="caption" style={styles.searchResultDetailText}>
+                        {item.region}
+                      </Typography>
+                    </View>
+                    <View style={styles.searchResultDetail}>
+                      <MaterialIcons name="update" size={14} color="#64748b" />
+                      <Typography variant="caption" style={styles.searchResultDetailText}>
+                        {item.lastUpdate}
+                      </Typography>
+                    </View>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#64748b" />
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={
+              searchQuery.length > 0 ? (
+                <View style={styles.noResultsContainer}>
+                  <Ionicons name="search" size={48} color="#e2e8f0" />
+                  <Typography variant="h3" style={styles.noResultsTitle}>
+                    {t('noResultsFound')}
+                  </Typography>
+                  <Typography variant="body" style={styles.noResultsText}>
+                    {t('tryDifferentKeywords')}
+                  </Typography>
+                </View>
+              ) : (
+                <View style={styles.searchPlaceholder}>
+                  <Ionicons name="water" size={64} color="#e2e8f0" />
+                  <Typography variant="h3" style={styles.searchPlaceholderTitle}>
+                    {t('searchPlaceholderTitle')}
+                  </Typography>
+                  <Typography variant="body" style={styles.searchPlaceholderText}>
+                    {t('searchPlaceholderText')}
+                  </Typography>
+                </View>
+              )
+            }
+            contentContainerStyle={styles.searchResultsList}
+          />
+        </View>
+      </Modal>
     </Layout>
   );
 };
@@ -684,15 +805,23 @@ const styles = StyleSheet.create({
   greetingContainer: {
     flex: 1,
   },
+  greetingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
   greeting: {
     fontSize: 28,
     fontWeight: '900',
     color: 'white',
-    marginBottom: 5,
     letterSpacing: -0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+    marginRight: 8,
+  },
+  greetingIcon: {
+    marginTop: 2,
   },
   location: {
     fontSize: 15,
@@ -730,48 +859,54 @@ const styles = StyleSheet.create({
   statsContainer: {
     marginTop: 5,
   },
+  statsSection: {
+    paddingHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 20,
+  },
   statsScroll: {
     paddingRight: 10,
   },
   statCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 18,
-    padding: 16,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 18,
     marginRight: 12,
     minWidth: 140,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: '#e2e8f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 2,
   },
   statIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 14,
   },
   statContent: {
     flex: 1,
   },
   statValue: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '900',
     color: 'white',
-    marginBottom: 2,
+    marginBottom: 4,
+    letterSpacing: -0.5,
   },
   statLabel: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    fontWeight: '600',
+    letterSpacing: 1,
+    fontWeight: '700',
   },
   statChange: {
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
@@ -842,7 +977,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   contentSpacer: {
-    height: 280, // Matches initial header height
+    height: 120, // Matches initial header height
   },
   section: {
     paddingHorizontal: 20,
@@ -1068,6 +1203,172 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 20,
+  },
+  // Search Modal Styles
+  searchModalContainer: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  searchHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingBottom: 16,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  searchBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8fafc',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0f172a',
+    flex: 1,
+    textAlign: 'center',
+  },
+  searchSpacer: {
+    width: 40,
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    margin: 20,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#0f172a',
+    paddingVertical: 0,
+  },
+  clearButton: {
+    padding: 4,
+  },
+  searchResultsList: {
+    padding: 20,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  searchResultContent: {
+    flex: 1,
+  },
+  searchResultHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  searchResultType: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchResultTypeText: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  searchResultStatus: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  searchResultStatusText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  searchResultName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 8,
+    lineHeight: 22,
+  },
+  searchResultDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  searchResultDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchResultDetailText: {
+    color: '#64748b',
+    fontSize: 12,
+    marginLeft: 6,
+  },
+  noResultsContainer: {
+    alignItems: 'center',
+    paddingTop: 60,
+  },
+  noResultsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#64748b',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  noResultsText: {
+    fontSize: 14,
+    color: '#94a3b8',
+    textAlign: 'center',
+  },
+  searchPlaceholder: {
+    alignItems: 'center',
+    paddingTop: 80,
+  },
+  searchPlaceholderTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#64748b',
+    marginTop: 24,
+    marginBottom: 8,
+  },
+  searchPlaceholderText: {
+    fontSize: 14,
+    color: '#94a3b8',
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 280,
   },
 });
 

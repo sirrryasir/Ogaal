@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View } from 'react-native';
 
 interface ButtonProps {
   title: string;
@@ -9,6 +9,9 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   style?: any;
+  textStyle?: any;
+  icon?: React.ReactNode;
+  iconPosition?: 'left' | 'right';
   accessibilityLabel?: string;
 }
 
@@ -20,6 +23,9 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   loading = false,
   style,
+  textStyle,
+  icon,
+  iconPosition = 'right',
   accessibilityLabel,
 }) => {
   const variantStyles = {
@@ -66,9 +72,13 @@ const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <ActivityIndicator color={textColors[variant]} />
       ) : (
-        <Text style={[styles.text, { color: textColors[variant] }]}>
-          {title}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {icon && iconPosition === 'left' && icon}
+          <Text style={[styles.text, { color: textColors[variant] }, textStyle]}>
+            {title}
+          </Text>
+          {icon && iconPosition === 'right' && icon}
+        </View>
       )}
     </TouchableOpacity>
   );

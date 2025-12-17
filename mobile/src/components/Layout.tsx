@@ -11,7 +11,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children, style, centered = true, noPadding = false }) => {
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: '#f8fafc' }]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: '#e0f2fe' }]}>
       <View style={[styles.container, style, !centered && styles.notCentered, noPadding && styles.noPadding]}>
         {children}
       </View>

@@ -78,7 +78,7 @@ const SplashScreen: React.FC = () => {
 
   const gradientInterpolate = gradientAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
+    outputRange: [0, 1],
   });
 
   return (
@@ -159,13 +159,13 @@ const SplashScreen: React.FC = () => {
           {/* Loading indicator */}
           <Animated.View style={[styles.loadingContainer, { opacity: fadeAnim }]}>
             <View style={styles.loadingTrack}>
-              <Animated.View 
+              <Animated.View
                 style={[
                   styles.loadingBar,
                   {
-                    width: gradientInterpolate,
+                    transform: [{ scaleX: gradientInterpolate }],
                   }
-                ]} 
+                ]}
               />
             </View>
             <Animated.Text 
@@ -210,7 +210,7 @@ const SplashScreen: React.FC = () => {
                   }
                 ]}
               >
-                <Text style={styles.particleText}>AI</Text>
+                <Text style={styles.particleText}>water</Text>
               </Animated.View>
             );
           })}
@@ -281,6 +281,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   loadingBar: {
+    width: '100%',
     height: '100%',
     backgroundColor: '#0c6dff',
     borderRadius: 2,
