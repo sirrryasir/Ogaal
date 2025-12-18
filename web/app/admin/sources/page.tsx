@@ -1,185 +1,15 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 import { deleteSource } from "@/lib/actions";
-import { getWaterSources, WaterSource } from "@/lib/data";
-import { Trash2, MapPin, ChevronDown, ChevronRight, Droplet } from "lucide-react";
-import AddWaterSourceButton from "@/components/add-water-source-button";
+import { getWaterSources, getVillages, WaterSource } from "@/lib/data";
 import DistrictView from "@/components/district-view";
-
-// Client component for collapsible sections
-function DistrictSection({ 
-  district, 
-  villages 
-}: { 
-  district: string; 
-  villages: { village: string; sources: WaterSource[] }[] 
-}) {
-  const [isOpen, setIsOpen] = useState(true);
-
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-4">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
-      >
-        <div className="flex items-center gap-3">
-          {isOpen ? (
-            <ChevronDown className="w-5 h-5 text-gray-500" />
-          ) : (
-            <ChevronRight className="w-5 h-5 text-gray-500" />
-          )}
-          <h2 className="text-lg font-bold text-gray-900">{district}</h2>
-          <span className="text-sm text-gray-500">
-            ({villages.reduce((sum, v) => sum + v.sources.length, 0)} sources)
-          </span>
-        </div>
-      </button>
-
-      {isOpen && (
-        <div className="divide-y divide-gray-100">
-          {villages.map((villageData, idx) => (
-            <VillageSection
-              key={idx}
-              village={villageData.village}
-              sources={villageData.sources}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function VillageSection({ 
-  village, 
-  sources 
-}: { 
-  village: string; 
-  sources: WaterSource[] 
-}) {
-  const [isOpen, setIsOpen] = useState(true);
-
-  const statusCounts = {
-    working: sources.filter(s => s.status?.toLowerCase().includes('working') || s.status?.toLowerCase().includes('operational')).length,
-    limited: sources.filter(s => s.status?.toLowerCase().includes('limited') || s.status?.toLowerCase().includes('maintenance')).length,
-    broken: sources.filter(s => s.status?.toLowerCase().includes('broken') || s.status?.toLowerCase().includes('non')).length,
-  };
-
-  return (
-    <div className="bg-gray-50">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-3 hover:bg-gray-100 transition-colors flex items-center justify-between"
-      >
-        <div className="flex items-center gap-3">
-          {isOpen ? (
-            <ChevronDown className="w-4 h-4 text-gray-400" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-          )}
-          <MapPin className="w-4 h-4 text-gray-400" />
-          <span className="font-semibold text-gray-700">{village}</span>
-          <span className="text-xs text-gray-500">
-            ({sources.length} sources)
-          </span>
-          <div className="flex gap-2 ml-4">
-            {statusCounts.working > 0 && (
-              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded">
-                {statusCounts.working} Working
-              </span>
-            )}
-            {statusCounts.limited > 0 && (
-              <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-bold rounded">
-                {statusCounts.limited} Limited
-              </span>
-            )}
-            {statusCounts.broken > 0 && (
-              <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded">
-                {statusCounts.broken} Broken
-              </span>
-            )}
-          </div>
-        </div>
-      </button>
-
-      {isOpen && (
-        <div className="px-6 py-4 space-y-3 bg-white">
-          {sources.map((source) => (
-            <WaterSourceCard key={source.id} source={source} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function WaterSourceCard({ source }: { source: WaterSource }) {
-  const getStatusColor = (status: string) => {
-    const s = status?.toLowerCase() || "";
-    if (s.includes("working") || s.includes("operational")) {
-      return "bg-green-100 text-green-700 border-green-200";
-    }
-    if (s.includes("limited") || s.includes("maintenance")) {
-      return "bg-orange-100 text-orange-700 border-orange-200";
-    }
-    if (s.includes("broken") || s.includes("non")) {
-      return "bg-red-100 text-red-700 border-red-200";
-    }
-    return "bg-gray-100 text-gray-700 border-gray-200";
-  };
-
-  return (
-    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
-      <div className="flex-1">
-        <div className="flex items-center gap-3 mb-2">
-          <Droplet className="w-4 h-4 text-blue-500" />
-          <h4 className="font-bold text-gray-900">{source.name}</h4>
-          {source.type && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-              {source.type}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-4 text-sm text-gray-600">
-          <span className="text-xs font-mono">
-            {source.lat.toFixed(4)}, {source.lng.toFixed(4)}
-          </span>
-          {source.water_level !== undefined && (
-            <span className="text-xs">
-              Water Level: {source.water_level}%
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-3">
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-bold uppercase border ${getStatusColor(
-            source.status
-          )}`}
-        >
-          {source.status?.replace(/_/g, " ") || "Unknown"}
-        </span>
-        <form
-          action={async () => {
-            "use server";
-            await deleteSource(source.id);
-          }}
-        >
-          <button
-            type="submit"
-            className="text-red-400 hover:text-red-600 p-1 transition-colors"
-            title="Delete source"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
+import AddSourceDialog from "./add-source-dialog";
 
 export default async function AdminSourcesPage() {
-  const sources = await getWaterSources();
+  const [sources, villages] = await Promise.all([
+    getWaterSources(),
+    getVillages(),
+  ]);
 
   // Group sources by district and village
   const groupedData: Record<
@@ -220,7 +50,7 @@ export default async function AdminSourcesPage() {
             {sources.length} total water sources across {districts.length} districts
           </p>
         </div>
-        <AddWaterSourceButton />
+        <AddSourceDialog villages={villages} />
       </div>
 
       <DistrictView districts={districts} />

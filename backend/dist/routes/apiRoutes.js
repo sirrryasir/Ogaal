@@ -19,5 +19,7 @@ router.post("/water-sources", apiController.addWaterSource);
 router.post("/sms/send", apiController.sendSms);
 // AI Simulation Endpoint
 router.post("/ai/update-risk", apiController.updateRisk);
+// Dashboard Stats
+router.get("/stats", apiController.getDashboardStats);
 export default router;
 //# sourceMappingURL=apiRoutes.js.map

@@ -131,16 +131,17 @@ model Report {
   user_id        Int?
   village_id     Int?
   water_source_id Int?
-  
+
   reporter_type  String?   // User (App), USSD
   content        String?
+  status         String?   // Working, Low Water, Dry, Broken, Other
   is_verified    Boolean   @default(false)
   timestamp      DateTime  @default(now())
-  
+
   user           User?         @relation(fields: [user_id], references: [id])
   village        Village?      @relation(fields: [village_id], references: [id])
   water_source   WaterSource?  @relation(fields: [water_source_id], references: [id])
-  
+
   @@map("reports")
 }
 

@@ -4,121 +4,198 @@ const handleUssdRequest = async (req, res) => {
     let response = "";
     let type = "CON"; // CON = Continue, END = End
     // text is a string like "1*2*1" representing the input path
+    // Split text to get navigation steps
     const parts = text ? text.split("*") : [];
     try {
         if (text === "") {
             // Main Menu
             response = `Welcome to Ogaal
 1. Check Water Availability
-2. Check Drought Risk
-3. Report Water Source Status
-4. Get Water-Saving Tips`;
+2. Report Water Source Status`;
         }
+        // Flow 1: Check Water Availability
         else if (parts[0] === "1") {
-            // 1. Check Water Availability
+            // Step 1: Select Village
             if (parts.length === 1) {
-                // Ask for village
-                response = "Enter Village Name:";
-            }
-            else if (parts.length === 2) {
-                // Return status
-                const villageName = parts[1];
-                // Mock lookup
-                const village = await prisma.village.findFirst({
-                    where: {
-                        name: {
-                            contains: villageName,
-                            mode: "insensitive", // SQLite LIKE is case-insensitive usually, safe to match here
-                        },
-                    },
+                const villages = await prisma.village.findMany({
+                    take: 10,
+                    orderBy: { name: 'asc' }
                 });
-                if (village) {
+                if (villages.length === 0) {
+                    response = "No villages found.";
+                    type = "END";
+                }
+                else {
+                    response = "Select Village:\n";
+                    villages.forEach((v, index) => {
+                        response += `${index + 1}. ${v.name}\n`;
+                    });
+                }
+            }
+            // Step 2: Select Water Source
+            else if (parts.length === 2) {
+                const villageIndex = parseInt(parts[1]) - 1;
+                const villages = await prisma.village.findMany({
+                    take: 10,
+                    orderBy: { name: 'asc' }
+                });
+                if (villageIndex >= 0 && villageIndex < villages.length) {
+                    const village = villages[villageIndex];
                     const sources = await prisma.waterSource.findMany({
                         where: { village_id: village.id },
+                        take: 10
                     });
-                    if (sources.length > 0) {
-                        const src = sources[0]; // Just showing first one for demo
-                        response = `${village.name} Water: ${src.status}
-Level: ${src.water_level}%
-Last Update: Today`;
+                    if (sources.length === 0) {
+                        response = `No sources found in ${village.name}`;
+                        type = "END";
                     }
                     else {
-                        response = `No water sources found for ${village.name}`;
+                        response = "Select Water Source:\n";
+                        sources.forEach((s, index) => {
+                            response += `${index + 1}. ${s.name}\n`;
+                        });
                     }
                 }
                 else {
-                    response = `Village ${villageName} not found.`;
+                    response = "Invalid choice. Please try again.";
+                    type = "END";
                 }
-                type = "END";
             }
-        }
-        else if (parts[0] === "2") {
-            // 2. Drought Risk
-            if (parts.length === 1) {
-                response = "Enter Village Name:";
-            }
-            else if (parts.length === 2) {
-                const villageName = parts[1];
-                const village = await prisma.village.findFirst({
-                    where: {
-                        name: {
-                            contains: villageName,
-                            mode: "insensitive",
-                        },
-                    },
+            // Step 3: Show Status
+            else if (parts.length === 3) {
+                // Need to resolve village and source again to get final data
+                // Optimization: In real USSD, usually session caches this, here we re-fetch
+                const villageIndex = parseInt(parts[1]) - 1;
+                const sourceIndex = parseInt(parts[2]) - 1;
+                const villages = await prisma.village.findMany({
+                    take: 10,
+                    orderBy: { name: 'asc' }
                 });
-                if (village) {
-                    response = `Drought Risk for ${village.name}: ${village.drought_risk_level}
-Advice: Store water now.`;
+                if (villageIndex >= 0 && villageIndex < villages.length) {
+                    const village = villages[villageIndex];
+                    const sources = await prisma.waterSource.findMany({
+                        where: { village_id: village.id },
+                        take: 10
+                    });
+                    if (sourceIndex >= 0 && sourceIndex < sources.length) {
+                        const src = sources[sourceIndex];
+                        response = `${src.name} Status:
+Status: ${src.status || 'Unknown'}
+Level: ${src.water_level || 0}%
+Last: ${src.last_maintained ? new Date(src.last_maintained).toLocaleDateString() : 'N/A'}`;
+                        type = "END";
+                    }
+                    else {
+                        response = "Invalid source choice.";
+                        type = "END";
+                    }
                 }
                 else {
-                    response = `Village not found.`;
+                    response = "Invalid village choice.";
+                    type = "END";
                 }
-                type = "END";
             }
         }
-        else if (parts[0] === "3") {
-            // 3. Report Status
+        // Flow 2: Report Status
+        else if (parts[0] === "2") {
+            // Step 1: Select Village (Same logic as Flow 1 Step 1)
             if (parts.length === 1) {
-                response = "Enter Source ID:";
+                const villages = await prisma.village.findMany({
+                    take: 10,
+                    orderBy: { name: 'asc' }
+                });
+                if (villages.length === 0) {
+                    response = "No villages found.";
+                    type = "END";
+                }
+                else {
+                    response = "Select Village for Report:\n";
+                    villages.forEach((v, index) => {
+                        response += `${index + 1}. ${v.name}\n`;
+                    });
+                }
             }
+            // Step 2: Select Water Source (Same logic as Flow 1 Step 2)
             else if (parts.length === 2) {
+                const villageIndex = parseInt(parts[1]) - 1;
+                const villages = await prisma.village.findMany({
+                    take: 10,
+                    orderBy: { name: 'asc' }
+                });
+                if (villageIndex >= 0 && villageIndex < villages.length) {
+                    const village = villages[villageIndex];
+                    const sources = await prisma.waterSource.findMany({
+                        where: { village_id: village.id },
+                        take: 10
+                    });
+                    if (sources.length === 0) {
+                        response = `No sources found in ${village.name}`;
+                        type = "END";
+                    }
+                    else {
+                        response = "Select Source to Report:\n";
+                        sources.forEach((s, index) => {
+                            response += `${index + 1}. ${s.name}\n`;
+                        });
+                    }
+                }
+                else {
+                    response = "Invalid choice.";
+                    type = "END";
+                }
+            }
+            // Step 3: Select Issue Type
+            else if (parts.length === 3) {
                 response = `Select Status:
 1. Water Finished
 2. Pump Broken
 3. Water Available`;
             }
-            else if (parts.length === 3) {
-                const statusMap = {
-                    "1": "Low Water",
-                    "2": "Broken",
-                    "3": "Working",
-                };
-                const status = statusMap[parts[2]] || "Unknown";
-                const srcId = parseInt(parts[1]); // Ensure Int
-                // Update DB
-                if (!isNaN(srcId)) {
-                    await prisma.report.create({
-                        data: {
-                            water_source_id: srcId,
-                            reporter_type: "USSD",
-                            content: `User reported status: ${status}`,
-                        },
+            // Step 4: Submit Report
+            else if (parts.length === 4) {
+                // Resolve IDs
+                const villageIndex = parseInt(parts[1]) - 1;
+                const sourceIndex = parseInt(parts[2]) - 1;
+                const statusChoice = parts[3];
+                const villages = await prisma.village.findMany({
+                    take: 10,
+                    orderBy: { name: 'asc' }
+                });
+                if (villageIndex >= 0 && villageIndex < villages.length) {
+                    const village = villages[villageIndex];
+                    const sources = await prisma.waterSource.findMany({
+                        where: { village_id: village.id },
+                        take: 10
                     });
-                    response = `Report received for Source ${srcId}. Thank you.`;
+                    if (sourceIndex >= 0 && sourceIndex < sources.length) {
+                        const src = sources[sourceIndex];
+                        const statusMap = {
+                            "1": "Low Water",
+                            "2": "Broken",
+                            "3": "Working",
+                        };
+                        const statusReport = statusMap[statusChoice] || "Other Issue";
+                        await prisma.report.create({
+                            data: {
+                                water_source_id: src.id,
+                                village_id: village.id,
+                                reporter_type: "USSD",
+                                content: `User reported status: ${statusReport}`,
+                            },
+                        });
+                        response = `Report received for ${src.name}. Thank you.`;
+                        type = "END";
+                    }
+                    else {
+                        response = "Invalid source choice.";
+                        type = "END";
+                    }
                 }
                 else {
-                    response = "Invalid Source ID.";
+                    response = "Invalid village choice.";
+                    type = "END";
                 }
-                type = "END";
             }
-        }
-        else if (parts[0] === "4") {
-            // 4. Tips
-            response = `1. Use drip irrigation
-2. Harvest rainwater
-3. Cover water tanks`;
-            type = "END";
         }
         else {
             response = "Invalid option.";
