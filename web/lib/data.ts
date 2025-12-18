@@ -78,3 +78,36 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     };
   }
 }
+
+export interface AnalyticsData {
+  statusData: {
+    status: string;
+    count: number;
+    color: string;
+    description?: string;
+  }[];
+  villageData: {
+    village: string;
+    count: number;
+    functional: number;
+    nonFunctional: number;
+    population: number;
+  }[];
+  sourceTypeData: { type: string; count: number; functional: number }[];
+  trendData: {
+    month: string;
+    functional: number;
+    nonFunctional: number;
+    repairs: number;
+  }[];
+}
+
+export async function getAnalyticsData(): Promise<AnalyticsData | null> {
+  try {
+    const res = await api.get("/analytics");
+    return res.data;
+  } catch (error) {
+    console.error("Failed to fetch analytics data:", error);
+    return null;
+  }
+}
