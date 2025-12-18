@@ -3,6 +3,18 @@ import api from "./api";
 export interface Village {
   id: number;
   name: string;
+  district_id?: number;
+}
+
+export interface Region {
+  id: number;
+  name: string;
+}
+
+export interface District {
+  id: number;
+  name: string;
+  region_id: number;
 }
 
 export interface WaterSource {
@@ -22,6 +34,26 @@ export async function getVillages(): Promise<Village[]> {
     return res.data;
   } catch (error) {
     console.error("Failed to fetch villages:", error);
+    return [];
+  }
+}
+
+export async function getRegions(): Promise<Region[]> {
+  try {
+    const res = await api.get("/regions");
+    return res.data;
+  } catch (error) {
+    console.error("Failed to fetch regions:", error);
+    return [];
+  }
+}
+
+export async function getDistricts(): Promise<District[]> {
+  try {
+    const res = await api.get("/districts");
+    return res.data;
+  } catch (error) {
+    console.error("Failed to fetch districts:", error);
     return [];
   }
 }
@@ -50,8 +82,9 @@ export async function getWaterSources(): Promise<WaterSource[]> {
 export async function submitReport(data: {
   village_id: number;
   water_source_id: number;
-  report_content: string;
+  content: string;
   reporter_type: string;
+  status: string;
 }) {
   const res = await api.post("/reports", data);
   return res.data;
