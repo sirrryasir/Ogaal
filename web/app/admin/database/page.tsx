@@ -231,7 +231,7 @@ export default function DatabasePage() {
             </button>
             <button
               onClick={handleExport}
-              className="group flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-all shadow-lg shadow-gray-200 hover:shadow-xl"
+              className="group flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-lg shadow-gray-200 hover:shadow-xl"
             >
               <Download className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
               <span>Export CSV</span>
