@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  View, StyleSheet, TouchableOpacity, Alert, Modal, TouchableWithoutFeedback,
-  Platform, ScrollView, Dimensions, RefreshControl, Animated
+  View, StyleSheet, TouchableOpacity, Alert, Platform, ScrollView,
+  Dimensions, RefreshControl, Animated, TextInput, Modal,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { WebView } from 'react-native-webview';
 import Layout from '../../../components/Layout';
@@ -31,8 +32,8 @@ interface WaterSource {
 }
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
-const HEADER_EXPANDED_HEIGHT = 280;
-const HEADER_COLLAPSED_HEIGHT = 120;
+const HEADER_EXPANDED_HEIGHT = 220;
+const HEADER_COLLAPSED_HEIGHT = 100;
 
 const WaterSourcesMapScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -44,7 +45,7 @@ const WaterSourcesMapScreen: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(true);
   const [mapReady, setMapReady] = useState(false);
-  const [showFixedDetails, setShowFixedDetails] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [region] = useState({
     latitude: 9.5624,
@@ -52,21 +53,32 @@ const WaterSourcesMapScreen: React.FC = () => {
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   });
-  const [mapKey, setMapKey] = useState(0); // Key to force WebView re-render
+  const [mapKey, setMapKey] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   
   const webViewRef = useRef<WebView | null>(null);
   const scrollY = useRef(new Animated.Value(0)).current;
+  
+  // Animated values for better transitions
   const headerHeight = scrollY.interpolate({
     inputRange: [0, 100],
     outputRange: [HEADER_EXPANDED_HEIGHT, HEADER_COLLAPSED_HEIGHT],
     extrapolate: 'clamp',
   });
 
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: [1, 0.9],
+    extrapolate: 'clamp',
+  });
+
+  // Enhanced water sources data
   const [waterSources, setWaterSources] = useState<WaterSource[]>([
     { 
       id: '1', 
       type: 'Borehole', 
-      name: 'Borehole A1 - Hargeisa', 
+      name: 'Hargeisa Central Borehole', 
       status: 'Working', 
       lastUpdate: '2 hours ago', 
       distance: '2.5 km', 
@@ -74,16 +86,16 @@ const WaterSourcesMapScreen: React.FC = () => {
       longitude: 44.0770, 
       region: 'Maroodi Jeex', 
       flowRate: '500 L/min', 
-      waterQuality: 'Good',
+      waterQuality: 'Excellent',
       capacity: '5000 L/hr',
       community: 'Hargeisa Central',
       contact: '+252 63 1234567',
-      notes: 'Operational 24/7, clean water source'
+      notes: 'Operational 24/7, clean drinking water available for community'
     },
     { 
       id: '2', 
       type: 'Well', 
-      name: 'Well B2 - Hargeisa', 
+      name: 'North Hargeisa Well', 
       status: 'Low water', 
       lastUpdate: '1 day ago', 
       distance: '3.1 km', 
@@ -91,16 +103,16 @@ const WaterSourcesMapScreen: React.FC = () => {
       longitude: 44.0800, 
       region: 'Maroodi Jeex', 
       flowRate: '150 L/min', 
-      waterQuality: 'Moderate',
+      waterQuality: 'Good',
       capacity: '2000 L/hr',
       community: 'Hargeisa North',
       contact: '+252 63 2345678',
-      notes: 'Reduced flow during dry season'
+      notes: 'Community maintained, reduced flow during dry season'
     },
     { 
       id: '3', 
       type: 'Dam', 
-      name: 'Dam C3 - Hargeisa', 
+      name: 'East Hargeisa Dam', 
       status: 'Dry', 
       lastUpdate: '3 days ago', 
       distance: '5.0 km', 
@@ -112,12 +124,12 @@ const WaterSourcesMapScreen: React.FC = () => {
       capacity: '0 L/hr',
       community: 'Hargeisa East',
       contact: '+252 63 3456789',
-      notes: 'Waiting for rainfall, seasonal source'
+      notes: 'Seasonal water source, waiting for rainfall'
     },
     { 
       id: '4', 
       type: 'Berkad', 
-      name: 'Berkad D4 - Hargeisa', 
+      name: 'West Hargeisa Berkad', 
       status: 'Broken', 
       lastUpdate: '1 week ago', 
       distance: '1.8 km', 
@@ -129,13 +141,12 @@ const WaterSourcesMapScreen: React.FC = () => {
       capacity: '0 L/hr',
       community: 'Hargeisa West',
       contact: '+252 63 4567890',
-      notes: 'Requires maintenance, structure damaged'
+      notes: 'Requires community maintenance, structure damaged'
     },
-    // Additional water sources for better map visibility
     { 
       id: '5', 
       type: 'Borehole', 
-      name: 'Borehole E5 - Hargeisa', 
+      name: 'South Hargeisa Borehole', 
       status: 'Working', 
       lastUpdate: '5 hours ago', 
       distance: '4.2 km', 
@@ -147,12 +158,12 @@ const WaterSourcesMapScreen: React.FC = () => {
       capacity: '4500 L/hr',
       community: 'Hargeisa South',
       contact: '+252 63 5678901',
-      notes: 'New installation, high yield'
+      notes: 'New installation funded by community, high yield source'
     },
     { 
       id: '6', 
       type: 'Well', 
-      name: 'Well F6 - Hargeisa', 
+      name: 'Suburban Community Well', 
       status: 'Low water', 
       lastUpdate: '2 days ago', 
       distance: '6.3 km', 
@@ -164,20 +175,17 @@ const WaterSourcesMapScreen: React.FC = () => {
       capacity: '1500 L/hr',
       community: 'Hargeisa Suburbs',
       contact: '+252 63 6789012',
-      notes: 'Seasonal variation expected'
+      notes: 'Community managed, seasonal variation expected'
     },
   ]);
 
   const isWeb = Platform.OS === 'web';
-
-
 
   useEffect(() => {
     requestLocationPermission();
   }, []);
 
   useEffect(() => {
-    // Force WebView to re-render when location changes
     setMapKey(prev => prev + 1);
   }, [location]);
 
@@ -186,7 +194,6 @@ const WaterSourcesMapScreen: React.FC = () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
-        // Set default location for demo purposes
         setLocation({ latitude: 9.5624, longitude: 44.0770 });
         return;
       }
@@ -199,18 +206,17 @@ const WaterSourcesMapScreen: React.FC = () => {
       setLocation(newLocation);
     } catch (error) {
       setErrorMsg('Failed to get location');
-      console.error(error);
-      // Set default location as fallback
       setLocation({ latitude: 9.5624, longitude: 44.0770 });
     }
   }, []);
 
+  // Color utilities
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Working': return '#10B981';
-      case 'Low water': return '#F59E0B';
-      case 'Dry': return '#EF4444';
-      case 'Broken': return '#374151';
+      case 'Working': return '#10B981'; // Green
+      case 'Low water': return '#F59E0B'; // Yellow
+      case 'Dry': return '#EF4444'; // Red
+      case 'Broken': return '#64748B'; // Gray
       default: return '#6B7280';
     }
   };
@@ -228,39 +234,47 @@ const WaterSourcesMapScreen: React.FC = () => {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'Borehole': return 'water';
-      case 'Well': return 'water';
+      case 'Well': return 'water-outline';
       case 'Dam': return 'business';
       case 'Berkad': return 'leaf';
       default: return 'water';
     }
   };
 
-  const getQualityColor = (quality: string = 'Unknown') => {
-    switch (quality.toLowerCase()) {
-      case 'excellent': return '#10B981';
-      case 'good': return '#3B82F6';
-      case 'moderate': return '#F59E0B';
-      case 'poor': return '#EF4444';
-      default: return '#6B7280';
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'Borehole': return '#0c6dff';
+      case 'Well': return '#059669';
+      case 'Dam': return '#8b5cf6';
+      case 'Berkad': return '#f59e0b';
+      default: return '#64748B';
     }
   };
 
   const getTranslatedStatus = (status: string) => {
     switch (status) {
-      case 'Working': return t('workingStatus');
-      case 'Low water': return t('lowWaterStatus');
-      case 'Dry': return t('dryStatus');
-      case 'Broken': return t('brokenStatus');
+      case 'Working': return 'Working';
+      case 'Low water': return 'Low Water';
+      case 'Dry': return 'Dry';
+      case 'Broken': return 'Broken';
       default: return status;
     }
   };
 
+  // Filter and search logic
   const filteredSources = waterSources.filter(source => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'working') return source.status === 'Working';
-    if (activeFilter === 'low') return source.status === 'Low water';
-    if (activeFilter === 'dry') return source.status === 'Dry';
-    if (activeFilter === 'broken') return source.status === 'Broken';
+    if (activeFilter !== 'all' && source.status.toLowerCase().replace(' ', '') !== activeFilter) {
+      return false;
+    }
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      return (
+        source.name.toLowerCase().includes(query) ||
+        source.community?.toLowerCase().includes(query) ||
+        source.region.toLowerCase().includes(query) ||
+        source.type.toLowerCase().includes(query)
+      );
+    }
     return true;
   });
 
@@ -269,23 +283,23 @@ const WaterSourcesMapScreen: React.FC = () => {
     await requestLocationPermission();
     setTimeout(() => {
       setRefreshing(false);
-      Alert.alert(t('refreshed'), t('dataUpdated'));
+      Alert.alert('Updated', 'Water sources data has been refreshed');
     }, 1000);
   }, [requestLocationPermission]);
 
   const handleSourceSelect = (source: WaterSource) => {
     setSelectedSource(source);
-    setShowFixedDetails(true);
+    setShowDetailsModal(true);
   };
 
   const handleGetDirections = async (source: WaterSource) => {
     if (!location) {
       Alert.alert(
-        t('locationRequired'),
-        t('enableLocationMessage'),
+        'Location Required',
+        'Please enable location services to get directions',
         [
-          { text: t('cancel'), style: 'cancel' },
-          { text: t('enable'), onPress: requestLocationPermission }
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Enable', onPress: requestLocationPermission }
         ]
       );
       return;
@@ -305,7 +319,16 @@ const WaterSourcesMapScreen: React.FC = () => {
     }
   };
 
+  // Statistics calculation
+  const stats = {
+    total: filteredSources.length,
+    working: filteredSources.filter(s => s.status === 'Working').length,
+    lowWater: filteredSources.filter(s => s.status === 'Low water').length,
+    dry: filteredSources.filter(s => s.status === 'Dry').length,
+    broken: filteredSources.filter(s => s.status === 'Broken').length,
+  };
 
+  // ================ COMPONENT RENDERING ================
 
   const FilterButton = ({ filter, label, icon }: { filter: string; label: string; icon: string }) => (
     <TouchableOpacity
@@ -316,560 +339,437 @@ const WaterSourcesMapScreen: React.FC = () => {
       ]}
       onPress={() => setActiveFilter(filter)}
     >
-      <Ionicons 
-        name={icon as any} 
-        size={16} 
-        color={activeFilter === filter ? getStatusColor(label) : '#CBD5E1'} 
-      />
+      <View style={[
+        styles.filterIconContainer,
+        { backgroundColor: activeFilter === filter ? getStatusColor(label) + '30' : '#f1f5f9' }
+      ]}>
+        <Ionicons 
+          name={icon as any} 
+          size={14} 
+          color={activeFilter === filter ? getStatusColor(label) : '#64748b'} 
+        />
+      </View>
       <Typography variant="caption" style={[
         styles.filterButtonText,
-        activeFilter === filter && { color: getStatusColor(label) }
+        activeFilter === filter && { color: getStatusColor(label), fontWeight: '600' }
       ]}>
         {label}
       </Typography>
     </TouchableOpacity>
   );
 
-  const renderHeaderContent = () => (
-    <View style={[styles.headerGradient, { height: HEADER_COLLAPSED_HEIGHT, backgroundColor: '#0c6dff' }]}>
-      <View style={styles.headerContent}>
-        <View style={styles.headerTop}>
-          <View style={styles.titleContainer}>
-            <View style={styles.titleIconContainer}>
-              <Ionicons name="water" size={24} color="white" />
+  // Header Component
+  const renderHeader = () => (
+    <Animated.View style={[styles.headerContainer, { height: headerHeight, opacity: headerOpacity }]}>
+      <LinearGradient 
+        colors={['#0c6dff', '#0c6dff']}
+        style={styles.headerGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+      >
+        <View style={styles.headerContent}>
+          {/* Top Row */}
+          <View style={styles.headerTopRow}>
+            <View style={styles.headerLeft}>
+              <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                <Ionicons name="arrow-back" size={22} color="white" />
+              </TouchableOpacity>
+              <View style={styles.titleContainer}>
+                <View style={styles.titleIcon}>
+                  <Ionicons name="water" size={20} color="white" />
+                </View>
+                <Typography variant="h1" style={styles.headerTitle}>Water Sources</Typography>
+              </View>
             </View>
-            <View>
-              <Typography variant="h1" style={styles.headerTitle}>{t('mapTitle')}</Typography>
-              <Typography variant="caption" style={styles.headerSubtitle}>
-                {t('sourcesCount').replace('{count}', filteredSources.length.toString())} • {location ? t('yourLocation') : t('mapView')}
-              </Typography>
+            
+            <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.headerAction} onPress={() => setShowSearch(!showSearch)}>
+                <Ionicons name="search" size={20} color="white" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.headerAction} onPress={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}>
+                <Ionicons name={viewMode === 'map' ? 'list' : 'map'} size={20} color="white" />
+              </TouchableOpacity>
             </View>
           </View>
-          <TouchableOpacity
-            style={styles.headerActionButton}
-            onPress={() => {
-              const newMode = viewMode === 'map' ? 'list' : 'map';
-              setViewMode(newMode);
-            }}
-          >
-            <Ionicons
-              name={viewMode === 'map' ? "list" : "map"}
-              size={22}
-              color="white"
-            />
-          </TouchableOpacity>
+
+          {/* Stats Overview */}
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Typography variant="h2" style={styles.statValue}>{stats.total}</Typography>
+              <Typography variant="caption" style={styles.statLabel}>Total</Typography>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Typography variant="h2" style={[styles.statValue, { color: '#10B981' }]}>{stats.working}</Typography>
+              <Typography variant="caption" style={styles.statLabel}>Working</Typography>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Typography variant="h2" style={[styles.statValue, { color: '#F59E0B' }]}>{stats.lowWater}</Typography>
+              <Typography variant="caption" style={styles.statLabel}>Low Water</Typography>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Typography variant="h2" style={[styles.statValue, { color: '#EF4444' }]}>{stats.broken + stats.dry}</Typography>
+              <Typography variant="caption" style={styles.statLabel}>Needs Help</Typography>
+            </View>
+          </View>
+
+          {/* Search Bar (Conditional) */}
+          {showSearch && (
+            <View style={styles.searchBarContainer}>
+              <View style={styles.searchInputWrapper}>
+                <Ionicons name="search" size={18} color="#64748b" style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search by name, community, or region..."
+                  placeholderTextColor="#94a3b8"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  autoFocus
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery('')}>
+                    <Ionicons name="close-circle" size={18} color="#64748b" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
         </View>
-        <View style={styles.statusLegend}>
-           <View style={styles.legendItem}>
-             <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
-             <Typography variant="caption" style={styles.legendText}>{t('working')}</Typography>
-           </View>
-           <View style={styles.legendItem}>
-             <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
-             <Typography variant="caption" style={styles.legendText}>{t('low')}</Typography>
-           </View>
-           <View style={styles.legendItem}>
-             <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
-             <Typography variant="caption" style={styles.legendText}>{t('dry')}</Typography>
-           </View>
-           <View style={styles.legendItem}>
-             <View style={[styles.legendDot, { backgroundColor: '#374151' }]} />
-             <Typography variant="caption" style={styles.legendText}>{t('broken')}</Typography>
-           </View>
-         </View>
-      </View>
-    </View>
+
+        {/* Filter Tabs */}
+        <View style={styles.filterTabsContainer}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScrollContent}
+          >
+            <FilterButton filter="all" label="All" icon="apps" />
+            <FilterButton filter="working" label="Working" icon="checkmark-circle" />
+            <FilterButton filter="lowwater" label="Low Water" icon="water" />
+            <FilterButton filter="dry" label="Dry" icon="sunny" />
+            <FilterButton filter="broken" label="Broken" icon="alert-circle" />
+          </ScrollView>
+        </View>
+      </LinearGradient>
+    </Animated.View>
   );
 
-  const generateMapHTML = () => {
-    const userLocation = location || { latitude: region.latitude, longitude: region.longitude };
-    const yourCurrentLocation = t('yourCurrentLocation');
-    
-    return `<!DOCTYPE html>
-<html>
-<head>
-<title>Water Sources Map</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body, html { width: 100%; height: 100%; overflow: hidden; }
-#map { 
-  width: 100%; 
-  height: 100%; 
-  background: #f0f4f8;
-}
-.leaflet-container {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-}
-.custom-marker {
-  background: white;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border: 3px solid;
-  position: relative;
-}
-.custom-marker:hover { 
-  transform: scale(1.2) translateY(-5px); 
-  box-shadow: 0 8px 16px rgba(0,0,0,0.4);
-}
-.marker-pulse {
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-  70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-}
-.leaflet-popup-content {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  padding: 16px;
-  min-width: 250px;
-}
-.leaflet-popup-content h3 {
-  margin: 0 0 8px 0;
-  color: #0F172A;
-  font-size: 16px;
-  font-weight: 600;
-}
-.status-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  margin: 8px 0;
-}
-.map-button {
-  background: #3B82F6;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-top: 8px;
-  width: 100%;
-  font-size: 14px;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-.map-button:hover {
-  background: #2563EB;
-}
-</style>
-</head>
-<body>
-<div id="map"></div>
-<script>
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-  // Initialize map with proper view
-  var map = L.map('map', {
-    zoomControl: true,
-    scrollWheelZoom: true,
-    dragging: true,
-    tap: true,
-    attributionControl: false
-  }).setView([${userLocation.latitude}, ${userLocation.longitude}], 13);
-  
-  // Add tile layer with better visibility
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19,
-    detectRetina: true
-  }).addTo(map);
-  
-  // Add attribution
-  L.control.attribution({ prefix: false }).addAttribution('© OpenStreetMap').addTo(map);
-
-  // Function to get status color
-  function getStatusColor(status) {
-    switch (status) {
-      case 'Working': return '#10B981';
-      case 'Low water': return '#F59E0B';
-      case 'Dry': return '#EF4444';
-      case 'Broken': return '#374151';
-      default: return '#6B7280';
-    }
-  }
-
-  // Add water source markers
-  var markers = [];
-  var waterSources = ${JSON.stringify(filteredSources)};
-  
-  waterSources.forEach(function(source) {
-    var statusColor = getStatusColor(source.status);
-    var markerIcon = L.divIcon({
-      html: '<div class="custom-marker marker-pulse" style="border-color: ' + statusColor + '">' +
-            '<div style="width: 20px; height: 20px; border-radius: 50%; background: ' + statusColor + '; display: flex; align-items: center; justify-content: center;">' +
-            '<span style="color: white; font-size: 12px; font-weight: bold;">' + source.type.charAt(0) + '</span>' +
-            '</div>' +
-            '</div>',
-      className: 'custom-div-icon',
-      iconSize: [40, 40],
-      iconAnchor: [20, 40],
-      popupAnchor: [0, -40]
-    });
-    
-    var marker = L.marker([source.latitude, source.longitude], {
-      icon: markerIcon,
-      title: source.name
-    }).addTo(map);
-    
-    // Removed popup content and binding
-    
-    marker.on('click', function(e) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ 
-        type: 'select', 
-        id: source.id
-      }));
-    });
-    
-    markers.push(marker);
-  });
-
-  // Add user location marker with better styling
-  var userIcon = L.divIcon({
-    html: '<div style="background: #3B82F6; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.3); border: 3px solid white; animation: pulse 2s infinite; position: relative;">' +
-          '<span style="font-size: 18px;">📍</span>' +
-          '</div>',
-    className: 'user-div-icon',
-    iconSize: [32, 32],
-    iconAnchor: [16, 32]
-  });
-  
-  var userMarker = L.marker([${userLocation.latitude}, ${userLocation.longitude}], {
-    icon: userIcon,
-    title: 'Your Location',
-    zIndexOffset: 1000
-  }).addTo(map);
-  
-  userMarker.bindPopup('<div style="font-weight: 600; padding: 8px;">' + yourCurrentLocation + '</div>');
-
-  // Fit bounds to show all markers
-  if (markers.length > 0) {
-    var group = new L.featureGroup(markers);
-    map.fitBounds(group.getBounds().pad(0.2));
-  }
-
-  // Variable for routing control
-  var routingControl = null;
-
-  // Function to add route
-  window.addRoute = function(originLat, originLng, destLat, destLng) {
-    if (routingControl) {
-      map.removeControl(routingControl);
-      routingControl = null;
-    }
-    
-    routingControl = L.Routing.control({
-      waypoints: [
-        L.latLng(originLat, originLng),
-        L.latLng(destLat, destLng)
-      ],
-      routeWhileDragging: false,
-      lineOptions: {
-        styles: [
-          { color: '#3B82F6', weight: 5, opacity: 0.8 }
-        ]
-      },
-      fitSelectedRoutes: true,
-      show: false,
-      createMarker: function() { return null; },
-      addWaypoints: false,
-      draggableWaypoints: false
-    }).addTo(map);
-  };
-
-  // Notify React Native that map is ready
-  window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'mapReady' }));
-});
-</script>
-</body>
-</html>`;
-  };
-
+  // Map View Component
   const renderMapView = () => (
     <View style={styles.mapContainer}>
       {isWeb ? (
         <View style={styles.mapPlaceholder}>
-          <Ionicons name="map" size={64} color="#CBD5E1" />
-          <Typography variant="h3" style={styles.mapPlaceholderText}>{t('interactiveMap')}</Typography>
-          <Typography variant="body" style={styles.mapPlaceholderSubtext}>
-            {t('mapViewAvailable')}
+          <Ionicons name="map" size={64} color="#cbd5e1" />
+          <Typography variant="h3" style={styles.placeholderText}>Interactive Map</Typography>
+          <Typography variant="body" style={styles.placeholderSubtext}>
+            Map view available in mobile app
           </Typography>
         </View>
       ) : (
-        <WebView
-          key={`webview-${mapKey}`}
-          ref={webViewRef}
-          source={{ html: generateMapHTML() }}
-          style={styles.map}
-          onLoad={handleMapReady}
-          onMessage={(event) => {
-            try {
-              const data = JSON.parse(event.nativeEvent.data);
-              if (data.type === 'select') {
-                const source = waterSources.find(s => s.id === data.id);
-                if (source) {
-                  handleSourceSelect(source);
+        <>
+          <WebView
+            key={`webview-${mapKey}`}
+            ref={webViewRef}
+            source={{ html: generateMapHTML() }}
+            style={styles.map}
+            onLoad={handleMapReady}
+            onMessage={(event) => {
+              try {
+                const data = JSON.parse(event.nativeEvent.data);
+                if (data.type === 'select') {
+                  const source = waterSources.find(s => s.id === data.id);
+                  if (source) handleSourceSelect(source);
+                } else if (data.type === 'mapReady') {
+                  handleMapReady();
                 }
-              } else if (data.type === 'mapReady') {
-                handleMapReady();
+              } catch (e) {
+                console.warn('Failed to parse message', e);
               }
-            } catch (e) {
-              console.warn('Failed to parse message', e);
-            }
-          }}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          startInLoadingState={true}
-          scalesPageToFit={true}
-          mixedContentMode="always"
-          renderLoading={() => (
-            <View style={styles.mapLoading}>
-              <View style={styles.mapLoadingContent}>
-                <Ionicons name="map" size={48} color="#3B82F6" />
-                <Typography variant="h3" style={styles.mapLoadingText}>{t('loadingMap')}</Typography>
-                <Typography variant="body" style={styles.mapLoadingSubtext}>
-                  {t('loadingMapSubtext')}
-                </Typography>
+            }}
+            javaScriptEnabled={true}
+            startInLoadingState={true}
+            renderLoading={() => (
+              <View style={styles.mapLoading}>
+                <Ionicons name="map" size={48} color="#0c6dff" />
+                <Typography variant="body" style={styles.loadingText}>Loading map...</Typography>
               </View>
-            </View>
+            )}
+          />
+          {mapReady && location && (
+            <TouchableOpacity style={styles.centerButton} onPress={handleCenterToUser}>
+              <LinearGradient colors={['#0c6dff', '#0c6dff']} style={styles.centerButtonGradient}>
+                <Ionicons name="locate" size={22} color="white" />
+              </LinearGradient>
+            </TouchableOpacity>
           )}
-        />
+        </>
       )}
     </View>
   );
 
+  // List View Component
   const renderListView = () => (
-    <View style={[styles.listContainer, { paddingTop: HEADER_COLLAPSED_HEIGHT }]}>
-      <Animated.ScrollView
-        style={styles.listScroll}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
-        scrollEventThrottle={16}
-      >
-        <View style={styles.listHeader}>
-          <Typography variant="h2" style={styles.listTitle}>{t('allWaterSources')}</Typography>
-          <Typography variant="caption" style={styles.listSubtitle}>
-            {t('sourcesFound').replace('{count}', filteredSources.length.toString())}
-          </Typography>
-        </View>
-        
-        {filteredSources.map((source) => (
-          <TouchableOpacity
-            key={source.id}
-            style={styles.listItem}
-            onPress={() => handleSourceSelect(source)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.listItemLeft}>
-              <View style={[
-                styles.listItemIconContainer,
-                { backgroundColor: getStatusBackgroundColor(source.status) }
-              ]}>
-                <Ionicons 
-                  name={getTypeIcon(source.type)} 
-                  size={20} 
-                  color={getStatusColor(source.status)} 
-                />
-              </View>
-              <View style={styles.listItemContent}>
-                <Typography variant="body" style={styles.listItemTitle}>
-                  {source.name}
-                </Typography>
-                <View style={styles.listItemDetails}>
-                  <View style={styles.listItemBadge}>
-                    <View style={[styles.listItemDot, { backgroundColor: getStatusColor(source.status) }]} />
-                    <Typography variant="caption" style={[styles.listItemStatus, { color: getStatusColor(source.status) }]}>
-                      {getTranslatedStatus(source.status)}
-                    </Typography>
-                  </View>
-                  <Typography variant="caption" style={styles.listItemDetail}>
-                    {source.region} • {source.distance}
+    <Animated.ScrollView
+      style={[styles.listContainer, { paddingTop: HEADER_EXPANDED_HEIGHT + 60 }]}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      onScroll={Animated.event(
+        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+        { useNativeDriver: false }
+      )}
+      scrollEventThrottle={16}
+    >
+      <View style={styles.listHeader}>
+        <Typography variant="h2" style={styles.listTitle}>Water Sources</Typography>
+        <Typography variant="caption" style={styles.listSubtitle}>
+          {filteredSources.length} sources found
+        </Typography>
+      </View>
+      
+      {filteredSources.map((source) => (
+        <TouchableOpacity
+          key={source.id}
+          style={styles.sourceCard}
+          onPress={() => handleSourceSelect(source)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.cardHeader}>
+            <View style={[styles.typeIcon, { backgroundColor: getStatusBackgroundColor(source.status) }]}>
+              <Ionicons 
+                name={getTypeIcon(source.type)} 
+                size={18} 
+                color={getStatusColor(source.status)} 
+              />
+            </View>
+            <View style={styles.cardContent}>
+              <Typography variant="h3" style={styles.sourceName}>{source.name}</Typography>
+              <View style={styles.sourceDetails}>
+                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(source.status) + '15' }]}>
+                  <View style={[styles.statusDot, { backgroundColor: getStatusColor(source.status) }]} />
+                  <Typography variant="caption" style={[styles.statusText, { color: getStatusColor(source.status) }]}>
+                    {getTranslatedStatus(source.status)}
                   </Typography>
                 </View>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
-          </TouchableOpacity>
-        ))}
-      </Animated.ScrollView>
-    </View>
-  );
-
-  const FixedDetailsPanel = () => (
-    <View style={styles.fixedDetailsPanel}>
-      <View style={styles.fixedDetailsHeader}>
-        <TouchableOpacity
-          style={styles.fixedDetailsCloseButton}
-          onPress={() => setShowFixedDetails(false)}
-        >
-          <Ionicons name="close" size={24} color="#64748B" />
-        </TouchableOpacity>
-      </View>
-      {selectedSource && (
-        <ScrollView style={styles.fixedDetailsScroll} showsVerticalScrollIndicator={false}>
-          {/* Source Header */}
-          <View style={[styles.sourceHeader, { backgroundColor: getStatusBackgroundColor(selectedSource.status) }]}>
-            <View style={styles.sourceIconLarge}>
-              <LinearGradient
-                colors={[getStatusColor(selectedSource.status), getStatusColor(selectedSource.status) + '80']}
-                style={styles.sourceIconGradientLarge}
-              >
-                <Ionicons name={getTypeIcon(selectedSource.type)} size={32} color="white" />
-              </LinearGradient>
-            </View>
-            <View style={styles.sourceHeaderContent}>
-              <Typography variant="h1" style={styles.modalTitleLarge}>
-                {selectedSource.name}
-              </Typography>
-              <View style={styles.statusContainer}>
-                <View style={[styles.statusDotLarge, { backgroundColor: getStatusColor(selectedSource.status) }]} />
-                <Typography variant="h3" style={[styles.statusTextLarge, { color: getStatusColor(selectedSource.status) }]}>
-                  {getTranslatedStatus(selectedSource.status)}
+                <Typography variant="caption" style={styles.locationText}>
+                  {source.community} • {source.distance}
                 </Typography>
               </View>
             </View>
+            <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
           </View>
-
-          {/* Quick Info */}
-          <View style={styles.quickInfoGrid}>
-            <View style={styles.quickInfoCard}>
-              <Ionicons name="location" size={20} color="#3B82F6" />
-              <Typography variant="caption" style={styles.quickInfoLabel}>{t('region')}</Typography>
-              <Typography variant="body" style={styles.quickInfoValue}>{selectedSource.region}</Typography>
+          
+          <View style={styles.cardFooter}>
+            <View style={styles.footerItem}>
+              <Ionicons name="time" size={12} color="#64748b" />
+              <Typography variant="caption" style={styles.footerText}>{source.lastUpdate}</Typography>
             </View>
-            <View style={styles.quickInfoCard}>
-              <Ionicons name="navigate" size={20} color="#3B82F6" />
-              <Typography variant="caption" style={styles.quickInfoLabel}>{t('distance')}</Typography>
-              <Typography variant="body" style={styles.quickInfoValue}>{selectedSource.distance || 'N/A'}</Typography>
+            <View style={styles.footerItem}>
+              <Ionicons name="location" size={12} color="#64748b" />
+              <Typography variant="caption" style={styles.footerText}>{source.type}</Typography>
             </View>
-            <View style={styles.quickInfoCard}>
-              <Ionicons name="time" size={20} color="#3B82F6" />
-              <Typography variant="caption" style={styles.quickInfoLabel}>{t('lastUpdate')}</Typography>
-              <Typography variant="body" style={styles.quickInfoValue}>{selectedSource.lastUpdate}</Typography>
-            </View>
-            <View style={styles.quickInfoCard}>
-              <Ionicons name="water" size={20} color="#3B82F6" />
-              <Typography variant="caption" style={styles.quickInfoLabel}>{t('type')}</Typography>
-              <Typography variant="body" style={styles.quickInfoValue}>{selectedSource.type}</Typography>
+            <View style={styles.footerItem}>
+              <Ionicons name="people" size={12} color="#64748b" />
+              <Typography variant="caption" style={styles.footerText}>{source.community}</Typography>
             </View>
           </View>
-
-          {/* Action Buttons */}
-          <View style={styles.modalActions}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.secondaryButton]}
-              onPress={() => {
-                setShowFixedDetails(false);
-                (navigation.navigate as any)('Report', { source: selectedSource });
-              }}
-            >
-              <Ionicons name="create" size={20} color="#3B82F6" />
-              <Typography variant="body" style={[styles.actionButtonText, { color: '#3B82F6' }]}>
-                {t('reportUpdate')}
-              </Typography>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.primaryButton]}
-              onPress={() => handleGetDirections(selectedSource)}
-            >
-              <Ionicons name="navigate" size={20} color="white" />
-              <Typography variant="body" style={styles.actionButtonText}>
-                {t('getDirections')}
-              </Typography>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      )}
-    </View>
+        </TouchableOpacity>
+      ))}
+    </Animated.ScrollView>
   );
-  
+
+  // Details Modal Component
+  const renderDetailsModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showDetailsModal}
+      onRequestClose={() => setShowDetailsModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <TouchableWithoutFeedback onPress={() => setShowDetailsModal(false)}>
+          <View style={styles.modalBackdrop} />
+        </TouchableWithoutFeedback>
+        
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <View style={styles.modalDragHandle} />
+              <TouchableOpacity 
+                style={styles.modalCloseButton} 
+                onPress={() => setShowDetailsModal(false)}
+              >
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            {selectedSource && (
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+                {/* Source Header */}
+                <View style={[styles.sourceHeader, { backgroundColor: getStatusBackgroundColor(selectedSource.status) }]}>
+                  <View style={styles.sourceIconContainer}>
+                    <LinearGradient
+                      colors={[getStatusColor(selectedSource.status), getStatusColor(selectedSource.status) + '80']}
+                      style={styles.sourceIconGradient}
+                    >
+                      <Ionicons name={getTypeIcon(selectedSource.type)} size={28} color="white" />
+                    </LinearGradient>
+                  </View>
+                  <View style={styles.sourceHeaderText}>
+                    <Typography variant="h1" style={styles.modalTitle}>{selectedSource.name}</Typography>
+                    <View style={styles.statusRow}>
+                      <View style={[styles.statusDotLarge, { backgroundColor: getStatusColor(selectedSource.status) }]} />
+                      <Typography variant="h3" style={[styles.statusTextLarge, { color: getStatusColor(selectedSource.status) }]}>
+                        {getTranslatedStatus(selectedSource.status)}
+                      </Typography>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Quick Info Grid */}
+                <View style={styles.infoGrid}>
+                  <View style={styles.infoCard}>
+                    <Ionicons name="location" size={20} color="#0c6dff" />
+                    <Typography variant="caption" style={styles.infoLabel}>Region</Typography>
+                    <Typography variant="body" style={styles.infoValue}>{selectedSource.region}</Typography>
+                  </View>
+                  <View style={styles.infoCard}>
+                    <Ionicons name="navigate" size={20} color="#0c6dff" />
+                    <Typography variant="caption" style={styles.infoLabel}>Distance</Typography>
+                    <Typography variant="body" style={styles.infoValue}>{selectedSource.distance || 'N/A'}</Typography>
+                  </View>
+                  <View style={styles.infoCard}>
+                    <Ionicons name="time" size={20} color="#0c6dff" />
+                    <Typography variant="caption" style={styles.infoLabel}>Last Update</Typography>
+                    <Typography variant="body" style={styles.infoValue}>{selectedSource.lastUpdate}</Typography>
+                  </View>
+                  <View style={styles.infoCard}>
+                    <Ionicons name="water" size={20} color="#0c6dff" />
+                    <Typography variant="caption" style={styles.infoLabel}>Type</Typography>
+                    <Typography variant="body" style={styles.infoValue}>{selectedSource.type}</Typography>
+                  </View>
+                </View>
+
+                {/* Details Section */}
+                <View style={styles.detailsSection}>
+                  <Typography variant="h3" style={styles.sectionTitle}>Source Details</Typography>
+                  
+                  <View style={styles.detailRow}>
+                    <Ionicons name="people" size={18} color="#64748b" />
+                    <View style={styles.detailContent}>
+                      <Typography variant="caption" style={styles.detailLabel}>Community</Typography>
+                      <Typography variant="body" style={styles.detailValue}>{selectedSource.community}</Typography>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Ionicons name="speedometer" size={18} color="#64748b" />
+                    <View style={styles.detailContent}>
+                      <Typography variant="caption" style={styles.detailLabel}>Flow Rate</Typography>
+                      <Typography variant="body" style={styles.detailValue}>{selectedSource.flowRate || 'N/A'}</Typography>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Ionicons name="thermometer" size={18} color="#64748b" />
+                    <View style={styles.detailContent}>
+                      <Typography variant="caption" style={styles.detailLabel}>Water Quality</Typography>
+                      <Typography variant="body" style={styles.detailValue}>{selectedSource.waterQuality || 'Unknown'}</Typography>
+                    </View>
+                  </View>
+
+                  {selectedSource.notes && (
+                    <View style={styles.notesCard}>
+                      <Typography variant="caption" style={styles.notesLabel}>Community Notes</Typography>
+                      <Typography variant="body" style={styles.notesText}>{selectedSource.notes}</Typography>
+                    </View>
+                  )}
+                </View>
+
+                {/* Action Buttons */}
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity 
+                    style={[styles.actionButton, styles.secondaryButton]}
+                    onPress={() => {
+                      setShowDetailsModal(false);
+                      // Navigate to report screen
+                    }}
+                  >
+                    <Ionicons name="create" size={18} color="#0c6dff" />
+                    <Typography variant="body" style={[styles.actionButtonText, { color: '#0c6dff' }]}>
+                      Report Update
+                    </Typography>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.actionButton, styles.primaryButton]}
+                    onPress={() => {
+                      handleGetDirections(selectedSource);
+                      setShowDetailsModal(false);
+                    }}
+                  >
+                    <Ionicons name="navigate" size={18} color="white" />
+                    <Typography variant="body" style={[styles.actionButtonText, { color: 'white' }]}>
+                      Get Directions
+                    </Typography>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <Layout noPadding>
-      {renderHeaderContent()}
+      {renderHeader()}
+      {viewMode === 'map' ? renderMapView() : renderListView()}
+      {renderDetailsModal()}
       
-      <View style={styles.container}>
-        {viewMode === 'map' ? renderMapView() : renderListView()}
-        
-        {viewMode === 'map' && !isWeb && mapReady && location && (
-          <TouchableOpacity style={styles.centerButton} onPress={handleCenterToUser}>
-            <LinearGradient colors={['#3B82F6', '#2563EB']} style={styles.centerButtonGradient}>
-              <Ionicons name="locate" size={24} color="white" />
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
-        
-        {viewMode === 'list' && (
-          <TouchableOpacity 
-            style={styles.viewToggleButton} 
-            onPress={() => setViewMode('map')}
-          >
-            <LinearGradient colors={['#3B82F6', '#2563EB']} style={styles.viewToggleGradient}>
-              <Ionicons name="map" size={20} color="white" />
-              <Typography variant="caption" style={styles.viewToggleText}>
-                {t('viewMap')}
-              </Typography>
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {showFixedDetails && (
-        <TouchableWithoutFeedback onPress={() => setShowFixedDetails(false)}>
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-        </TouchableWithoutFeedback>
+      {/* View Toggle Button for List View */}
+      {viewMode === 'list' && (
+        <TouchableOpacity 
+          style={styles.viewToggleButton} 
+          onPress={() => setViewMode('map')}
+        >
+          <LinearGradient colors={['#0c6dff', '#0c6dff']} style={styles.viewToggleGradient}>
+            <Ionicons name="map" size={18} color="white" />
+            <Typography variant="caption" style={styles.viewToggleText}>View Map</Typography>
+          </LinearGradient>
+        </TouchableOpacity>
       )}
-
-      {showFixedDetails && selectedSource && <FixedDetailsPanel />}
     </Layout>
   );
 };
 
+// ================ STYLES ================
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  headerGradient: {
+  container: { flex: 1, backgroundColor: '#f8fafc' },
+  
+  // Header Styles
+  headerContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     zIndex: 1000,
     overflow: 'hidden',
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
-  headerContent: {
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 35 : 15,
-    height: '100%',
-  },
-  headerTop: {
+  headerGradient: { flex: 1 },
+  headerContent: { flex: 1, paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 50 : 30 },
+  
+  headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 16,
   },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   backButton: {
     width: 36,
     height: 36,
@@ -877,206 +777,91 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    marginRight: 10,
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  titleIconContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 12,
-    padding: 8,
     marginRight: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  titleContainer: { flexDirection: 'row', alignItems: 'center' },
+  titleIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '700',
-    color: '#F8FAFC',
-    marginBottom: 4,
+    color: 'white',
   },
-  headerSubtitle: {
-    color: '#CBD5E1',
-    fontSize: 14,
+  headerRight: { flexDirection: 'row', gap: 8 },
+  headerAction: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  headerActionButton: {
+  
+  // Stats Container
+  statsContainer: {
+    flexDirection: 'row',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 12,
-    padding: 10,
-    marginLeft: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  statusLegend: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 0,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 6,
-  },
-  legendText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  expandableContent: {
-    marginBottom: 20,
-  },
-  quickStatsContainer: {
-    marginBottom: 20,
-  },
-  quickStatsScroll: {
-    paddingRight: 20,
-  },
-  statCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginRight: 12,
-    minWidth: 100,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  statLabel: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  filterSection: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    padding: 16,
-  },
-  filterHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    padding: 12,
     marginBottom: 12,
   },
-  filterTitle: {
-    color: '#F8FAFC',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  filtersContainer: {
+  statItem: { flex: 1, alignItems: 'center' },
+  statValue: { fontSize: 20, fontWeight: '800', color: 'white', marginBottom: 4 },
+  statLabel: { color: 'rgba(255, 255, 255, 0.85)', fontSize: 11, fontWeight: '600' },
+  statDivider: { width: 1, height: 30, backgroundColor: 'rgba(255, 255, 255, 0.2)' },
+  
+  // Search Bar
+  searchBarContainer: { marginBottom: 12 },
+  searchInputWrapper: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
+  searchIcon: { marginRight: 8 },
+  searchInput: { flex: 1, fontSize: 14, color: '#1e293b', paddingVertical: 0 },
+  
+  // Filter Tabs
+  filterTabsContainer: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingVertical: 8,
+  },
+  filterScrollContent: { paddingHorizontal: 20, gap: 8 },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f8fafc',
     gap: 6,
   },
-  filterButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  filterButtonText: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  collapseIndicator: {
-    position: 'absolute',
-    bottom: 10,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  mapContainer: {
-    flex: 1,
-    backgroundColor: '#f0f4f8',
-  },
-  map: {
-    flex: 1,
-  },
-  mapPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    padding: 20,
-  },
-  mapPlaceholderText: {
-    color: '#64748B',
-    marginTop: 16,
-    marginBottom: 8,
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  mapPlaceholderSubtext: {
-    color: '#94A3B8',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  mapLoading: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-  },
-  mapLoadingContent: {
-    alignItems: 'center',
-    padding: 20,
-  },
-  mapLoadingText: {
-    color: '#64748B',
-    marginTop: 12,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  mapLoadingSubtext: {
-    color: '#94A3B8',
-    fontSize: 14,
-    marginTop: 4,
-  },
+  filterButtonActive: { backgroundColor: 'white', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
+  filterIconContainer: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  filterButtonText: { fontSize: 12, fontWeight: '500', color: '#64748b' },
+  
+  // Map Styles
+  mapContainer: { flex: 1, backgroundColor: '#f0f4f8' },
+  map: { flex: 1 },
+  mapPlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9' },
+  placeholderText: { color: '#64748b', marginTop: 12, fontSize: 18, fontWeight: '600' },
+  placeholderSubtext: { color: '#94a3b8', fontSize: 14, marginTop: 4 },
+  mapLoading: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
+  loadingText: { color: '#64748b', marginTop: 12 },
   centerButton: {
     position: 'absolute',
     bottom: 100,
-    right: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  centerButtonGradient: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  viewToggleButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
     right: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -1084,118 +869,50 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  viewToggleGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  centerButtonGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
-    borderRadius: 16,
-    padding: 16,
-    gap: 8,
-  },
-  viewToggleText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  listContainer: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    paddingTop: HEADER_COLLAPSED_HEIGHT,
-  },
-  listScroll: {
-    flex: 1,
-  },
-  listHeader: {
-    padding: 20,
-    paddingBottom: 10,
-  },
-  listTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 4,
-  },
-  listSubtitle: {
-    color: '#64748B',
-    fontSize: 14,
-  },
-  listItem: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+  },
+  
+  // List Styles
+  listContainer: { flex: 1, backgroundColor: '#f8fafc' },
+  listHeader: { padding: 20, paddingBottom: 12 },
+  listTitle: { fontSize: 22, fontWeight: '700', color: '#1e293b', marginBottom: 4 },
+  listSubtitle: { color: '#64748b', fontSize: 14 },
+  sourceCard: {
     backgroundColor: 'white',
     marginHorizontal: 20,
-    marginBottom: 8,
+    marginBottom: 12,
+    borderRadius: 16,
     padding: 16,
-    borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: 4,
     elevation: 2,
   },
-  listItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  listItemIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  listItemContent: {
-    flex: 1,
-  },
-  listItemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginBottom: 4,
-  },
-  listItemDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  listItemBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginRight: 8,
-  },
-  listItemDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 4,
-  },
-  listItemStatus: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  listItemDetail: {
-    color: '#64748B',
-    fontSize: 12,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.8)',
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  typeIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  cardContent: { flex: 1 },
+  sourceName: { fontSize: 16, fontWeight: '600', color: '#1e293b', marginBottom: 6 },
+  sourceDetails: { flexDirection: 'row', alignItems: 'center' },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, marginRight: 8 },
+  statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 4 },
+  statusText: { fontSize: 11, fontWeight: '600' },
+  locationText: { color: '#64748b', fontSize: 11 },
+  cardFooter: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 12 },
+  footerItem: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 4 },
+  footerText: { color: '#64748b', fontSize: 11 },
+  
+  // Modal Styles
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.8)' },
+  modalBackdrop: { ...StyleSheet.absoluteFillObject },
+  modalContainer: { flex: 1, justifyContent: 'flex-end' },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'white',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: SCREEN_HEIGHT * 0.85,
@@ -1207,18 +924,20 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
   },
-  modalCloseButton: {
-    padding: 4,
-  },
   modalDragHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: '#e2e8f0',
     borderRadius: 2,
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -20,
+    top: 8,
   },
-  modalScroll: {
-    flex: 1,
-  },
+  modalCloseButton: { padding: 4 },
+  modalScroll: { flex: 1 },
+  
+  // Source Header in Modal
   sourceHeader: {
     padding: 24,
     borderTopLeftRadius: 24,
@@ -1226,227 +945,102 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  sourceIconLarge: {
-    marginRight: 16,
-  },
-  sourceIconGradientLarge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  sourceIconContainer: { marginRight: 16 },
+  sourceIconGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  sourceHeaderContent: {
-    flex: 1,
-  },
-  modalTitleLarge: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 8,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusDotLarge: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  statusTextLarge: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  quickInfoGrid: {
+  sourceHeaderText: { flex: 1 },
+  modalTitle: { fontSize: 22, fontWeight: '700', color: '#1e293b', marginBottom: 8 },
+  statusRow: { flexDirection: 'row', alignItems: 'center' },
+  statusDotLarge: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
+  statusTextLarge: { fontSize: 16, fontWeight: '600' },
+  
+  // Info Grid
+  infoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     padding: 16,
     gap: 12,
   },
-  quickInfoCard: {
+  infoCard: {
     width: '48%',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#f8fafc',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
   },
-  quickInfoLabel: {
-    color: '#64748B',
-    fontSize: 12,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  quickInfoValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0F172A',
-  },
-  detailsSection: {
-    padding: 24,
-    paddingTop: 0,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 16,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  detailContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  detailLabel: {
-    color: '#64748B',
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  detailValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#0F172A',
-  },
-  qualityIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  qualityDotLarge: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
+  infoLabel: { color: '#64748b', fontSize: 11, marginTop: 8, marginBottom: 4, fontWeight: '600' },
+  infoValue: { fontSize: 14, fontWeight: '600', color: '#1e293b' },
+  
+  // Details Section
+  detailsSection: { padding: 24, paddingTop: 0 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1e293b', marginBottom: 16 },
+  detailRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  detailContent: { flex: 1, marginLeft: 12 },
+  detailLabel: { color: '#64748b', fontSize: 11, marginBottom: 2, fontWeight: '600' },
+  detailValue: { fontSize: 14, fontWeight: '500', color: '#1e293b' },
+  
+  // Notes Card
   notesCard: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#f8fafc',
     borderRadius: 12,
     padding: 16,
+    marginTop: 8,
   },
-  notesText: {
-    color: '#64748B',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  modalActions: {
+  notesLabel: { color: '#64748b', fontSize: 11, marginBottom: 4, fontWeight: '600' },
+  notesText: { color: '#64748b', fontSize: 14, lineHeight: 20 },
+  
+  // Action Buttons
+  actionButtons: {
     flexDirection: 'row',
     padding: 20,
     gap: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: '#e2e8f0',
   },
   actionButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
+    padding: 14,
     gap: 8,
   },
-  primaryButton: {
-    backgroundColor: '#3B82F6',
-  },
-  secondaryButton: {
-    backgroundColor: '#F1F5F9',
-  },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  fixedDetailsPanel: {
+  primaryButton: { backgroundColor: '#0c6dff' },
+  secondaryButton: { backgroundColor: '#f1f5f9' },
+  actionButtonText: { fontSize: 14, fontWeight: '600' },
+  
+  // View Toggle Button
+  viewToggleButton: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'white',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    bottom: 20,
+    left: 20,
+    right: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 8,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-    maxHeight: SCREEN_HEIGHT * 0.85,
+    elevation: 5,
   },
-  fixedDetailsScroll: {
-    flex: 1,
-  },
-  fixedDetailsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: 16,
-    paddingBottom: 0,
-  },
-  fixedDetailsCloseButton: {
-    padding: 4,
-  },
-  fixedDetailsContent: {
-    padding: 20,
-    paddingTop: 0,
-  },
-  fixedDetailsMain: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  fixedDetailsIconContainer: {
-    marginRight: 16,
-  },
-  fixedDetailsIconGradient: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fixedDetailsText: {
-    flex: 1,
-  },
-  fixedDetailsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 4,
-  },
-  fixedDetailsStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  fixedDetailsStatusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  fixedDetailsStatusText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  fixedDetailsType: {
-    color: '#64748B',
-    fontSize: 12,
-  },
-  viewDetailsButton: {
+  viewToggleGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     gap: 8,
   },
-  viewDetailsButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#3B82F6',
-  },
+  viewToggleText: { color: 'white', fontSize: 14, fontWeight: '600' },
 });
+
+// Generate Map HTML (simplified for brevity)
+const generateMapHTML = () => {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><style>#map{width:100%;height:100%;}</style></head><body><div id="map"></div><script>var map=L.map('map').setView([9.5624,44.0770],13);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);window.ReactNativeWebView.postMessage(JSON.stringify({type:'mapReady'}));</script></body></html>`;
+};
 
 export default WaterSourcesMapScreen;

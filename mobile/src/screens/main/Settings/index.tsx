@@ -101,7 +101,7 @@ const SettingsScreen: React.FC = () => {
       <Layout style={styles.container} noPadding>
         {/* Header - Modern Glassmorphism */}
         <LinearGradient
-          colors={['#0F172A', '#1E293B']}
+          colors={['#0c6dff', '#4f46e5']}
           style={styles.header}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}

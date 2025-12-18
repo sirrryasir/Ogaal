@@ -67,6 +67,25 @@ type RootStackParamList = {
   // add other routes here as needed
 };
 
+// Blue color palette
+const BLUE_PRIMARY = '#0c6dff';
+const BLUE_DARK = '#0052cc';
+const BLUE_LIGHT = '#3d8eff';
+const BLUE_EXTRA_LIGHT = '#f0f7ff';
+const BLUE_PALE = '#e6f0ff';
+
+// Status colors in blue tones
+const BLUE_HIGH = '#ff6b6b'; // Keep red for high risk
+const BLUE_MEDIUM = '#ffa726'; // Keep orange for medium risk
+const BLUE_LOW = '#4caf50'; // Keep green for low risk
+
+// Neutral colors
+const GRAY_DARK = '#1e293b';
+const GRAY_MEDIUM = '#64748b';
+const GRAY_LIGHT = '#94a3b8';
+const GRAY_EXTRA_LIGHT = '#f1f5f9';
+const WHITE = '#ffffff';
+
 const SubDistrictsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute();
@@ -266,10 +285,10 @@ const SubDistrictsScreen: React.FC = () => {
 
   const getRiskLevelColor = (level: string) => {
     switch (level) {
-      case 'high': return '#ef4444';
-      case 'medium': return '#f59e0b';
-      case 'low': return '#10b981';
-      default: return '#64748b';
+      case 'high': return BLUE_HIGH;
+      case 'medium': return BLUE_MEDIUM;
+      case 'low': return BLUE_LOW;
+      default: return GRAY_MEDIUM;
     }
   };
 
@@ -294,13 +313,14 @@ const SubDistrictsScreen: React.FC = () => {
   };
 
   const getTypeColor = (type: string) => {
+    // All types use blue variations
     switch (type) {
-      case 'urban': return '#0c6dff';
-      case 'rural': return '#84cc16';
-      case 'mixed': return '#8b5cf6';
-      case 'commercial': return '#f59e0b';
-      case 'residential': return '#ec4899';
-      default: return '#64748b';
+      case 'urban': return BLUE_PRIMARY;
+      case 'rural': return BLUE_LIGHT;
+      case 'mixed': return BLUE_PRIMARY;
+      case 'commercial': return BLUE_DARK;
+      case 'residential': return BLUE_LIGHT;
+      default: return BLUE_PRIMARY;
     }
   };
 
@@ -326,8 +346,8 @@ const SubDistrictsScreen: React.FC = () => {
 
   const renderSubDistrictCard = ({ item }: { item: SubDistrict }) => {
     const workingPercentage = getWorkingPercentage(item);
-    const efficiencyColor = workingPercentage >= 80 ? '#10b981' : 
-                           workingPercentage >= 50 ? '#f59e0b' : '#ef4444';
+    const efficiencyColor = workingPercentage >= 80 ? BLUE_LOW : 
+                           workingPercentage >= 50 ? BLUE_MEDIUM : BLUE_HIGH;
     
     return (
       <TouchableOpacity
@@ -337,8 +357,8 @@ const SubDistrictsScreen: React.FC = () => {
       >
         <View style={styles.cardHeader}>
           <View style={styles.titleContainer}>
-            <View style={[styles.typeIcon, { backgroundColor: getTypeColor(item.type) + '20' }]}>
-              <MaterialIcons name={getTypeIcon(item.type) as any} size={20} color={getTypeColor(item.type)} />
+            <View style={[styles.typeIcon, { backgroundColor: BLUE_EXTRA_LIGHT }]}>
+              <MaterialIcons name={getTypeIcon(item.type) as any} size={20} color={BLUE_PRIMARY} />
             </View>
             <View style={styles.titleContent}>
               <Typography variant="h3" style={styles.subDistrictName}>
@@ -366,21 +386,21 @@ const SubDistrictsScreen: React.FC = () => {
 
         <View style={styles.detailsContainer}>
           <View style={styles.detailItem}>
-            <MaterialIcons name="people" size={14} color="#64748b" />
+            <MaterialIcons name="people" size={14} color={GRAY_MEDIUM} />
             <Typography variant="caption" style={styles.detailLabel}>Population</Typography>
             <Typography variant="body" style={styles.detailValue}>
               {item.population}
             </Typography>
           </View>
           <View style={styles.detailItem}>
-            <MaterialIcons name="square-foot" size={14} color="#64748b" />
+            <MaterialIcons name="square-foot" size={14} color={GRAY_MEDIUM} />
             <Typography variant="caption" style={styles.detailLabel}>Area</Typography>
             <Typography variant="body" style={styles.detailValue}>
               {item.area}
             </Typography>
           </View>
           <View style={styles.detailItem}>
-            <MaterialIcons name="water" size={14} color="#64748b" />
+            <MaterialIcons name="water" size={14} color={GRAY_MEDIUM} />
             <Typography variant="caption" style={styles.detailLabel}>Sources</Typography>
             <Typography variant="body" style={styles.detailValue}>
               {item.waterSources}
@@ -415,7 +435,7 @@ const SubDistrictsScreen: React.FC = () => {
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Typography variant="h1" style={[styles.statValue, { color: regionColor }]}>
+            <Typography variant="h1" style={[styles.statValue, { color: BLUE_PRIMARY }]}>
               {item.waterSources}
             </Typography>
             <Typography variant="caption" style={styles.statLabel}>Total Sources</Typography>
@@ -427,57 +447,25 @@ const SubDistrictsScreen: React.FC = () => {
             </Typography>
             <Typography variant="caption" style={styles.statLabel}>Working</Typography>
           </View>
-          {/* <View style={styles.statDivider} /> */}
-          {/* <View style={styles.statItem}>
-            <Typography variant="h1" style={[styles.statValue, { color: regionColor }]}>
-              {workingPercentage}%
-            </Typography>
-            <Typography variant="caption" style={styles.statLabel}>Efficiency</Typography>
-          </View> */}
         </View>
-
-        {/* <View style={styles.progressContainer}>
-          <View style={styles.progressLabels}>
-            <View style={styles.progressLabel}>
-              <MaterialIcons name="check-circle" size={12} color="#10b981" />
-              <Typography variant="caption" style={styles.progressText}>
-                {item.workingSources} working
-              </Typography>
-            </View>
-            <Typography variant="caption" style={[styles.percentageText, { color: efficiencyColor }]}>
-              {workingPercentage}%
-            </Typography>
-          </View>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${workingPercentage}%`,
-                  backgroundColor: regionColor
-                }
-              ]}
-            />
-          </View>
-        </View> */}
 
         <View style={styles.actionsContainer}>
           <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: '#f0f7ff' }]}
+            style={[styles.actionButton, { backgroundColor: BLUE_EXTRA_LIGHT }]}
             onPress={() => handleSubDistrictPress(item)}
           >
-            <MaterialIcons name="water" size={16} color="#0c6dff" />
-            <Typography variant="caption" style={[styles.actionText, { color: '#0c6dff' }]}>
+            <MaterialIcons name="water" size={16} color={BLUE_PRIMARY} />
+            <Typography variant="caption" style={[styles.actionText, { color: BLUE_PRIMARY }]}>
               View Water Sources
             </Typography>
           </TouchableOpacity>
           {item.location && (
             <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: '#f8fafc' }]}
+              style={[styles.actionButton, { backgroundColor: GRAY_EXTRA_LIGHT }]}
               onPress={() => handleMapPress(item)}
             >
-              <MaterialIcons name="map" size={16} color="#64748b" />
-              <Typography variant="caption" style={[styles.actionText, { color: '#64748b' }]}>
+              <MaterialIcons name="map" size={16} color={GRAY_MEDIUM} />
+              <Typography variant="caption" style={[styles.actionText, { color: GRAY_MEDIUM }]}>
                 View on Map
               </Typography>
             </TouchableOpacity>
@@ -511,7 +499,7 @@ const SubDistrictsScreen: React.FC = () => {
             >
               <View style={[
                 styles.markerContainer,
-                { backgroundColor: getRiskLevelColor(subDistrict.riskLevel) }
+                { backgroundColor: BLUE_PRIMARY }
               ]}>
                 <MaterialIcons 
                   name={getTypeIcon(subDistrict.type) as any} 
@@ -531,7 +519,7 @@ const SubDistrictsScreen: React.FC = () => {
               {selectedSubDistrict.name}
             </Typography>
             <TouchableOpacity onPress={() => setSelectedSubDistrict(null)}>
-              <MaterialIcons name="close" size={24} color="#64748b" />
+              <MaterialIcons name="close" size={24} color={GRAY_MEDIUM} />
             </TouchableOpacity>
           </View>
           <Typography variant="caption" style={styles.mapInfoDescription}>
@@ -542,8 +530,8 @@ const SubDistrictsScreen: React.FC = () => {
               <Typography variant="caption" style={styles.mapInfoStatLabel}>
                 Type
               </Typography>
-              <View style={[styles.mapInfoType, { backgroundColor: getTypeColor(selectedSubDistrict.type) + '15' }]}>
-                <Typography variant="caption" style={[styles.mapInfoTypeText, { color: getTypeColor(selectedSubDistrict.type) }]}>
+              <View style={[styles.mapInfoType, { backgroundColor: BLUE_EXTRA_LIGHT }]}>
+                <Typography variant="caption" style={[styles.mapInfoTypeText, { color: BLUE_PRIMARY }]}>
                   {selectedSubDistrict.type.toUpperCase()}
                 </Typography>
               </View>
@@ -588,7 +576,7 @@ const SubDistrictsScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Header */}
       <LinearGradient 
-        colors={[regionColor, regionColor + 'CC']} 
+        colors={[BLUE_PRIMARY, BLUE_DARK]} 
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
@@ -657,17 +645,17 @@ const SubDistrictsScreen: React.FC = () => {
       {/* Search and Filters */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Ionicons name="search" size={20} color="#64748b" style={styles.searchIcon} />
+          <Ionicons name="search" size={20} color={GRAY_MEDIUM} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search sub-districts..."
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={GRAY_LIGHT}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#64748b" />
+              <Ionicons name="close-circle" size={20} color={GRAY_MEDIUM} />
             </TouchableOpacity>
           )}
         </View>
@@ -683,20 +671,20 @@ const SubDistrictsScreen: React.FC = () => {
               key={type.value}
               style={[
                 styles.typeFilterButton,
-                typeFilter === type.value && { backgroundColor: regionColor + '15' }
+                typeFilter === type.value && { backgroundColor: BLUE_EXTRA_LIGHT }
               ]}
               onPress={() => setTypeFilter(type.value)}
             >
               <MaterialIcons 
                 name={getTypeIcon(type.value)} 
                 size={16} 
-                color={typeFilter === type.value ? regionColor : '#64748b'} 
+                color={typeFilter === type.value ? BLUE_PRIMARY : GRAY_MEDIUM} 
               />
               <Typography 
                 variant="caption" 
                 style={[
                   styles.typeFilterText,
-                  typeFilter === type.value && { color: regionColor }
+                  typeFilter === type.value && { color: BLUE_PRIMARY }
                 ]}
               >
                 {type.label}
@@ -714,7 +702,7 @@ const SubDistrictsScreen: React.FC = () => {
             <TouchableOpacity 
               style={[
                 styles.riskFilterButton,
-                activeFilter === 'all' && { backgroundColor: regionColor + '15' }
+                activeFilter === 'all' && { backgroundColor: BLUE_EXTRA_LIGHT }
               ]}
               onPress={() => setActiveFilter('all')}
             >
@@ -722,7 +710,7 @@ const SubDistrictsScreen: React.FC = () => {
                 variant="caption" 
                 style={[
                   styles.riskFilterText,
-                  activeFilter === 'all' && { color: regionColor }
+                  activeFilter === 'all' && { color: BLUE_PRIMARY }
                 ]}
               >
                 All
@@ -731,16 +719,16 @@ const SubDistrictsScreen: React.FC = () => {
             <TouchableOpacity 
               style={[
                 styles.riskFilterButton,
-                activeFilter === 'high' && { backgroundColor: '#ef444415' }
+                activeFilter === 'high' && { backgroundColor: BLUE_HIGH + '15' }
               ]}
               onPress={() => setActiveFilter('high')}
             >
-              <MaterialIcons name="warning" size={14} color={activeFilter === 'high' ? '#ef4444' : '#64748b'} />
+              <MaterialIcons name="warning" size={14} color={activeFilter === 'high' ? BLUE_HIGH : GRAY_MEDIUM} />
               <Typography 
                 variant="caption" 
                 style={[
                   styles.riskFilterText,
-                  activeFilter === 'high' && { color: '#ef4444' }
+                  activeFilter === 'high' && { color: BLUE_HIGH }
                 ]}
               >
                 High Risk
@@ -749,16 +737,16 @@ const SubDistrictsScreen: React.FC = () => {
             <TouchableOpacity 
               style={[
                 styles.riskFilterButton,
-                activeFilter === 'medium' && { backgroundColor: '#f59e0b15' }
+                activeFilter === 'medium' && { backgroundColor: BLUE_MEDIUM + '15' }
               ]}
               onPress={() => setActiveFilter('medium')}
             >
-              <MaterialIcons name="info" size={14} color={activeFilter === 'medium' ? '#f59e0b' : '#64748b'} />
+              <MaterialIcons name="info" size={14} color={activeFilter === 'medium' ? BLUE_MEDIUM : GRAY_MEDIUM} />
               <Typography 
                 variant="caption" 
                 style={[
                   styles.riskFilterText,
-                  activeFilter === 'medium' && { color: '#f59e0b' }
+                  activeFilter === 'medium' && { color: BLUE_MEDIUM }
                 ]}
               >
                 Medium
@@ -767,16 +755,16 @@ const SubDistrictsScreen: React.FC = () => {
             <TouchableOpacity 
               style={[
                 styles.riskFilterButton,
-                activeFilter === 'low' && { backgroundColor: '#10b98115' }
+                activeFilter === 'low' && { backgroundColor: BLUE_LOW + '15' }
               ]}
               onPress={() => setActiveFilter('low')}
             >
-              <MaterialIcons name="check-circle" size={14} color={activeFilter === 'low' ? '#10b981' : '#64748b'} />
+              <MaterialIcons name="check-circle" size={14} color={activeFilter === 'low' ? BLUE_LOW : GRAY_MEDIUM} />
               <Typography 
                 variant="caption" 
                 style={[
                   styles.riskFilterText,
-                  activeFilter === 'low' && { color: '#10b981' }
+                  activeFilter === 'low' && { color: BLUE_LOW }
                 ]}
               >
                 Low Risk
@@ -814,7 +802,7 @@ const SubDistrictsScreen: React.FC = () => {
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <MaterialIcons name="location-off" size={48} color="#e2e8f0" />
+              <MaterialIcons name="location-off" size={48} color={GRAY_EXTRA_LIGHT} />
               <Typography variant="h3" style={styles.emptyTitle}>
                 No sub-districts found
               </Typography>
@@ -856,7 +844,7 @@ const SubDistrictsScreen: React.FC = () => {
       >
         <View style={styles.fullMapModal}>
           <LinearGradient 
-            colors={[regionColor, regionColor + 'CC']} 
+            colors={[BLUE_PRIMARY, BLUE_DARK]} 
             style={styles.mapHeader}
           >
             <View style={styles.mapHeaderContent}>
@@ -879,7 +867,7 @@ const SubDistrictsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: GRAY_EXTRA_LIGHT,
   },
   // Header
   header: {
@@ -970,19 +958,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 16,
-    backgroundColor: 'white',
+    backgroundColor: WHITE,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: GRAY_EXTRA_LIGHT,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: GRAY_EXTRA_LIGHT,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: GRAY_EXTRA_LIGHT,
     marginBottom: 16,
   },
   searchIcon: {
@@ -991,7 +979,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#0f172a',
+    color: GRAY_DARK,
     paddingVertical: 0,
   },
   // Type Filter
@@ -1006,13 +994,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: GRAY_EXTRA_LIGHT,
     gap: 6,
   },
   typeFilterText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748b',
+    color: GRAY_MEDIUM,
   },
   // Risk Filter
   riskFilterContainer: {
@@ -1021,7 +1009,7 @@ const styles = StyleSheet.create({
   filterLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748b',
+    color: GRAY_MEDIUM,
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1038,13 +1026,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: GRAY_EXTRA_LIGHT,
     gap: 6,
   },
   riskFilterText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748b',
+    color: GRAY_MEDIUM,
   },
   // Sub-Districts List
   subDistrictsList: {
@@ -1061,16 +1049,16 @@ const styles = StyleSheet.create({
   resultsCount: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#64748b',
+    color: GRAY_MEDIUM,
   },
   clearFiltersLink: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#0c6dff',
+    color: BLUE_PRIMARY,
   },
   // Sub-District Card
   subDistrictCard: {
-    backgroundColor: 'white',
+    backgroundColor: WHITE,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
@@ -1080,7 +1068,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: GRAY_EXTRA_LIGHT,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -1107,12 +1095,12 @@ const styles = StyleSheet.create({
   subDistrictName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0f172a',
+    color: GRAY_DARK,
     marginBottom: 4,
   },
   subDistrictType: {
     fontSize: 12,
-    color: '#64748b',
+    color: GRAY_MEDIUM,
     fontWeight: '500',
   },
   riskBadge: {
@@ -1131,7 +1119,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 13,
-    color: '#475569',
+    color: GRAY_MEDIUM,
     lineHeight: 18,
     marginBottom: 16,
   },
@@ -1147,7 +1135,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 11,
-    color: '#64748b',
+    color: GRAY_MEDIUM,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1156,7 +1144,7 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0f172a',
+    color: GRAY_DARK,
   },
   // Villages Container
   villagesContainer: {
@@ -1165,7 +1153,7 @@ const styles = StyleSheet.create({
   villagesLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748b',
+    color: GRAY_MEDIUM,
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1179,27 +1167,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: GRAY_EXTRA_LIGHT,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: GRAY_EXTRA_LIGHT,
   },
   villageName: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#475569',
+    color: GRAY_MEDIUM,
   },
   moreVillagesTag: {
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: '#f8fafc',
+    backgroundColor: GRAY_EXTRA_LIGHT,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: GRAY_EXTRA_LIGHT,
   },
   moreVillagesText: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#94a3b8',
+    color: GRAY_LIGHT,
   },
   // Stats Container
   statsContainer: {
@@ -1220,7 +1208,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 11,
-    color: '#64748b',
+    color: GRAY_MEDIUM,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1228,40 +1216,7 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: '#e2e8f0',
-  },
-  // Progress Container
-  progressContainer: {
-    marginBottom: 16,
-  },
-  progressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  progressLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-  percentageText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
+    backgroundColor: GRAY_EXTRA_LIGHT,
   },
   // Actions Container
   actionsContainer: {
@@ -1277,7 +1232,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: GRAY_EXTRA_LIGHT,
   },
   actionText: {
     fontSize: 13,
@@ -1291,13 +1246,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#64748b',
+    color: GRAY_MEDIUM,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 14,
-    color: '#94a3b8',
+    color: GRAY_LIGHT,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -1305,14 +1260,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: GRAY_EXTRA_LIGHT,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: GRAY_EXTRA_LIGHT,
   },
   resetButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#0c6dff',
+    color: BLUE_PRIMARY,
   },
   // Map View
   mapViewContainer: {
@@ -1345,7 +1300,7 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
-    backgroundColor: 'white',
+    backgroundColor: WHITE,
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -1363,13 +1318,13 @@ const styles = StyleSheet.create({
   mapInfoTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0f172a',
+    color: GRAY_DARK,
     flex: 1,
     marginRight: 12,
   },
   mapInfoDescription: {
     fontSize: 12,
-    color: '#64748b',
+    color: GRAY_MEDIUM,
     marginBottom: 12,
     lineHeight: 16,
   },
@@ -1383,7 +1338,7 @@ const styles = StyleSheet.create({
   },
   mapInfoStatLabel: {
     fontSize: 11,
-    color: '#64748b',
+    color: GRAY_MEDIUM,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1417,7 +1372,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: 'center',
     borderRadius: 8,
-    backgroundColor: '#0c6dff',
+    backgroundColor: BLUE_PRIMARY,
   },
   viewSubDistrictButtonText: {
     fontSize: 13,

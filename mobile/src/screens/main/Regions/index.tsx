@@ -27,7 +27,6 @@ type RootStackParamList = {
   RegionDetails: { 
     regionId: string;
     regionName: string;
-    regionColor: string;
   };
 };
 
@@ -35,7 +34,6 @@ interface Region {
   name: string;
   count: number;
   working: number;
-  color: string;
   population: string;
   area: string;
   riskLevel: 'high' | 'medium' | 'low';
@@ -68,7 +66,6 @@ const RegionsScreen: React.FC = () => {
       name: 'Hargeisa', 
       count: 67, 
       working: 52, 
-      color: '#0c6dff', 
       population: '1.2M', 
       area: '2,100 km²', 
       riskLevel: 'medium',
@@ -85,7 +82,6 @@ const RegionsScreen: React.FC = () => {
       name: 'Gabiley', 
       count: 34, 
       working: 28, 
-      color: '#10b981', 
       population: '750K', 
       area: '1,800 km²', 
       riskLevel: 'low',
@@ -101,7 +97,6 @@ const RegionsScreen: React.FC = () => {
       name: 'Togdheer', 
       count: 28, 
       working: 18, 
-      color: '#f59e0b', 
       population: '850K', 
       area: '3,500 km²', 
       riskLevel: 'high',
@@ -117,7 +112,6 @@ const RegionsScreen: React.FC = () => {
       name: 'Berbera', 
       count: 22, 
       working: 16, 
-      color: '#8b5cf6', 
       population: '350K', 
       area: '900 km²', 
       riskLevel: 'medium',
@@ -132,7 +126,6 @@ const RegionsScreen: React.FC = () => {
       name: 'Borama', 
       count: 19, 
       working: 12, 
-      color: '#ef4444', 
       population: '420K', 
       area: '1,100 km²', 
       riskLevel: 'high',
@@ -148,7 +141,6 @@ const RegionsScreen: React.FC = () => {
       name: 'Baki', 
       count: 15, 
       working: 11, 
-      color: '#06b6d4', 
       population: '180K', 
       area: '750 km²', 
       riskLevel: 'low',
@@ -163,7 +155,6 @@ const RegionsScreen: React.FC = () => {
       name: 'Erigavo', 
       count: 12, 
       working: 8, 
-      color: '#84cc16', 
       population: '250K', 
       area: '2,800 km²', 
       riskLevel: 'medium',
@@ -179,7 +170,6 @@ const RegionsScreen: React.FC = () => {
       name: 'Las Anod', 
       count: 9, 
       working: 6, 
-      color: '#f97316', 
       population: '320K', 
       area: '1,400 km²', 
       riskLevel: 'high',
@@ -194,7 +184,6 @@ const RegionsScreen: React.FC = () => {
       name: 'Burco', 
       count: 7, 
       working: 4, 
-      color: '#ec4899', 
       population: '280K', 
       area: '1,200 km²', 
       riskLevel: 'medium',
@@ -264,7 +253,6 @@ const RegionsScreen: React.FC = () => {
     navigation.navigate('RegionDetails', { 
       regionId: region.id,
       regionName: region.name,
-      regionColor: region.color
     });
   };
 
@@ -321,9 +309,9 @@ const RegionsScreen: React.FC = () => {
 
   const getRiskLevelColor = (level: string) => {
     switch (level) {
-      case 'high': return '#ef4444';
+      case 'high': return '#dc2626';
       case 'medium': return '#f59e0b';
-      case 'low': return '#10b981';
+      case 'low': return '#059669';
       default: return '#6b7280';
     }
   };
@@ -346,12 +334,12 @@ const RegionsScreen: React.FC = () => {
     }
   };
 
-  // Stats data
+  // Stats data - simplified colors
   const statsData = [
-    { label: t('regions'), value: regions.length.toString(), icon: 'location-city', color: '#0c6dff' },
-    { label: t('districts'), value: totalDistricts.toString(), icon: 'map', color: '#10b981' },
-    { label: t('totalSources'), value: totalSources.toString(), icon: 'water', color: '#f59e0b' },
-    { label: t('workingRate'), value: `${averageWorkingPercentage}%`, icon: 'trending-up', color: '#8b5cf6' },
+    { label: t('regions'), value: regions.length.toString(), icon: 'location-city' },
+    { label: t('districts'), value: totalDistricts.toString(), icon: 'map' },
+    { label: t('totalSources'), value: totalSources.toString(), icon: 'water' },
+    { label: t('workingRate'), value: `${averageWorkingPercentage}%`, icon: 'trending-up' },
   ];
 
   return (
@@ -361,7 +349,7 @@ const RegionsScreen: React.FC = () => {
       {/* Collapsible Header */}
       <Animated.View style={[styles.headerContainer, { height: headerHeight }]}>
         <LinearGradient
-          colors={['#0c6dff', '#4f46e5']}
+          colors={['#0c6dff', '#0c6dff']}
           style={styles.headerBackground}
         >
           {/* Background Pattern */}
@@ -477,16 +465,16 @@ const RegionsScreen: React.FC = () => {
             {statsData.map((stat, index) => (
               <View
                 key={index}
-                style={[styles.statCard, { borderLeftColor: stat.color, borderLeftWidth: 4 }]}
+                style={[styles.statCard, { borderLeftColor: '#0c6dff', borderLeftWidth: 4 }]}
               >
-                <View style={[styles.statIcon, { backgroundColor: stat.color + '20' }]}>
-                  <MaterialIcons name={stat.icon as any} size={24} color={stat.color} />
+                <View style={[styles.statIcon, { backgroundColor: '#e0f2ff' }]}>
+                  <MaterialIcons name={stat.icon as any} size={24} color="#0c6dff" />
                 </View>
                 <View style={styles.statContent}>
-                  <Typography variant="h2" style={[styles.statValue, { color: '#0f172a' }]}>
+                  <Typography variant="h2" style={styles.statValue}>
                     {stat.value}
                   </Typography>
-                  <Typography variant="caption" style={[styles.statLabel, { color: '#64748b' }]}>
+                  <Typography variant="caption" style={styles.statLabel}>
                     {stat.label}
                   </Typography>
                 </View>
@@ -519,28 +507,28 @@ const RegionsScreen: React.FC = () => {
             
             <View style={styles.overviewStats}>
               <View style={styles.overviewStatItem}>
-                <View style={[styles.overviewStatIcon, { backgroundColor: '#0c6dff20' }]}>
+                <View style={[styles.overviewStatIcon, { backgroundColor: '#e0f2ff' }]}>
                   <MaterialIcons name="location-city" size={18} color="#0c6dff" />
                 </View>
                 <View style={styles.overviewStatContent}>
-                  <Typography variant="body" style={[styles.overviewStatValue, { color: '#0f172a' }]}>
+                  <Typography variant="body" style={styles.overviewStatValue}>
                     {regions.length} Regions
                   </Typography>
-                  <Typography variant="caption" style={[styles.overviewStatLabel, { color: '#64748b' }]}>
+                  <Typography variant="caption" style={styles.overviewStatLabel}>
                     Across Somaliland
                   </Typography>
                 </View>
               </View>
 
               <View style={styles.overviewStatItem}>
-                <View style={[styles.overviewStatIcon, { backgroundColor: '#10b98120' }]}>
-                  <MaterialIcons name="check-circle" size={18} color="#10b981" />
+                <View style={[styles.overviewStatIcon, { backgroundColor: '#e0f7ff' }]}>
+                  <MaterialIcons name="check-circle" size={18} color="#059669" />
                 </View>
                 <View style={styles.overviewStatContent}>
-                  <Typography variant="body" style={[styles.overviewStatValue, { color: '#0f172a' }]}>
+                  <Typography variant="body" style={styles.overviewStatValue}>
                     {averageWorkingPercentage}% Working
                   </Typography>
-                  <Typography variant="caption" style={[styles.overviewStatLabel, { color: '#64748b' }]}>
+                  <Typography variant="caption" style={styles.overviewStatLabel}>
                     Average efficiency
                   </Typography>
                 </View>
@@ -568,7 +556,7 @@ const RegionsScreen: React.FC = () => {
               style={[styles.filterTab, activeFilter === 'high' && styles.filterTabActive]}
               onPress={() => setActiveFilter('high')}
             >
-              <MaterialIcons name="warning" size={16} color={activeFilter === 'high' ? '#ef4444' : '#64748b'} />
+              <MaterialIcons name="warning" size={16} color={activeFilter === 'high' ? '#dc2626' : '#64748b'} />
               <Typography variant="body" style={[styles.filterTabText, activeFilter === 'high' && styles.filterTabTextActive]}>
                 {t('highRisk')}
               </Typography>
@@ -586,7 +574,7 @@ const RegionsScreen: React.FC = () => {
               style={[styles.filterTab, activeFilter === 'low' && styles.filterTabActive]}
               onPress={() => setActiveFilter('low')}
             >
-              <MaterialIcons name="check-circle" size={16} color={activeFilter === 'low' ? '#10b981' : '#64748b'} />
+              <MaterialIcons name="check-circle" size={16} color={activeFilter === 'low' ? '#059669' : '#64748b'} />
               <Typography variant="body" style={[styles.filterTabText, activeFilter === 'low' && styles.filterTabTextActive]}>
                 {t('lowRisk')}
               </Typography>
@@ -597,8 +585,8 @@ const RegionsScreen: React.FC = () => {
         {/* Regions List */}
         {filteredRegions().map((region, index) => {
           const workingPercentage = (region.working / region.count) * 100;
-          const efficiencyColor = workingPercentage >= 80 ? '#10b981' : 
-                                 workingPercentage >= 50 ? '#f59e0b' : '#ef4444';
+          const efficiencyColor = workingPercentage >= 80 ? '#059669' : 
+                                 workingPercentage >= 50 ? '#f59e0b' : '#dc2626';
           
           return (
             <TouchableOpacity
@@ -627,8 +615,8 @@ const RegionsScreen: React.FC = () => {
               >
                 <View style={styles.regionCardHeader}>
                   <View style={styles.regionTitleContainer}>
-                    <View style={[styles.regionIcon, { backgroundColor: region.color + '20' }]}>
-                      <MaterialIcons name="location-city" size={24} color={region.color} />
+                    <View style={[styles.regionIcon, { backgroundColor: '#e0f2ff' }]}>
+                      <MaterialIcons name="location-city" size={24} color="#0c6dff" />
                     </View>
                     <View style={styles.regionTitle}>
                       <Typography variant="h3" style={styles.regionName}>
@@ -648,34 +636,10 @@ const RegionsScreen: React.FC = () => {
                   </View>
                 </View>
 
-                {/* Region Details */}
-                {/* <View style={styles.regionDetailsContainer}>
-                  <View style={styles.regionDetailItem}>
-                    <MaterialIcons name="people" size={14} color="#64748b" />
-                    <Typography variant="caption" style={styles.regionDetailText}>
-                      Population: {region.population}
-                    </Typography>
-                  </View>
-                  <View style={styles.regionDetailItem}>
-                    <MaterialIcons name="square-foot" size={14} color="#64748b" />
-                    <Typography variant="caption" style={styles.regionDetailText}>
-                      Area: {region.area}
-                    </Typography>
-                  </View>
-                  {region.districts && (
-                    <View style={styles.regionDetailItem}>
-                      <MaterialIcons name="map" size={14} color="#64748b" />
-                      <Typography variant="caption" style={styles.regionDetailText}>
-                        Districts: {region.districts.length}
-                      </Typography>
-                    </View>
-                  )}
-                </View> */}
-
                 {/* Stats Section */}
                 <View style={styles.regionStats}>
                   <View style={styles.regionStatItem}>
-                    <Typography variant="h1" style={[styles.regionCount, { color: region.color }]}>
+                    <Typography variant="h1" style={[styles.regionCount, { color: '#0c6dff' }]}>
                       {region.count}
                     </Typography>
                     <Typography variant="caption" style={styles.regionStatLabel}>
@@ -693,82 +657,15 @@ const RegionsScreen: React.FC = () => {
                       {t('working')}
                     </Typography>
                   </View>
-
-                  {/* <View style={styles.regionStatDivider} /> */}
-
-                  {/* <View style={styles.regionStatItem}>
-                    <Typography variant="h1" style={[styles.regionCount, { color: region.color }]}>
-                      {Math.round(workingPercentage)}%
-                    </Typography>
-                    <Typography variant="caption" style={styles.regionStatLabel}>
-                      {t('efficiency')}
-                    </Typography>
-                  </View> */}
                 </View>
-
-                {/* Progress Bar */}
-                <View style={styles.workingStats}>
-                  <View style={styles.workingTextContainer}>
-                    {/* <MaterialIcons name="check-circle" size={14} color="#10b981" /> */}
-                    {/* <Typography variant="caption" style={styles.workingText}>
-                      {t('workingSources').replace('{count}', region.working.toString())}
-                    </Typography> */}
-                  </View>
-                  {/* <Typography variant="caption" style={[styles.percentageText, { color: efficiencyColor }]}>
-                    {Math.round(workingPercentage)}%
-                  </Typography> */}
-                </View>
-
-                {/* <View style={styles.progressBar}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${workingPercentage}%`,
-                        backgroundColor: region.color
-                      }
-                    ]}
-                  />
-                </View> */}
-
-                {/* Districts Preview */}
-                {/* {region.districts && (
-                  <View style={styles.districtsPreview}>
-                    <Typography variant="caption" style={styles.districtsPreviewTitle}>
-                      Districts:
-                    </Typography>
-                    <View style={styles.districtsList}>
-                      {region.districts.slice(0, 3).map((district, idx) => (
-                        <View key={district.id} style={styles.districtTag}>
-                          <Typography variant="caption" style={styles.districtName}>
-                            {district.name}
-                          </Typography>
-                          <View style={styles.districtStats}>
-                            <MaterialIcons name="water" size={10} color="#64748b" />
-                            <Typography variant="caption" style={styles.districtStatText}>
-                              {district.workingSources}/{district.waterSources}
-                            </Typography>
-                          </View>
-                        </View>
-                      ))}
-                      {region.districts.length > 3 && (
-                        <View style={styles.moreDistrictsTag}>
-                          <Typography variant="caption" style={styles.moreDistrictsText}>
-                            +{region.districts.length - 3} more
-                          </Typography>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                )} */}
 
                 {/* View Districts Button */}
                 <TouchableOpacity 
-                  style={[styles.viewDistrictsButton, { backgroundColor: region.color + '15' }]}
+                  style={[styles.viewDistrictsButton, { backgroundColor: '#e0f2ff' }]}
                   onPress={() => handleRegionPress(region)}
                 >
-                  <MaterialIcons name="arrow-forward" size={16} color={region.color} />
-                  <Typography variant="caption" style={[styles.viewDistrictsText, { color: region.color }]}>
+                  <MaterialIcons name="arrow-forward" size={16} color="#0c6dff" />
+                  <Typography variant="caption" style={[styles.viewDistrictsText, { color: '#0c6dff' }]}>
                     View Districts
                   </Typography>
                 </TouchableOpacity>
@@ -835,7 +732,7 @@ const RegionsScreen: React.FC = () => {
                 <View style={styles.searchResultContent}>
                   <View style={styles.searchResultHeader}>
                     <View style={styles.searchResultType}>
-                      <MaterialIcons name="location-city" size={18} color={item.color} />
+                      <MaterialIcons name="location-city" size={18} color="#0c6dff" />
                       <Typography variant="caption" style={styles.searchResultTypeText}>
                         {item.name}
                       </Typography>
@@ -865,12 +762,6 @@ const RegionsScreen: React.FC = () => {
                       <MaterialIcons name="trending-up" size={14} color="#64748b" />
                       <Typography variant="caption" style={styles.searchResultStatText}>
                         {Math.round((item.working / item.count) * 100)}% {t('working')}
-                      </Typography>
-                    </View>
-                    <View style={styles.searchResultStat}>
-                      <MaterialIcons name="people" size={14} color="#64748b" />
-                      <Typography variant="caption" style={styles.searchResultStatText}>
-                        {item.population}
                       </Typography>
                     </View>
                   </View>
@@ -1094,7 +985,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(12, 109, 255, 0.1)',
+    backgroundColor: '#e0f2ff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -1250,23 +1141,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  // Region Details
-  regionDetailsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 20,
-  },
-  regionDetailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  regionDetailText: {
-    fontSize: 12,
-    color: '#64748b',
-    fontWeight: '500',
-  },
   // Region Stats
   regionStats: {
     flexDirection: 'row',
@@ -1295,94 +1169,6 @@ const styles = StyleSheet.create({
     width: 1,
     height: 40,
     backgroundColor: '#e2e8f0',
-  },
-  // Working Stats
-  workingStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 12,
-  },
-  workingTextContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  workingText: {
-    fontSize: 12,
-    color: '#64748b',
-    fontWeight: '600',
-  },
-  percentageText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  // Progress Bar
-  progressBar: {
-    height: 6,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 20,
-    width: '100%',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  // Districts Preview
-  districtsPreview: {
-    marginBottom: 16,
-  },
-  districtsPreviewTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748b',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  districtsList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  districtTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    gap: 6,
-  },
-  districtName: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#0f172a',
-  },
-  districtStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  districtStatText: {
-    fontSize: 10,
-    color: '#64748b',
-  },
-  moreDistrictsTag: {
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  moreDistrictsText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748b',
   },
   // View Districts Button
   viewDistrictsButton: {
