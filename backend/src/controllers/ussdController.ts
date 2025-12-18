@@ -13,9 +13,9 @@ const handleUssdRequest = async (req: Request, res: Response) => {
   try {
     if (text === "") {
       // Main Menu
-      response = `Welcome to Ogaal
-1. Check Water Availability
-2. Report Water Source Status`;
+      response = `Kusoo dhawoow Ogaal
+1. Hubi helitaanka biyaha
+2. Ka warbixi xaalad taagan`;
     } 
     // Flow 1: Check Water Availability
     else if (parts[0] === "1") {
@@ -27,10 +27,10 @@ const handleUssdRequest = async (req: Request, res: Response) => {
         });
         
         if (villages.length === 0) {
-          response = "No villages found.";
+          response = "Ma diwaangashana tuuladada.";
           type = "END";
         } else {
-          response = "Select Village:\n";
+          response = "Dooro tuulada:\n";
           villages.forEach((v, index) => {
             response += `${index + 1}. ${v.name}\n`;
           });
@@ -52,16 +52,16 @@ const handleUssdRequest = async (req: Request, res: Response) => {
           });
 
           if (sources.length === 0) {
-            response = `No sources found in ${village.name}`;
+            response = `Ma jirto wax ila biyood ah oo laga helay ${village.name}`;
             type = "END";
           } else {
-            response = "Select Water Source:\n";
+            response = "Dooro isha biyaha:\n";
             sources.forEach((s, index) => {
               response += `${index + 1}. ${s.name}\n`;
             });
           }
         } else {
-          response = "Invalid choice. Please try again.";
+          response = "Doorasho aan saxsanayn. Fadlan isku day mar kale.";
           type = "END";
         }
       }
@@ -92,11 +92,11 @@ Level: ${src.water_level || 0}%
 Last: ${src.last_maintained ? new Date(src.last_maintained).toLocaleDateString() : 'N/A'}`;
             type = "END";
           } else {
-            response = "Invalid source choice.";
+            response = "Maaha mid saxa ishan aad dooratay.";
             type = "END";
           }
         } else {
-          response = "Invalid village choice.";
+          response = "Maaha mid diwaangashan tuuladani.";
           type = "END";
         }
       }
@@ -111,10 +111,10 @@ Last: ${src.last_maintained ? new Date(src.last_maintained).toLocaleDateString()
         });
         
         if (villages.length === 0) {
-          response = "No villages found.";
+          response = "Wax tuulo ah ma diwaangashana.";
           type = "END";
         } else {
-          response = "Select Village for Report:\n";
+          response = "Dooro tuuladaad warbixinta ka gudbinayso:\n";
           villages.forEach((v, index) => {
             response += `${index + 1}. ${v.name}\n`;
           });
@@ -136,25 +136,25 @@ Last: ${src.last_maintained ? new Date(src.last_maintained).toLocaleDateString()
           });
 
           if (sources.length === 0) {
-            response = `No sources found in ${village.name}`;
+            response = `Ma jirto wax ila biyood ah oo laga diwaangeliyay ${village.name}`;
             type = "END";
           } else {
-            response = "Select Source to Report:\n";
+            response = "Dooro isha biyahaad warbixinta ka gudbinayso:\n";
             sources.forEach((s, index) => {
               response += `${index + 1}. ${s.name}\n`;
             });
           }
         } else {
-          response = "Invalid choice.";
+          response = "Doorasho aan saxsanayn.";
           type = "END";
         }
       }
       // Step 3: Select Issue Type
       else if (parts.length === 3) {
-        response = `Select Status:
-1. Water Finished
-2. Pump Broken
-3. Water Available`;
+        response = `Dooro xaaladda:
+1. Biyahaa dhammaaday
+2. Ceelkaa jabay
+3. Biyo way jiraan`;
       }
       // Step 4: Submit Report
       else if (parts.length === 4) {
@@ -179,9 +179,9 @@ Last: ${src.last_maintained ? new Date(src.last_maintained).toLocaleDateString()
             const src = sources[sourceIndex];
             
             const statusMap: Record<string, string> = {
-              "1": "Low Water",
-              "2": "Broken",
-              "3": "Working",
+              "1": "Biyahaa hooseeya",
+              "2": "Wuu jaban yahay",
+              "3": "Wuu shaqaynayaa",
             };
             const statusReport = statusMap[statusChoice] || "Other Issue";
 
@@ -190,28 +190,28 @@ Last: ${src.last_maintained ? new Date(src.last_maintained).toLocaleDateString()
                 water_source_id: src.id,
                 village_id: village.id,
                 reporter_type: "USSD",
-                content: `User reported status: ${statusReport}`,
+                content: `Xaaladda warbixinta qofka: ${statusReport}`,
               },
             });
-            response = `Report received for ${src.name}. Thank you.`;
+            response = `Waad nasoo gaadhsiisay warbixinta ${src.name}. Mahadsanid.`;
             type = "END";
 
           } else {
-            response = "Invalid source choice.";
+            response = "Maaha mid saxa ishan aad dooratay.";
             type = "END";
           }
         } else {
-          response = "Invalid village choice.";
+          response = "Maaha mid diwaangashan tuuladani.";
           type = "END";
         }
       }
     } else {
-      response = "Invalid option.";
+      response = "Doorasho aan sax ahayn.";
       type = "END";
     }
   } catch (error) {
     console.error("USSD Error:", error);
-    response = "An error occurred. Please try again.";
+    response = "Khalad baa dhacay. Fadlan isku day mar kale.";
     type = "END";
   }
   res.json({ message: response, type });
