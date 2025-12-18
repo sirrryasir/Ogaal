@@ -21,5 +21,7 @@ router.post("/sms/send", apiController.sendSms);
 router.post("/ai/update-risk", apiController.updateRisk);
 // Dashboard Stats
 router.get("/stats", apiController.getDashboardStats);
+// Admin Water Sources (hierarchical)
+router.get("/admin/water-sources", apiController.getAdminWaterSources);
 export default router;
 //# sourceMappingURL=apiRoutes.js.map

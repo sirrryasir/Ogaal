@@ -27,6 +27,40 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import api from "../../../lib/api";
 
+// Type definitions
+interface WaterSource {
+  id: number;
+  source_name: string;
+  water_source_type: string;
+  status: string;
+  lat: number;
+  lng: number;
+}
+
+interface Village {
+  name: string;
+  totalSources: number;
+  avgStatus: number;
+  functional: number;
+  needsRepair: number;
+  nonFunctional: number;
+  sources: WaterSource[];
+}
+
+interface District {
+  name: string;
+  totalSources: number;
+  avgStatus: number;
+  villages: Village[];
+}
+
+interface Region {
+  region: string;
+  totalSources: number;
+  avgStatus: number;
+  districts: District[];
+}
+
 // Water source types with icons
 const WATER_SOURCE_TYPES = {
   "Borehole": { icon: Zap, color: "text-yellow-500", bgColor: "bg-yellow-50" },
@@ -75,9 +109,9 @@ const STATUS_CONFIG = {
 
 export default function DashboardPage() {
   // State for hierarchical data
-  const [somalilandRegions, setSomalilandRegions] = useState([]);
+  const [somalilandRegions, setSomalilandRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
@@ -109,21 +143,21 @@ export default function DashboardPage() {
   }, []);
 
   // Get current view data
-  const currentRegion = selectedRegion ? somalilandRegions.find(r => r.region === selectedRegion) : null;
-  const currentDistrict = selectedDistrict ? currentRegion?.districts.find(d => d.name === selectedDistrict) : null;
-  const currentVillage = selectedVillage ? currentDistrict?.villages.find(v => v.name === selectedVillage) : null;
+  const currentRegion = selectedRegion ? somalilandRegions.find((r: Region) => r.region === selectedRegion) : null;
+  const currentDistrict = selectedDistrict ? currentRegion?.districts.find((d: District) => d.name === selectedDistrict) : null;
+  const currentVillage = selectedVillage ? currentDistrict?.villages.find((v: Village) => v.name === selectedVillage) : null;
 
   // Prepare chart data
-  const regionChartData = somalilandRegions.map(region => ({
+  const regionChartData = somalilandRegions.map((region: Region) => ({
     name: region.region,
     sources: region.totalSources,
     status: region.avgStatus
   }));
 
   // Calculate status distribution
-  const statusDistribution = somalilandRegions.reduce((acc, region) => {
-    region.districts.forEach(district => {
-      district.villages.forEach(village => {
+  const statusDistribution = somalilandRegions.reduce((acc, region: Region) => {
+    region.districts.forEach((district: District) => {
+      district.villages.forEach((village: Village) => {
         acc.functional += village.functional;
         acc.needsRepair += village.needsRepair;
         acc.nonFunctional += village.nonFunctional;
@@ -140,12 +174,12 @@ export default function DashboardPage() {
 
   // Calculate overall stats
   const overallStats = {
-    totalSources: somalilandRegions.reduce((sum, region) => sum + region.totalSources, 0),
-    avgStatus: somalilandRegions.length > 0 ? Math.round(somalilandRegions.reduce((sum, region) => sum + region.avgStatus, 0) / somalilandRegions.length) : 0,
-    totalVillages: somalilandRegions.reduce((sum, region) =>
-      sum + region.districts.reduce((dSum, district) => dSum + district.villages.length, 0), 0
+    totalSources: somalilandRegions.reduce((sum, region: Region) => sum + region.totalSources, 0),
+    avgStatus: somalilandRegions.length > 0 ? Math.round(somalilandRegions.reduce((sum, region: Region) => sum + region.avgStatus, 0) / somalilandRegions.length) : 0,
+    totalVillages: somalilandRegions.reduce((sum, region: Region) =>
+      sum + region.districts.reduce((dSum, district: District) => dSum + district.villages.length, 0), 0
     ),
-    totalDistricts: somalilandRegions.reduce((sum, region) => sum + region.districts.length, 0)
+    totalDistricts: somalilandRegions.reduce((sum, region: Region) => sum + region.districts.length, 0)
   };
 
   // Toggle functions with proper state management
@@ -168,7 +202,7 @@ export default function DashboardPage() {
       newExpanded.delete(districtName);
       // Collapse village when collapsing district
       const newVillageExpanded = new Set(expandedVillages);
-      currentDistrict?.villages.forEach(village => {
+      currentDistrict?.villages.forEach((village: Village) => {
         newVillageExpanded.delete(village.name);
       });
       setExpandedVillages(newVillageExpanded);
@@ -236,8 +270,8 @@ export default function DashboardPage() {
   // Get filtered sources
   const getFilteredSources = () => {
     if (!currentVillage) return [];
-    
-    return currentVillage.sources.filter(source => {
+
+    return currentVillage.sources.filter((source: WaterSource) => {
       if (statusFilter !== 'all' && source.status !== statusFilter) return false;
       if (typeFilter !== 'all' && source.water_source_type !== typeFilter) return false;
       return true;
@@ -491,7 +525,7 @@ export default function DashboardPage() {
             {/* Region Cards with Expand/Collapse */}
             {!selectedRegion ? (
               // All Regions View
-              somalilandRegions.map(region => (
+              somalilandRegions.map((region: Region) => (
                 <div key={region.region} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                   {/* Region Header - Clickable */}
                   <div 
@@ -536,7 +570,7 @@ export default function DashboardPage() {
                       <div className="mb-4">
                         <h4 className="font-medium text-gray-900 mb-3">Districts in {region.region}</h4>
                         <div className="space-y-3">
-                          {region.districts.map(district => (
+                          {region.districts.map((district: District) => (
                             <div 
                               key={district.name}
                               className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-colors"
@@ -576,7 +610,7 @@ export default function DashboardPage() {
               ))
             ) : !selectedDistrict ? (
               // Selected Region - Districts View
-              currentRegion?.districts.map(district => (
+              currentRegion?.districts.map((district: District) => (
                 <div key={district.name} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                   {/* District Header */}
                   <div 
@@ -621,7 +655,7 @@ export default function DashboardPage() {
                       <div className="mb-4">
                         <h4 className="font-medium text-gray-900 mb-3">Villages in {district.name}</h4>
                         <div className="space-y-3">
-                          {district.villages.map(village => (
+                          {district.villages.map((village: Village) => (
                             <div 
                               key={village.name}
                               className="p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 cursor-pointer transition-colors"
@@ -661,7 +695,7 @@ export default function DashboardPage() {
               ))
             ) : !selectedVillage ? (
               // Selected District - Villages View
-              currentDistrict?.villages.map(village => (
+              currentDistrict?.villages.map((village: Village) => (
                 <div key={village.name} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                   {/* Village Header */}
                   <div 
@@ -738,7 +772,7 @@ export default function DashboardPage() {
                         
                         {/* Sources List */}
                         <div className="space-y-3">
-                          {getFilteredSources().map(source => {
+                          {getFilteredSources().map((source: WaterSource) => {
                             const SourceIcon = WATER_SOURCE_TYPES[source.water_source_type as keyof typeof WATER_SOURCE_TYPES]?.icon || Droplet;
                             const statusConfig = STATUS_CONFIG[source.status as keyof typeof STATUS_CONFIG];
                             const StatusIcon = statusConfig?.icon || AlertCircle;
