@@ -1,4 +1,24 @@
 import { prisma } from "../config/prisma.js";
+// Get all Regions
+export const getRegions = async (req, res) => {
+    try {
+        const regions = await prisma.region.findMany();
+        res.json(regions);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+// Get all Districts
+export const getDistricts = async (req, res) => {
+    try {
+        const districts = await prisma.district.findMany();
+        res.json(districts);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 // Get all Villages
 export const getVillages = async (req, res) => {
     try {
@@ -239,48 +259,51 @@ export const getAdminWaterSources = async (req, res) => {
                     include: {
                         villages: {
                             include: {
-                                water_sources: true
-                            }
-                        }
-                    }
-                }
-            }
+                                water_sources: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
         // Map to frontend structure
-        const mappedRegions = regions.map(region => {
-            const districts = region.districts.map(district => {
-                const villages = district.villages.map(village => {
-                    let sources = village.water_sources.map(source => {
-                        let mappedStatus = 'functional'; // default
-                        if (source.status === 'Working')
-                            mappedStatus = 'functional';
-                        else if (source.status === 'Needed Maintenance')
-                            mappedStatus = 'needs_repair';
-                        else if (source.status === 'Broken')
-                            mappedStatus = 'non_functional';
+        const mappedRegions = regions.map((region) => {
+            const districts = region.districts.map((district) => {
+                const villages = district.villages.map((village) => {
+                    let sources = village.water_sources.map((source) => {
+                        let mappedStatus = "functional"; // default
+                        if (source.status === "Working")
+                            mappedStatus = "functional";
+                        else if (source.status === "Needed Maintenance")
+                            mappedStatus = "needs_repair";
+                        else if (source.status === "Broken")
+                            mappedStatus = "non_functional";
                         else
-                            mappedStatus = source.status?.toLowerCase().replace(' ', '_') || 'functional';
+                            mappedStatus =
+                                source.status?.toLowerCase().replace(" ", "_") || "functional";
                         return {
                             id: source.id,
                             source_name: source.name,
                             water_source_type: source.type,
                             status: mappedStatus,
                             lat: source.latitude,
-                            lng: source.longitude
+                            lng: source.longitude,
                         };
                     });
                     // Filter sources if status or type provided
                     if (status) {
-                        sources = sources.filter(s => s.status === status);
+                        sources = sources.filter((s) => s.status === status);
                     }
                     if (type) {
-                        sources = sources.filter(s => s.water_source_type === type);
+                        sources = sources.filter((s) => s.water_source_type === type);
                     }
                     const totalSources = sources.length;
-                    const functional = sources.filter(s => s.status === 'functional').length;
-                    const needsRepair = sources.filter(s => s.status === 'needs_repair').length;
-                    const nonFunctional = sources.filter(s => s.status === 'non_functional').length;
-                    const avgStatus = totalSources > 0 ? Math.round((functional / totalSources) * 100) : 0;
+                    const functional = sources.filter((s) => s.status === "functional").length;
+                    const needsRepair = sources.filter((s) => s.status === "needs_repair").length;
+                    const nonFunctional = sources.filter((s) => s.status === "non_functional").length;
+                    const avgStatus = totalSources > 0
+                        ? Math.round((functional / totalSources) * 100)
+                        : 0;
                     return {
                         name: village.name,
                         totalSources,
@@ -288,25 +311,31 @@ export const getAdminWaterSources = async (req, res) => {
                         functional,
                         needsRepair,
                         nonFunctional,
-                        sources
+                        sources,
                     };
                 });
                 const totalSources = villages.reduce((sum, v) => sum + v.totalSources, 0);
-                const avgStatus = villages.length > 0 ? Math.round(villages.reduce((sum, v) => sum + v.avgStatus, 0) / villages.length) : 0;
+                const avgStatus = villages.length > 0
+                    ? Math.round(villages.reduce((sum, v) => sum + v.avgStatus, 0) /
+                        villages.length)
+                    : 0;
                 return {
                     name: district.name,
                     totalSources,
                     avgStatus,
-                    villages
+                    villages,
                 };
             });
             const totalSources = districts.reduce((sum, d) => sum + d.totalSources, 0);
-            const avgStatus = districts.length > 0 ? Math.round(districts.reduce((sum, d) => sum + d.avgStatus, 0) / districts.length) : 0;
+            const avgStatus = districts.length > 0
+                ? Math.round(districts.reduce((sum, d) => sum + d.avgStatus, 0) /
+                    districts.length)
+                : 0;
             return {
                 region: region.name,
                 totalSources,
                 avgStatus,
-                districts
+                districts,
             };
         });
         res.json(mappedRegions);
@@ -315,17 +344,111 @@ export const getAdminWaterSources = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+// Get Analytics Data
+export const getAnalyticsData = async (req, res) => {
+    try {
+        // 1. Status Distribution
+        const statusCounts = await prisma.waterSource.groupBy({
+            by: ["status"],
+            _count: {
+                id: true,
+            },
+        });
+        const statusData = statusCounts.map((item) => ({
+            status: item.status || "Unknown",
+            count: item._count.id,
+            color: item.status === "Working"
+                ? "#22c55e"
+                : item.status === "Broken"
+                    ? "#ef4444"
+                    : "#f97316", // Default color mapping
+            description: item.status, // You might want to map this to descriptions
+        }));
+        // 2. Village/Region Performance
+        // We want sources per village, broken down by functional/non-functional
+        const villages = await prisma.village.findMany({
+            include: {
+                _count: {
+                    select: { water_sources: true },
+                },
+                water_sources: {
+                    select: {
+                        status: true,
+                    },
+                },
+            },
+        });
+        const villageData = villages
+            .map((v) => {
+            const functional = v.water_sources.filter((s) => s.status === "Working").length;
+            const nonFunctional = v.water_sources.filter((s) => s.status === "Broken").length;
+            // Simple population estimate logic (placeholder)
+            const population = v.water_sources.length * 500;
+            return {
+                village: v.name,
+                count: v._count.water_sources,
+                functional,
+                nonFunctional,
+                population,
+            };
+        })
+            .sort((a, b) => b.count - a.count) // Top villages first
+            .slice(0, 10); // Limit to top 10 for charts
+        // 3. Source Type Analysis
+        const typeCounts = await prisma.waterSource.groupBy({
+            by: ["type", "status"],
+            _count: {
+                id: true,
+            },
+        });
+        // Group by type manually since prisma groupBy returns flat list of type+status pairs
+        const typeMap = {};
+        typeCounts.forEach((item) => {
+            const typeName = item.type || "Unknown";
+            if (!typeMap[typeName]) {
+                typeMap[typeName] = { type: typeName, count: 0, functional: 0 };
+            }
+            typeMap[typeName].count += item._count.id;
+            if (item.status === "Working") {
+                typeMap[typeName].functional += item._count.id;
+            }
+        });
+        const sourceTypeData = Object.values(typeMap);
+        // 4. Trends (Mocked for now based on months if no date field, or using created_at if available)
+        // Assuming created_at exists, let's try to group by month for the last year.
+        // Use raw query for date truncation if needed or just simple mock if speed is preferred.
+        // For now, let's send a static mock for trends to ensure frontend doesn't break,
+        // or calculate if possible.
+        const trendData = [
+            { month: "Jan", functional: 150, nonFunctional: 50, repairs: 20 },
+            { month: "Feb", functional: 155, nonFunctional: 45, repairs: 25 },
+            // ... keeping it simple or mocked for now as real historical data might be empty
+        ];
+        res.json({
+            statusData,
+            villageData,
+            sourceTypeData,
+            trendData,
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 export default {
     getVillages,
-    getWaterSources, // Renamed
+    getWaterSources,
     submitReport,
     getReports,
     getAlerts,
     createAlert,
-    addWaterSource, // Renamed
+    addWaterSource,
     sendSms,
     updateRisk,
     getDashboardStats,
+    getRegions,
+    getDistricts,
     getAdminWaterSources,
+    getAnalyticsData,
 };
 //# sourceMappingURL=apiController.js.map
