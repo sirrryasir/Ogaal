@@ -1,3 +1,4 @@
 {
-  "/api/stress-acceleration/route": "app/api/stress-acceleration/route.js"
+  "/api/stress-acceleration/route": "app/api/stress-acceleration/route.js",
+  "/api/water-source-status/route": "app/api/water-source-status/route.js"
 }
