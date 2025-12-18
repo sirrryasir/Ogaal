@@ -14,7 +14,7 @@ import {
   FlatList
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, Feather, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import Layout from '../../../components/Layout';
@@ -52,14 +52,66 @@ interface StatItem {
   change?: string;
 }
 
+interface Weather {
+  temperature: number;
+  condition: string;
+  humidity: number;
+  precipitation: number;
+  icon: string;
+}
+
+interface Activity {
+  id: string;
+  type: 'report' | 'maintenance' | 'visit' | 'alert';
+  title: string;
+  description: string;
+  time: string;
+  user: string;
+  icon: string;
+  color: string;
+}
+
+interface CommunityUpdate {
+  id: string;
+  title: string;
+  description: string;
+  region: string;
+  time: string;
+  type: 'success' | 'issue' | 'maintenance' | 'new';
+  upvotes: number;
+  comments: number;
+}
+
+interface MaintenanceSchedule {
+  id: string;
+  asset: string;
+  type: 'preventive' | 'corrective' | 'emergency';
+  scheduledDate: string;
+  status: 'pending' | 'in-progress' | 'completed' | 'overdue';
+  priority: 'low' | 'medium' | 'high';
+  assignedTo: string;
+}
+
+interface DonationCampaign {
+  id: string;
+  title: string;
+  description: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline: string;
+  region: string;
+  progress: number;
+  donorsCount: number;
+}
+
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
-  
+
   // Animation values for collapsible header
   const scrollY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  
+
   // State
   const [refreshing, setRefreshing] = useState(false);
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -69,6 +121,41 @@ const HomeScreen: React.FC = () => {
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<WaterSource[]>([]);
+
+  // Additional state for new sections
+  const [weather, setWeather] = useState<Weather>({
+    temperature: 28,
+    condition: 'Sunny',
+    humidity: 45,
+    precipitation: 10,
+    icon: 'sunny'
+  });
+
+  const [activities, setActivities] = useState<Activity[]>([
+    { id: '1', type: 'report', title: 'Water Level Report', description: 'Updated borehole A1 water levels', time: '2 hours ago', user: 'Ahmed Ali', icon: 'assignment', color: '#0c6dff' },
+    { id: '2', type: 'maintenance', title: 'Maintenance Completed', description: 'Pump repaired at Well B2', time: '5 hours ago', user: 'Maintenance Team', icon: 'build', color: '#10b981' },
+    { id: '3', type: 'visit', title: 'Field Visit', description: 'Inspected dam water levels', time: '1 day ago', user: 'Field Officer', icon: 'location-on', color: '#f59e0b' },
+    { id: '4', type: 'alert', title: 'Low Water Alert', description: 'Water levels dropping in Togdheer', time: '2 days ago', user: 'System Alert', icon: 'warning', color: '#ef4444' },
+  ]);
+
+  const [communityUpdates, setCommunityUpdates] = useState<CommunityUpdate[]>([
+    { id: '1', title: 'New Well Operational', description: 'Community well now providing clean water', region: 'Gabiley', time: '1 day ago', type: 'success', upvotes: 24, comments: 8 },
+    { id: '2', title: 'Water Pressure Issue', description: 'Low pressure reported in central area', region: 'Hargeisa', time: '2 days ago', type: 'issue', upvotes: 18, comments: 12 },
+    { id: '3', title: 'Scheduled Maintenance', description: 'Monthly maintenance on main pipeline', region: 'Berbera', time: '3 days ago', type: 'maintenance', upvotes: 15, comments: 5 },
+  ]);
+
+  const [maintenanceSchedule, setMaintenanceSchedule] = useState<MaintenanceSchedule[]>([
+    { id: '1', asset: 'Borehole Pump A1', type: 'preventive', scheduledDate: 'Tomorrow', status: 'pending', priority: 'high', assignedTo: 'Maintenance Team A' },
+    { id: '2', asset: 'Water Treatment Plant', type: 'corrective', scheduledDate: 'Today', status: 'in-progress', priority: 'high', assignedTo: 'Tech Team' },
+    { id: '3', asset: 'Distribution Pipeline', type: 'preventive', scheduledDate: 'In 3 days', status: 'pending', priority: 'medium', assignedTo: 'Field Team B' },
+    { id: '4', asset: 'Storage Tank C2', type: 'emergency', scheduledDate: 'Overdue', status: 'overdue', priority: 'high', assignedTo: 'Emergency Team' },
+  ]);
+
+  const [donationCampaigns, setDonationCampaigns] = useState<DonationCampaign[]>([
+    { id: '1', title: 'Clean Water for Rural Schools', description: 'Providing clean water access to 10 rural schools', targetAmount: 50000, currentAmount: 32000, deadline: '15 days left', region: 'All Regions', progress: 64, donorsCount: 124 },
+    { id: '2', title: 'Borehole Repair Fund', description: 'Emergency fund for broken boreholes in drought areas', targetAmount: 25000, currentAmount: 18500, deadline: '7 days left', region: 'Togdheer', progress: 74, donorsCount: 89 },
+    { id: '3', title: 'Water Purification Units', description: 'Installing purification systems in hospitals', targetAmount: 75000, currentAmount: 42000, deadline: '30 days left', region: 'Hargeisa', progress: 56, donorsCount: 210 },
+  ]);
 
   // Mock data
   const waterSources: WaterSource[] = [
@@ -86,35 +173,45 @@ const HomeScreen: React.FC = () => {
     { id: 3, message: 'Emergency repair in progress', type: 'critical', time: '1 day ago' },
   ];
 
-
-  // Header animations based on scroll
+  // Header animations
   const headerHeight = scrollY.interpolate({
-    inputRange: [0, 150],
-    outputRange: [120, 100],
+    inputRange: [0, 120],
+    outputRange: [200, 100],
     extrapolate: 'clamp',
   });
 
   const headerTitleOpacity = scrollY.interpolate({
-    inputRange: [0, 100],
+    inputRange: [0, 80],
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
 
   const headerTitleTranslateY = scrollY.interpolate({
-    inputRange: [0, 150],
-    outputRange: [0, -20],
+    inputRange: [0, 120],
+    outputRange: [0, -15],
     extrapolate: 'clamp',
   });
 
+  const greetingOpacity = scrollY.interpolate({
+    inputRange: [0, 60],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const greetingTranslateY = scrollY.interpolate({
+    inputRange: [0, 60],
+    outputRange: [0, -15],
+    extrapolate: 'clamp',
+  });
 
   const collapsedHeaderOpacity = scrollY.interpolate({
-    inputRange: [100, 150],
+    inputRange: [80, 120],
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
 
   const collapsedHeaderTranslateY = scrollY.interpolate({
-    inputRange: [100, 150],
+    inputRange: [80, 120],
     outputRange: [20, 0],
     extrapolate: 'clamp',
   });
@@ -131,10 +228,10 @@ const HomeScreen: React.FC = () => {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
@@ -176,10 +273,64 @@ const HomeScreen: React.FC = () => {
     }
   };
 
+  // Helper functions for new sections
+  const getWeatherIcon = (condition: string) => {
+    switch (condition.toLowerCase()) {
+      case 'sunny': return 'sunny';
+      case 'cloudy': return 'cloud';
+      case 'rainy': return 'rainy';
+      case 'partly cloudy': return 'partly-cloudy-day';
+      default: return 'wb-sunny';
+    }
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'report': return 'assignment';
+      case 'maintenance': return 'build';
+      case 'visit': return 'location-on';
+      case 'alert': return 'warning';
+      default: return 'notifications';
+    }
+  };
+
+  const getCommunityUpdateColor = (type: string) => {
+    switch (type) {
+      case 'success': return '#10b981';
+      case 'issue': return '#ef4444';
+      case 'maintenance': return '#f59e0b';
+      case 'new': return '#0c6dff';
+      default: return '#6b7280';
+    }
+  };
+
+  const getMaintenanceStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return '#f59e0b';
+      case 'in-progress': return '#0c6dff';
+      case 'completed': return '#10b981';
+      case 'overdue': return '#ef4444';
+      default: return '#6b7280';
+    }
+  };
+
+  const getMaintenancePriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return '#ef4444';
+      case 'medium': return '#f59e0b';
+      case 'low': return '#10b981';
+      default: return '#6b7280';
+    }
+  };
+
   const handleViewWaterSources = () => navigation.navigate('WaterSources' as never);
   const handleReportImpact = () => navigation.navigate('Report' as never);
   const handleViewAllWells = () => navigation.navigate('WaterSources' as never);
   const handleViewAllAlerts = () => navigation.navigate('Notifications' as never);
+  const handleViewAllActivities = () => navigation.navigate('Activities' as never);
+  const handleViewCommunityUpdates = () => navigation.navigate('Community' as never);
+  const handleViewMaintenance = () => navigation.navigate('Maintenance' as never);
+  const handleViewDonations = () => navigation.navigate('Donations' as never);
 
   const translateType = (type: string) => {
     switch (type) {
@@ -224,8 +375,11 @@ const HomeScreen: React.FC = () => {
     setSearchModalVisible(false);
     setSearchQuery('');
     setSearchResults([]);
-    // Navigate to water sources map with selected source
     navigation.navigate('WaterSources' as never);
+  };
+
+  const handleDonate = (campaignId: string) => {
+    navigation.navigate('Donate' as never);
   };
 
   const onRefresh = React.useCallback(() => {
@@ -235,8 +389,6 @@ const HomeScreen: React.FC = () => {
 
   useEffect(() => {
     setGreeting(getGreeting());
-    
-    // Initial fade animation
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,
@@ -249,7 +401,6 @@ const HomeScreen: React.FC = () => {
       try {
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          // Use default location
           setLocation({ latitude: 9.5624, longitude: 44.0770 });
           return;
         }
@@ -271,13 +422,13 @@ const HomeScreen: React.FC = () => {
       const sourcesWithDistance = waterSources.map(source => ({
         ...source,
         distance: calculateDistance(
-          location.latitude, 
-          location.longitude, 
-          source.latitude, 
+          location.latitude,
+          location.longitude,
+          source.latitude,
           source.longitude
         ).toFixed(1) + ' km'
       }));
-      
+
       const sorted = sourcesWithDistance.sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
       setNearestWells(sorted.slice(0, 4));
 
@@ -298,15 +449,19 @@ const HomeScreen: React.FC = () => {
   return (
     <Layout noPadding style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0c6dff" />
-      
+
       {/* Collapsible Header */}
       <Animated.View style={[styles.headerContainer, { height: headerHeight }]}>
-        <View style={[styles.headerGradient, { backgroundColor: '#0c6dff' }]}>
-          {/* Background Pattern */}
+        <LinearGradient
+          colors={['#0c6dff', '#4f46e5']}
+          style={styles.headerBackground}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
           <View style={styles.headerPattern}>
             {[...Array(20)].map((_, i) => (
-              <View 
-                key={i} 
+              <View
+                key={i}
                 style={[
                   styles.patternDot,
                   {
@@ -315,12 +470,11 @@ const HomeScreen: React.FC = () => {
                     opacity: 0.05 + (i % 3) * 0.02,
                     transform: [{ scale: 1 + (i % 2) * 0.5 }]
                   }
-                ]} 
+                ]}
               />
             ))}
           </View>
 
-          {/* Expanded Header Content */}
           <Animated.View
             style={[
               styles.expandedContent,
@@ -330,51 +484,62 @@ const HomeScreen: React.FC = () => {
               }
             ]}
           >
-            <View style={styles.topBar}>
+            <View style={styles.headerTopRow}>
               <View style={styles.greetingContainer}>
-                <View style={styles.greetingRow}>
-                  <Typography variant="h1" style={styles.greeting}>
-                    {greeting}
+                <Animated.View
+                  style={[
+                    styles.greetingWrapper,
+                    {
+                      opacity: greetingOpacity,
+                      transform: [{ translateY: greetingTranslateY }]
+                    }
+                  ]}
+                >
+                  <View style={styles.greetingRow}>
+                    <Typography variant="h1" style={styles.greeting}>
+                      {greeting}
+                    </Typography>
+                  </View>
+                  <Typography variant="body" style={styles.location}>
+                    {location ? t('currentLocation') : t('locating')}
                   </Typography>
-                  <Ionicons name="hand-left" size={28} color="white" style={styles.greetingIcon} />
-                </View>
-                <Typography variant="body" style={styles.location}>
-                  {location ? t('currentLocation') : t('locating')}
-                </Typography>
+                </Animated.View>
               </View>
 
               <TouchableOpacity
                 style={styles.notificationButton}
                 onPress={handleSearch}
               >
-                <Ionicons name="search-outline" size={24} color="white" />
+                <Ionicons name="search-outline" size={22} color="white" />
               </TouchableOpacity>
             </View>
           </Animated.View>
 
-          {/* Collapsed Header Content */}
-          <Animated.View 
+          <Animated.View
             style={[
               styles.collapsedContent,
               {
                 opacity: collapsedHeaderOpacity,
-                transform: [{ translateY: collapsedHeaderTranslateY }]
+                transform: [{ translateY: collapsedHeaderTranslateY }],
+                paddingTop: Platform.OS === 'ios' ? 15 : 10,
               }
             ]}
           >
             <View style={styles.collapsedBar}>
               <View style={styles.collapsedTitle}>
-                <MaterialIcons name="home" size={24} color="white" />
+                <MaterialIcons name="home" size={22} color="white" />
                 <Typography variant="h3" style={styles.collapsedTitleText}>
                   {t('dashboard')}
                 </Typography>
               </View>
               <TouchableOpacity style={styles.collapsedNotificationButton} onPress={handleSearch}>
-                <Ionicons name="search-outline" size={22} color="white" />
+                <Ionicons name="search-outline" size={20} color="white" />
               </TouchableOpacity>
             </View>
           </Animated.View>
-        </View>
+
+          <View style={styles.headerCurve} />
+        </LinearGradient>
       </Animated.View>
 
       {/* Main Content */}
@@ -397,8 +562,16 @@ const HomeScreen: React.FC = () => {
           />
         }
       >
-        {/* Content starts below header */}
-        <View style={styles.contentSpacer} />
+        <Animated.View style={[
+          styles.contentSpacer,
+          {
+            marginTop: scrollY.interpolate({
+              inputRange: [0, 120],
+              outputRange: [0, 15],
+              extrapolate: 'clamp',
+            }),
+          }
+        ]} />
 
         {/* Stats Cards */}
         <View style={styles.statsSection}>
@@ -436,6 +609,56 @@ const HomeScreen: React.FC = () => {
           </ScrollView>
         </View>
 
+        {/* Weather Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <MaterialIcons name="cloud" size={24} color="#3b82f6" />
+              <Typography variant="h3" style={styles.sectionTitle}>
+                {t('weatherConditions')}
+              </Typography>
+            </View>
+            <TouchableOpacity style={styles.weatherRefresh}>
+              <MaterialIcons name="refresh" size={20} color="#3b82f6" />
+            </TouchableOpacity>
+          </View>
+
+          <LinearGradient
+            colors={['#dbeafe', '#eff6ff']}
+            style={styles.weatherCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.weatherContent}>
+              <View style={styles.weatherMain}>
+                <MaterialIcons name={getWeatherIcon(weather.condition) as any} size={48} color="#3b82f6" />
+                <View style={styles.weatherTemp}>
+                  <Typography variant="h1" style={styles.temperature}>
+                    {weather.temperature}°
+                  </Typography>
+                  <Typography variant="body" style={styles.condition}>
+                    {weather.condition}
+                  </Typography>
+                </View>
+              </View>
+              <View style={styles.weatherDetails}>
+                <View style={styles.weatherDetail}>
+                  <MaterialIcons name="water-drop" size={16} color="#3b82f6" />
+                  <Typography variant="caption" style={styles.weatherDetailText}>
+                    Humidity: {weather.humidity}%
+                  </Typography>
+                </View>
+                <View style={styles.weatherDetail}>
+                  <MaterialIcons name="umbrella" size={16} color="#3b82f6" />
+                  <Typography variant="caption" style={styles.weatherDetailText}>
+                    Precip: {weather.precipitation}%
+                  </Typography>
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+
         {/* Nearest Wells Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -445,7 +668,7 @@ const HomeScreen: React.FC = () => {
                 {t('nearestWaterSources')}
               </Typography>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.viewAllButton}
               onPress={handleViewAllWells}
             >
@@ -481,10 +704,10 @@ const HomeScreen: React.FC = () => {
                 <View style={styles.wellCardContent}>
                   <View style={styles.wellCardHeader}>
                     <View style={styles.wellType}>
-                      <MaterialIcons 
-                        name={getWellIcon(well.type) as any} 
-                        size={20} 
-                        color={getWellStatusColor(well.status, well.waterLevel)} 
+                      <MaterialIcons
+                        name={getWellIcon(well.type) as any}
+                        size={20}
+                        color={getWellStatusColor(well.status, well.waterLevel)}
                       />
                       <Typography variant="caption" style={styles.wellTypeText}>
                         {translateType(well.type)}
@@ -500,7 +723,7 @@ const HomeScreen: React.FC = () => {
                   <Typography variant="body" style={styles.wellName}>
                     {well.name}
                   </Typography>
-                  
+
                   <View style={styles.wellDetails}>
                     <View style={styles.detailItem}>
                       <MaterialIcons name="location-on" size={14} color="#64748b" />
@@ -515,7 +738,74 @@ const HomeScreen: React.FC = () => {
                       </Typography>
                     </View>
                   </View>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+        </View>
 
+        {/* Recent Activity Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <MaterialIcons name="history" size={24} color="#8b5cf6" />
+              <Typography variant="h3" style={styles.sectionTitle}>
+                {t('recentActivity')}
+              </Typography>
+            </View>
+            <TouchableOpacity
+              style={[styles.viewAllButton, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}
+              onPress={handleViewAllActivities}
+            >
+              <Typography variant="body" style={[styles.viewAllText, { color: '#8b5cf6' }]}>
+                {t('viewAll')}
+              </Typography>
+              <MaterialIcons name="arrow-forward" size={16} color="#8b5cf6" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.activitiesContainer}>
+            {activities.map((activity, index) => (
+              <Animated.View
+                key={activity.id}
+                style={[
+                  styles.activityCard,
+                  {
+                    opacity: fadeAnim.interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: [0, 0.5, 1]
+                    }),
+                    transform: [
+                      {
+                        translateX: fadeAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [30, 0]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              >
+                <View style={styles.activityHeader}>
+                  <View style={[styles.activityIcon, { backgroundColor: activity.color + '20' }]}>
+                    <MaterialIcons name={activity.icon as any} size={18} color={activity.color} />
+                  </View>
+                  <View style={styles.activityContent}>
+                    <Typography variant="body" style={styles.activityTitle}>
+                      {activity.title}
+                    </Typography>
+                    <Typography variant="caption" style={styles.activityDescription}>
+                      {activity.description}
+                    </Typography>
+                  </View>
+                  <Typography variant="caption" style={styles.activityTime}>
+                    {activity.time}
+                  </Typography>
+                </View>
+                <View style={styles.activityFooter}>
+                  <Typography variant="caption" style={styles.activityUser}>
+                    {activity.user}
+                  </Typography>
                 </View>
               </Animated.View>
             ))}
@@ -531,7 +821,7 @@ const HomeScreen: React.FC = () => {
                 {t('recentAlerts')}
               </Typography>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.viewAllButton, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}
               onPress={handleViewAllAlerts}
             >
@@ -566,10 +856,10 @@ const HomeScreen: React.FC = () => {
               >
                 <View style={styles.alertHeader}>
                   <View style={styles.alertType}>
-                    <MaterialIcons 
-                      name={getAlertIcon(alert.type) as any} 
-                      size={20} 
-                      color={getAlertColor(alert.type)} 
+                    <MaterialIcons
+                      name={getAlertIcon(alert.type) as any}
+                      size={20}
+                      color={getAlertColor(alert.type)}
                     />
                     <Typography variant="caption" style={[styles.alertTypeText, { color: getAlertColor(alert.type) }]}>
                       {t(alert.type)}
@@ -587,13 +877,267 @@ const HomeScreen: React.FC = () => {
           </View>
         </View>
 
+        {/* Community Updates Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <MaterialIcons name="people" size={24} color="#10b981" />
+              <Typography variant="h3" style={styles.sectionTitle}>
+                {t('communityUpdates')}
+              </Typography>
+            </View>
+            <TouchableOpacity
+              style={[styles.viewAllButton, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}
+              onPress={handleViewCommunityUpdates}
+            >
+              <Typography variant="body" style={[styles.viewAllText, { color: '#10b981' }]}>
+                {t('viewAll')}
+              </Typography>
+              <MaterialIcons name="arrow-forward" size={16} color="#10b981" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.communityGrid}>
+            {communityUpdates.map((update, index) => (
+              <Animated.View
+                key={update.id}
+                style={[
+                  styles.communityCard,
+                  {
+                    opacity: fadeAnim.interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: [0, 0.5, 1]
+                    }),
+                    transform: [
+                      {
+                        translateY: fadeAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [20, 0]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              >
+                <View style={styles.communityHeader}>
+                  <View style={[styles.communityType, { backgroundColor: getCommunityUpdateColor(update.type) + '15' }]}>
+                    <Typography variant="caption" style={[styles.communityTypeText, { color: getCommunityUpdateColor(update.type) }]}>
+                      {update.type.toUpperCase()}
+                    </Typography>
+                  </View>
+                  <Typography variant="caption" style={styles.communityTime}>
+                    {update.time}
+                  </Typography>
+                </View>
+                <Typography variant="body" style={styles.communityTitle}>
+                  {update.title}
+                </Typography>
+                <Typography variant="caption" style={styles.communityDescription}>
+                  {update.description}
+                </Typography>
+                <View style={styles.communityFooter}>
+                  <View style={styles.communityRegion}>
+                    <MaterialIcons name="location-on" size={12} color="#64748b" />
+                    <Typography variant="caption" style={styles.communityRegionText}>
+                      {update.region}
+                    </Typography>
+                  </View>
+                  <View style={styles.communityStats}>
+                    <View style={styles.communityStat}>
+                      <MaterialIcons name="thumb-up" size={12} color="#64748b" />
+                      <Typography variant="caption" style={styles.communityStatText}>
+                        {update.upvotes}
+                      </Typography>
+                    </View>
+                    <View style={styles.communityStat}>
+                      <MaterialIcons name="comment" size={12} color="#64748b" />
+                      <Typography variant="caption" style={styles.communityStatText}>
+                        {update.comments}
+                      </Typography>
+                    </View>
+                  </View>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+        </View>
+
+        {/* Maintenance Schedule Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <MaterialIcons name="schedule" size={24} color="#f59e0b" />
+              <Typography variant="h3" style={styles.sectionTitle}>
+                {t('maintenanceSchedule')}
+              </Typography>
+            </View>
+            <TouchableOpacity
+              style={[styles.viewAllButton, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}
+              onPress={handleViewMaintenance}
+            >
+              <Typography variant="body" style={[styles.viewAllText, { color: '#f59e0b' }]}>
+                {t('viewAll')}
+              </Typography>
+              <MaterialIcons name="arrow-forward" size={16} color="#f59e0b" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.maintenanceContainer}>
+            {maintenanceSchedule.map((item, index) => (
+              <Animated.View
+                key={item.id}
+                style={[
+                  styles.maintenanceCard,
+                  {
+                    opacity: fadeAnim.interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: [0, 0.5, 1]
+                    }),
+                    transform: [
+                      {
+                        translateX: fadeAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [30, 0]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              >
+                <View style={styles.maintenanceHeader}>
+                  <View style={styles.maintenanceAsset}>
+                    <MaterialIcons name="build" size={18} color="#64748b" />
+                    <Typography variant="body" style={styles.maintenanceAssetText}>
+                      {item.asset}
+                    </Typography>
+                  </View>
+                  <View style={[styles.maintenancePriority, { backgroundColor: getMaintenancePriorityColor(item.priority) + '15' }]}>
+                    <Typography variant="caption" style={[styles.maintenancePriorityText, { color: getMaintenancePriorityColor(item.priority) }]}>
+                      {item.priority.toUpperCase()}
+                    </Typography>
+                  </View>
+                </View>
+                <View style={styles.maintenanceDetails}>
+                  <View style={styles.maintenanceDetail}>
+                    <MaterialIcons name="date-range" size={14} color="#64748b" />
+                    <Typography variant="caption" style={styles.maintenanceDetailText}>
+                      {item.scheduledDate}
+                    </Typography>
+                  </View>
+                  <View style={[styles.maintenanceStatus, { backgroundColor: getMaintenanceStatusColor(item.status) + '15' }]}>
+                    <Typography variant="caption" style={[styles.maintenanceStatusText, { color: getMaintenanceStatusColor(item.status) }]}>
+                      {item.status.toUpperCase()}
+                    </Typography>
+                  </View>
+                </View>
+                <View style={styles.maintenanceFooter}>
+                  <Typography variant="caption" style={styles.maintenanceAssigned}>
+                    Assigned to: {item.assignedTo}
+                  </Typography>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+        </View>
+
+        {/* Donation Campaigns Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <MaterialIcons name="volunteer-activism" size={24} color="#ec4899" />
+              <Typography variant="h3" style={styles.sectionTitle}>
+                {t('donationCampaigns')}
+              </Typography>
+            </View>
+            <TouchableOpacity
+              style={[styles.viewAllButton, { backgroundColor: 'rgba(236, 72, 153, 0.1)' }]}
+              onPress={handleViewDonations}
+            >
+              <Typography variant="body" style={[styles.viewAllText, { color: '#ec4899' }]}>
+                {t('viewAll')}
+              </Typography>
+              <MaterialIcons name="arrow-forward" size={16} color="#ec4899" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.donationsContainer}>
+            {donationCampaigns.map((campaign, index) => (
+              <Animated.View
+                key={campaign.id}
+                style={[
+                  styles.donationCard,
+                  {
+                    opacity: fadeAnim.interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: [0, 0.5, 1]
+                    }),
+                    transform: [
+                      {
+                        translateY: fadeAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [20, 0]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              >
+                <View style={styles.donationHeader}>
+                  <Typography variant="body" style={styles.donationTitle}>
+                    {campaign.title}
+                  </Typography>
+                  <Typography variant="caption" style={styles.donationDeadline}>
+                    {campaign.deadline}
+                  </Typography>
+                </View>
+                <Typography variant="caption" style={styles.donationDescription}>
+                  {campaign.description}
+                </Typography>
+                <View style={styles.donationProgress}>
+                  <View style={styles.progressBar}>
+                    <View style={[
+                      styles.progressFill,
+                      { width: `${campaign.progress}%`, backgroundColor: '#0c6dff' }
+                    ]} />
+                  </View>
+                  <View style={styles.donationProgressInfo}>
+                    <Typography variant="caption" style={styles.donationProgressText}>
+                      ${campaign.currentAmount.toLocaleString()} raised of ${campaign.targetAmount.toLocaleString()}
+                    </Typography>
+                    <Typography variant="caption" style={styles.donationProgressPercent}>
+                      {campaign.progress}%
+                    </Typography>
+                  </View>
+                </View>
+                <View style={styles.donationFooter}>
+                  <View style={styles.donationStats}>
+                    <MaterialIcons name="people" size={12} color="#64748b" />
+                    <Typography variant="caption" style={styles.donationStatText}>
+                      {campaign.donorsCount} donors
+                    </Typography>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.donateButton}
+                    onPress={() => handleDonate(campaign.id)}
+                  >
+                    <MaterialIcons name="favorite" size={14} color="white" />
+                    <Typography variant="caption" style={styles.donateButtonText}>
+                      Donate
+                    </Typography>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+        </View>
+
         {/* Quick Actions */}
         <View style={styles.actionsSection}>
           <Typography variant="h3" style={styles.actionsTitle}>
             {t('quickActions')}
           </Typography>
           <View style={styles.actionsGrid}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.actionCard}
               onPress={handleViewWaterSources}
             >
@@ -613,7 +1157,7 @@ const HomeScreen: React.FC = () => {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.actionCard}
               onPress={handleReportImpact}
             >
@@ -634,7 +1178,6 @@ const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
-
 
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
@@ -777,9 +1320,8 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     overflow: 'hidden',
   },
-  headerGradient: {
+  headerBackground: {
     flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 50 : 30,
   },
   headerPattern: {
     ...StyleSheet.absoluteFillObject,
@@ -793,71 +1335,103 @@ const styles = StyleSheet.create({
   },
   expandedContent: {
     flex: 1,
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
     paddingHorizontal: 20,
-    paddingTop: 10,
   },
-  topBar: {
+  headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 25,
+    alignItems: 'center',
+    marginBottom: 20,
   },
   greetingContainer: {
     flex: 1,
   },
+  greetingWrapper: {
+    marginTop: 10,
+  },
   greetingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 8,
   },
   greeting: {
     fontSize: 28,
     fontWeight: '900',
     color: 'white',
     letterSpacing: -0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-    marginRight: 8,
+    marginRight: 10,
   },
   greetingIcon: {
     marginTop: 2,
   },
   location: {
-    fontSize: 15,
+    fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: '500',
   },
   notificationButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
-    marginTop: 5,
+    marginTop: 10,
   },
-  notificationBadge: {
+  collapsedContent: {
     position: 'absolute',
-    top: -3,
-    right: -3,
-    backgroundColor: '#ef4444',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    top: Platform.OS === 'ios' ? 50 : 30,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    height: 50,
+  },
+  collapsedBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 40,
+    paddingHorizontal: 5,
+  },
+  collapsedTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  collapsedTitleText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'white',
+    marginLeft: 14,
+    letterSpacing: -0.3,
+  },
+  collapsedNotificationButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#4f46e5',
   },
-  badgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
+  headerCurve: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 20,
+    backgroundColor: '#f8fafc',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
-  statsContainer: {
-    marginTop: 5,
+  scrollView: {
+    flex: 1,
+    marginTop: Platform.OS === 'ios' ? 0 : 0,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  contentSpacer: {
+    height: 200,
   },
   statsSection: {
     paddingHorizontal: 20,
@@ -897,13 +1471,13 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '900',
-    color: 'white',
+    color: '#0f172a',
     marginBottom: 4,
     letterSpacing: -0.5,
   },
   statLabel: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#64748b',
     textTransform: 'uppercase',
     letterSpacing: 1,
     fontWeight: '700',
@@ -918,66 +1492,10 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   changeText: {
-    color: 'white',
+    color: '#0f172a',
     fontSize: 10,
     fontWeight: '700',
     marginLeft: 4,
-  },
-  collapsedContent: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 30,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-  },
-  collapsedBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    height: 50,
-  },
-  collapsedTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  collapsedTitleText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: 'white',
-    marginLeft: 10,
-    letterSpacing: -0.3,
-  },
-  collapsedNotificationButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  collapsedNotificationBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    backgroundColor: '#ef4444',
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#4f46e5',
-  },
-  scrollView: {
-    flex: 1,
-    marginTop: Platform.OS === 'ios' ? 0 : 0,
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  contentSpacer: {
-    height: 120, // Matches initial header height
   },
   section: {
     paddingHorizontal: 20,
@@ -1013,6 +1531,61 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
     marginRight: 4,
+  },
+  weatherRefresh: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  weatherCard: {
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  weatherContent: {},
+  weatherMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  weatherTemp: {
+    marginLeft: 16,
+  },
+  temperature: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#1e40af',
+    letterSpacing: -1,
+  },
+  condition: {
+    fontSize: 16,
+    color: '#3b82f6',
+    fontWeight: '600',
+  },
+  weatherDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  weatherDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 12,
+  },
+  weatherDetailText: {
+    fontSize: 12,
+    color: '#1e40af',
+    fontWeight: '600',
+    marginLeft: 6,
   },
   wellsGrid: {
     flexDirection: 'row',
@@ -1083,34 +1656,60 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 6,
   },
-  waterLevelContainer: {
-    marginTop: 8,
+  activitiesContainer: {},
+  activityCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  waterLevelLabel: {
+  activityHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 12,
   },
-  waterLevelText: {
-    color: '#64748b',
-    fontSize: 11,
-    fontWeight: '600',
+  activityIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
-  waterLevelPercent: {
-    color: '#0f172a',
-    fontSize: 11,
+  activityContent: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: 14,
     fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 4,
   },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 2,
-    overflow: 'hidden',
+  activityDescription: {
+    fontSize: 12,
+    color: '#64748b',
   },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
+  activityTime: {
+    fontSize: 11,
+    color: '#94a3b8',
+    fontWeight: '500',
+  },
+  activityFooter: {
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 12,
+  },
+  activityUser: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '600',
   },
   alertsContainer: {},
   alertCard: {
@@ -1152,6 +1751,244 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0f172a',
     lineHeight: 20,
+  },
+  communityGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  communityCard: {
+    width: (width - 50) / 2,
+    marginBottom: 16,
+  },
+  communityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  communityType: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  communityTypeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  communityTime: {
+    fontSize: 10,
+    color: '#94a3b8',
+    fontWeight: '500',
+  },
+  communityTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  communityDescription: {
+    fontSize: 12,
+    color: '#64748b',
+    marginBottom: 12,
+    lineHeight: 16,
+  },
+  communityFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  communityRegion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  communityRegionText: {
+    fontSize: 10,
+    color: '#64748b',
+    marginLeft: 4,
+  },
+  communityStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  communityStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  communityStatText: {
+    fontSize: 10,
+    color: '#64748b',
+    marginLeft: 2,
+  },
+  maintenanceContainer: {},
+  maintenanceCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  maintenanceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  maintenanceAsset: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  maintenanceAssetText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginLeft: 6,
+  },
+  maintenancePriority: {
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  maintenancePriorityText: {
+    fontSize: 9,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  maintenanceDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  maintenanceDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  maintenanceDetailText: {
+    fontSize: 11,
+    color: '#64748b',
+    marginLeft: 4,
+  },
+  maintenanceStatus: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  maintenanceStatusText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  maintenanceFooter: {},
+  maintenanceAssigned: {
+    fontSize: 11,
+    color: '#64748b',
+    fontStyle: 'italic',
+  },
+  donationsContainer: {},
+  donationCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  donationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  donationTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+    flex: 1,
+  },
+  donationDeadline: {
+    fontSize: 11,
+    color: '#ef4444',
+    fontWeight: '600',
+  },
+  donationDescription: {
+    fontSize: 12,
+    color: '#64748b',
+    marginBottom: 16,
+    lineHeight: 16,
+  },
+  donationProgress: {
+    marginBottom: 16,
+  },
+  donationProgressInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  donationProgressText: {
+    fontSize: 10,
+    color: '#64748b',
+  },
+  donationProgressPercent: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0c6dff',
+  },
+  donationFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  donationStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  donationStatText: {
+    fontSize: 10,
+    color: '#64748b',
+    marginLeft: 4,
+  },
+  donateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#ef4444',
+    borderRadius: 8,
+    gap: 4,
+  },
+  donateButtonText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
   },
   actionsSection: {
     paddingHorizontal: 20,
@@ -1204,7 +2041,6 @@ const styles = StyleSheet.create({
   bottomSpacing: {
     height: 20,
   },
-  // Search Modal Styles
   searchModalContainer: {
     flex: 1,
     backgroundColor: '#f8fafc',

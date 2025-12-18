@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons, Ionicons, Feather } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons, Feather, AntDesign, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
@@ -11,325 +11,457 @@ const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
   const { t, language } = useTranslation();
 
-  const settingsItems = [
+  const handleOpenWebPortal = () => {
+    const webPortalUrl = 'https://portal.sol-etsgo.com';
+    Linking.openURL(webPortalUrl).catch(err => {
+      Alert.alert('Error', 'Failed to open web portal. Please check your internet connection.');
+    });
+  };
+
+  const settingsSections = [
+    // {
+    //   title: 'Account',
+    //   icon: 'user',
+    //   color: '#4F46E5',
+    //   items: [
+    //     {
+    //       icon: 'person-outline',
+    //       title: 'Profile',
+    //       subtitle: 'Manage your personal information',
+    //       onPress: () => navigation.navigate('AccountSettings' as never),
+    //     },
+    //     {
+    //       icon: 'shield-checkmark-outline',
+    //       title: 'Security',
+    //       subtitle: 'Password, 2FA, and privacy settings',
+    //       onPress: () => navigation.navigate('PrivacySecurity' as never),
+    //     },
+    //     {
+    //       icon: 'notifications-outline',
+    //       title: 'Notifications',
+    //       subtitle: 'Customize your notification preferences',
+    //       onPress: () => navigation.navigate('NotificationSettings' as never),
+    //     },
+    //   ],
+    // },
     {
-      icon: 'language',
-      title: t('language'),
-      subtitle: `${t(language === 'en' ? 'english' : 'somali')} ${t('tapToChange')}`,
-      onPress: () => navigation.navigate('LanguageSelect' as never),
-      gradient: ['#667eea', '#764ba2'],
+      title: 'Preferences',
+      icon: 'settings-outline',
+      color: '#10B981',
+      items: [
+        {
+          icon: 'language',
+          title: 'Language',
+          subtitle: language === 'en' ? 'English' : 'Somali',
+          onPress: () => navigation.navigate('LanguageSelect' as never),
+        },
+        {
+          icon: 'color-palette-outline',
+          title: 'Theme',
+          subtitle: 'Dark / Light / Auto',
+          onPress: () => Alert.alert('Theme', 'Theme settings coming soon!'),
+        },
+        {
+          icon: 'globe-outline',
+          title: 'Web Portal',
+          subtitle: 'Access SOL ETSGO online',
+          onPress: handleOpenWebPortal,
+        },
+      ],
     },
     {
-      icon: 'info',
-      title: t('about'),
-      subtitle: t('aboutSubtitle'),
-      onPress: () => navigation.navigate('About' as never),
-      gradient: ['#f093fb', '#f5576c'],
+      title: 'Support',
+      icon: 'help-circle-outline',
+      color: '#F59E0B',
+      items: [
+        {
+          icon: 'headset-outline',
+          title: 'Help & Support',
+          subtitle: 'FAQs, contact us, live chat',
+          onPress: () => navigation.navigate('HelpSupport' as never),
+        },
+        {
+          icon: 'information-circle-outline',
+          title: 'About',
+          subtitle: 'App version and information',
+          onPress: () => navigation.navigate('About' as never),
+        },
+        {
+          icon: 'star-outline',
+          title: 'Rate App',
+          subtitle: 'Share your feedback with us',
+          onPress: () => Alert.alert('Rate App', 'Rating feature coming soon!'),
+        },
+      ],
     },
   ];
 
   return (
-    <Layout style={styles.container} noPadding>
-      {/* Premium Compact Header */}
-      <View style={styles.headerContainer}>
-        <LinearGradient 
-          colors={['#0c6dff', '#4f46e5']} 
-          style={styles.headerBackground}
+    <SafeAreaView style={styles.safeArea}>
+      <Layout style={styles.container} noPadding>
+        {/* Header - Modern Glassmorphism */}
+        <LinearGradient
+          colors={['#0F172A', '#1E293B']}
+          style={styles.header}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+          end={{ x: 1, y: 1 }}
         >
-          {/* Header Content */}
           <View style={styles.headerContent}>
-            {/* Top Row with Icons */}
-            <View style={styles.headerTopRow}>
-              <TouchableOpacity 
-                style={styles.backButton}
-                onPress={() => navigation.goBack()}
-                activeOpacity={0.7}
-              >
-                <Feather name="arrow-left" size={22} color="white" />
-              </TouchableOpacity>
-              
-              <View style={styles.centerTitle}>
-                <View style={styles.titleIcon}>
-                  <Ionicons name="settings-sharp" size={20} color="white" />
-                </View>
-                <Typography variant="h1" style={styles.headerTitle}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.8}
+            >
+              <Feather name="chevron-left" size={24} color="white" />
+            </TouchableOpacity>
+            
+            <View style={styles.headerCenter}>
+              <View style={styles.titleContainer}>
+                <Ionicons name="settings-sharp" size={24} color="#60A5FA" style={styles.titleIcon} />
+                <Typography style={styles.headerTitle}>
                   {t('settings')}
                 </Typography>
               </View>
-              
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => navigation.goBack()}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="close" size={22} color="white" />
-              </TouchableOpacity>
-            </View>
-            
-            {/* Subtitle */}
-            <View style={styles.headerSubtitleRow}>
-              <Feather name="info" size={14} color="rgba(255,255,255,0.8)" />
-              <Typography variant="body" style={styles.headerSubtitle}>
-                {t('settingsSubtitle')}
+              <Typography style={styles.headerSubtitle}>
+                Manage your account and preferences
               </Typography>
             </View>
+            
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="close" size={24} color="white" />
+            </TouchableOpacity>
           </View>
           
-          {/* Bottom Curve */}
-          <View style={styles.headerBottom}>
-            <View style={styles.curveLine} />
-            <View style={styles.curveShape} />
+          {/* Decorative element */}
+          <View style={styles.headerDecoration}>
+            <View style={styles.decorationCircle} />
+            <View style={styles.decorationCircleSmall} />
           </View>
         </LinearGradient>
-      </View>
 
-      {/* Main Content */}
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Settings Cards */}
-        <View style={styles.settingsContainer}>
-          {settingsItems.map((item, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={styles.settingCard}
-              onPress={item.onPress}
-              activeOpacity={0.85}
+        {/* Content */}
+        <ScrollView 
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* User Profile Card */}
+          {/* <View style={styles.profileCard}>
+            <LinearGradient
+              colors={['#6366F1', '#8B5CF6']}
+              style={styles.profileGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
             >
-              <LinearGradient 
-                colors={item.gradient as any} 
-                style={styles.cardGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                {/* Card Content */}
-                <View style={styles.cardContent}>
-                  {/* Icon Container */}
-                  <View style={styles.cardIconContainer}>
-                    <View style={styles.iconBackground}>
-                      <MaterialIcons name={item.icon as any} size={22} color="white" />
-                    </View>
-                  </View>
-                  
-                  {/* Text Content */}
-                  <View style={styles.cardTextContainer}>
-                    <Typography variant="h3" style={styles.cardTitle}>
-                      {item.title}
-                    </Typography>
-                    <Typography variant="caption" style={styles.cardSubtitle}>
-                      {item.subtitle}
-                    </Typography>
-                  </View>
-                  
-                  {/* Arrow Icon */}
-                  <View style={styles.cardArrow}>
-                    <Feather name="chevron-right" size={20} color="rgba(255,255,255,0.9)" />
-                  </View>
+              <View style={styles.profileContent}>
+                <View style={styles.avatarContainer}>
+                  <LinearGradient
+                    colors={['#FFFFFF', '#F3F4F6']}
+                    style={styles.avatar}
+                  >
+                    <Typography style={styles.avatarText}>JD</Typography>
+                  </LinearGradient>
                 </View>
-                
-                {/* Card Decoration */}
-                <View style={styles.cardDecoration} />
-              </LinearGradient>
-            </TouchableOpacity>
+                <View style={styles.profileInfo}>
+                  <Typography style={styles.profileName}>John Doe</Typography>
+                  <Typography style={styles.profileEmail}>john.doe@example.com</Typography>
+                </View>
+                <TouchableOpacity style={styles.editButton}>
+                  <Feather name="edit-2" size={16} color="white" />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </View> */}
+
+          {/* Settings Sections */}
+          {settingsSections.map((section, sectionIndex) => (
+            <View key={sectionIndex} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.sectionIcon, { backgroundColor: `${section.color}20` }]}>
+                  <Ionicons name={section.icon as any} size={20} color={section.color} />
+                </View>
+                <Typography style={styles.sectionTitle}>{section.title}</Typography>
+              </View>
+              
+              <View style={styles.sectionCards}>
+                {section.items.map((item, itemIndex) => (
+                  <TouchableOpacity
+                    key={itemIndex}
+                    style={styles.settingCard}
+                    onPress={item.onPress}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.cardContent}>
+                      <View style={[styles.itemIcon, { backgroundColor: `${section.color}15` }]}>
+                        <Ionicons name={item.icon as any} size={22} color={section.color} />
+                      </View>
+                      <View style={styles.itemText}>
+                        <Typography style={styles.itemTitle}>{item.title}</Typography>
+                        <Typography style={styles.itemSubtitle}>{item.subtitle}</Typography>
+                      </View>
+                      <Feather name="chevron-right" size={20} color="#94A3B8" />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           ))}
-        </View>
-        
-        {/* Bottom Spacing */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
-    </Layout>
+
+          {/* App Version */}
+          <View style={styles.versionContainer}>
+            <Typography style={styles.versionText}>
+              OGAAL • v1.0.0 (Build 2025.01)
+            </Typography>
+            <Typography style={styles.copyrightText}>
+              © 2024 OGAAL. All rights reserved.
+            </Typography>
+          </View>
+        </ScrollView>
+      </Layout>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F8FAFC',
   },
-  // Header Styles
-  headerContainer: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-    zIndex: 10,
-  },
-  headerBackground: {
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+  header: {
+    paddingTop: 60,
+    paddingBottom: 30,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    position: 'relative',
     overflow: 'hidden',
   },
   headerContent: {
-    paddingTop: 50,
-    paddingBottom: 24,
-    paddingHorizontal: 20,
-  },
-  headerTopRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  centerTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  headerCenter: {
     flex: 1,
-    justifyContent: 'center',
-  },
-  titleIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: 'white',
-    letterSpacing: -0.3,
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  headerSubtitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: 20,
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  titleIcon: {
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: 'white',
+    letterSpacing: -0.5,
+  },
   headerSubtitle: {
-    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
-    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
-    marginLeft: 8,
-    lineHeight: 20,
   },
-  headerBottom: {
-    position: 'relative',
-    height: 20,
+  closeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  curveLine: {
+  headerDecoration: {
     position: 'absolute',
     top: 0,
-    left: 0,
     right: 0,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    left: 0,
+    bottom: 0,
   },
-  curveShape: {
+  decorationCircle: {
     position: 'absolute',
-    top: 1,
-    left: 0,
-    right: 0,
-    height: 20,
-    backgroundColor: '#f8fafc',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    top: -100,
+    right: -50,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(96, 165, 250, 0.1)',
   },
-  // Content Styles
+  decorationCircleSmall: {
+    position: 'absolute',
+    top: 50,
+    left: -50,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 20,
+    paddingTop: 24,
     paddingBottom: 40,
   },
-  settingsContainer: {
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-  settingCard: {
-    borderRadius: 18,
+  profileCard: {
+    marginHorizontal: 24,
+    marginBottom: 32,
+    borderRadius: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
     shadowRadius: 16,
     elevation: 8,
     overflow: 'hidden',
   },
-  cardGradient: {
-    borderRadius: 18,
-    padding: 20,
-    position: 'relative',
-    overflow: 'hidden',
+  profileGradient: {
+    padding: 24,
+    borderRadius: 24,
   },
-  cardContent: {
+  profileContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    zIndex: 2,
   },
-  cardIconContainer: {
+  avatarContainer: {
     marginRight: 16,
   },
-  iconBackground: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  avatarText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#4F46E5',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 4,
+  },
+  profileEmail: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  editButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  cardTextContainer: {
+  section: {
+    marginBottom: 32,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 24,
+  },
+  sectionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  sectionCards: {
+    paddingHorizontal: 24,
+  },
+  settingCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    marginBottom: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  itemText: {
     flex: 1,
   },
-  cardTitle: {
-    color: 'white',
-    fontSize: 17,
-    fontWeight: '700',
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
     marginBottom: 4,
-    letterSpacing: -0.2,
   },
-  cardSubtitle: {
-    color: 'rgba(255, 255, 255, 0.85)',
+  itemSubtitle: {
     fontSize: 13,
-    lineHeight: 18,
+    color: '#64748B',
   },
-  cardArrow: {
-    marginLeft: 8,
+  versionContainer: {
+    alignItems: 'center',
+    marginTop: 24,
+    paddingHorizontal: 24,
   },
-  cardDecoration: {
-    position: 'absolute',
-    top: -30,
-    right: -30,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+  versionText: {
+    fontSize: 14,
+    color: '#94A3B8',
+    fontWeight: '500',
+    marginBottom: 8,
   },
-  bottomSpacing: {
-    height: 20,
+  copyrightText: {
+    fontSize: 12,
+    color: '#CBD5E1',
   },
 });
 

@@ -1,12 +1,14 @@
 import React, { useState, useRef } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   RefreshControl,
   Animated,
-  Platform 
+  Platform,
+  ActivityIndicator,
+  Dimensions
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
@@ -14,6 +16,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Layout from '../../../components/Layout';
 import Typography from '../../../components/Typography';
 import { useTranslation } from '../../../contexts/LanguageContext';
+
+// Create a separate interface for navigation props
+interface NotificationNavigationProps {
+  navigate: (screen: string, params?: any) => void;
+  goBack: () => void;
+}
 
 interface Notification {
   id: string;
@@ -27,8 +35,10 @@ interface Notification {
   category?: string;
 }
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const NotificationsScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NotificationNavigationProps>();
   const { t } = useTranslation();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [refreshing, setRefreshing] = useState(false);
@@ -37,7 +47,7 @@ const NotificationsScreen: React.FC = () => {
       id: '1',
       type: 'Alert',
       title: 'Water Shortage Alert',
-      message: 'Severe water shortage detected in your area. Please conserve water and check alternative sources.',
+      message: 'Severe water shortage detected in your area. Please conserve water and check alternative sources. This is a critical alert requiring immediate attention.',
       timestamp: '2 hours ago',
       timeExact: '10:30 AM',
       read: false,
@@ -48,7 +58,7 @@ const NotificationsScreen: React.FC = () => {
       id: '2',
       type: 'Update',
       title: 'New Water Source Added',
-      message: 'A new functional borehole has been added near Hargeisa market. Water level at 85%.',
+      message: 'A new functional borehole has been added near Hargeisa market. Water level at 85%. Check the map for exact location details.',
       timestamp: '1 day ago',
       timeExact: 'Yesterday, 3:45 PM',
       read: true,
@@ -59,7 +69,7 @@ const NotificationsScreen: React.FC = () => {
       id: '3',
       type: 'Reminder',
       title: 'Weekly Report Due',
-      message: 'Your weekly water usage report is due tomorrow. Please submit before 6 PM.',
+      message: 'Your weekly water usage report is due tomorrow. Please submit before 6 PM to avoid penalties.',
       timestamp: '3 days ago',
       timeExact: 'Monday, 11:20 AM',
       read: true,
@@ -70,7 +80,7 @@ const NotificationsScreen: React.FC = () => {
       id: '4',
       type: 'Community',
       title: 'Community Update',
-      message: '5 new community members joined today and contributed water source data.',
+      message: '5 new community members joined today and contributed water source data. Welcome to our water monitoring community!',
       timestamp: '4 days ago',
       timeExact: 'Sunday, 2:15 PM',
       read: true,
@@ -81,7 +91,7 @@ const NotificationsScreen: React.FC = () => {
       id: '5',
       type: 'System',
       title: 'App Update Available',
-      message: 'New version 2.1.0 is available with improved maps and faster loading.',
+      message: 'New version 2.1.0 is available with improved maps and faster loading. Update now for better experience.',
       timestamp: '1 week ago',
       timeExact: 'Last Friday, 9:00 AM',
       read: true,
@@ -93,10 +103,10 @@ const NotificationsScreen: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<'All' | 'Unread' | 'Alert' | 'Update'>('All');
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Collapsible header animations
+  // Collapsible header animations - FIXED: Better animation coordination
   const headerHeight = scrollY.interpolate({
     inputRange: [0, 120],
-    outputRange: [180, 80],
+    outputRange: [180, 100],
     extrapolate: 'clamp',
   });
 
@@ -136,16 +146,10 @@ const NotificationsScreen: React.FC = () => {
     extrapolate: 'clamp',
   });
 
-  // Filter tabs animation - show when header is collapsed
-  const filterContainerTranslateY = scrollY.interpolate({
+  // Filter tabs animation - FIXED: Separate animation from header
+  const filterTop = scrollY.interpolate({
     inputRange: [0, 120],
-    outputRange: [0, 0],
-    extrapolate: 'clamp',
-  });
-
-  const filterContainerOpacity = scrollY.interpolate({
-    inputRange: [100, 120],
-    outputRange: [0, 1],
+    outputRange: [180, 100],
     extrapolate: 'clamp',
   });
 
@@ -181,7 +185,7 @@ const NotificationsScreen: React.FC = () => {
   };
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications(prev => prev.map(notif => 
+    setNotifications(prev => prev.map(notif =>
       notif.id === id ? { ...notif, read: true } : notif
     ));
   };
@@ -194,25 +198,27 @@ const NotificationsScreen: React.FC = () => {
     setNotifications(prev => prev.filter(notif => notif.id !== id));
   };
 
+  const handleViewDetails = (notification: Notification) => {
+    navigation.navigate('NotificationDetails', { notification });
+  };
+
   const handleRefresh = () => {
     setRefreshing(true);
     // Simulate API call
     setTimeout(() => {
-      // Add some new notifications on refresh
-      setNotifications(prev => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          type: 'Update',
-          title: 'Water Level Updated',
-          message: 'Water levels in your region have been updated with real-time data.',
-          timestamp: 'Just now',
-          timeExact: 'Now',
-          read: false,
-          priority: 'Medium',
-          category: 'Update'
-        }
-      ]);
+      // Add one new notification on refresh (not multiple)
+      const newNotification: Notification = {
+        id: Date.now().toString(),
+        type: 'Update',
+        title: 'Water Level Updated',
+        message: 'Water levels in your region have been updated with real-time data from 5 monitoring stations.',
+        timestamp: 'Just now',
+        timeExact: 'Now',
+        read: false,
+        priority: 'Medium',
+        category: 'Update'
+      };
+      setNotifications(prev => [newNotification, ...prev]);
       setRefreshing(false);
     }, 1500);
   };
@@ -236,14 +242,14 @@ const NotificationsScreen: React.FC = () => {
         <View style={styles.emptyIcon}>
           <Ionicons name="notifications-off" size={48} color="#0c6dff" />
         </View>
-        <Typography variant="h2" style={styles.emptyTitle}>
+        <Typography style={styles.emptyTitle}>
           {t('noNotifications') || 'No Notifications'}
         </Typography>
-        <Typography variant="body" style={styles.emptyMessage}>
+        <Typography style={styles.emptyMessage}>
           {t('noNotificationsMessage') || 'You\'re all caught up! Check back later for updates.'}
         </Typography>
         <TouchableOpacity style={styles.emptyButton}>
-          <Typography variant="body" style={styles.emptyButtonText}>
+          <Typography style={styles.emptyButtonText}>
             Check Back Later
           </Typography>
         </TouchableOpacity>
@@ -253,16 +259,16 @@ const NotificationsScreen: React.FC = () => {
 
   return (
     <Layout style={styles.container} noPadding>
-      {/* Collapsible Header */}
+      {/* Collapsible Header - FIXED: Simplified animation */}
       <Animated.View style={[styles.headerContainer, { height: headerHeight }]}>
-        <LinearGradient 
-          colors={['#0c6dff', '#4f46e5']} 
+        <LinearGradient
+          colors={['#0c6dff', '#4f46e5']}
           style={styles.headerBackground}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
         >
           {/* Expanded Header Content */}
-          <Animated.View 
+          <Animated.View
             style={[
               styles.expandedContent,
               {
@@ -272,30 +278,30 @@ const NotificationsScreen: React.FC = () => {
             ]}
           >
             <View style={styles.headerTopRow}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.backButton}
                 onPress={() => navigation.goBack()}
                 activeOpacity={0.7}
               >
                 <Feather name="arrow-left" size={20} color="white" />
               </TouchableOpacity>
-              
+
               <View style={styles.titleContainer}>
                 <View style={styles.titleIcon}>
                   <Ionicons name="notifications" size={18} color="white" />
                 </View>
-                <Typography variant="h1" style={styles.headerTitle}>
+                <Typography style={styles.headerTitle}>
                   Notifications
                 </Typography>
                 {unreadCount > 0 && (
                   <View style={styles.headerBadge}>
-                    <Typography variant="caption" style={styles.badgeText}>
+                    <Typography style={styles.badgeText}>
                       {unreadCount}
                     </Typography>
                   </View>
                 )}
               </View>
-              
+
               <TouchableOpacity
                 style={styles.headerAction}
                 onPress={handleMarkAllAsRead}
@@ -304,9 +310,9 @@ const NotificationsScreen: React.FC = () => {
                 <Feather name="check-circle" size={20} color="white" />
               </TouchableOpacity>
             </View>
-            
+
             {/* Subtitle */}
-            <Animated.View 
+            <Animated.View
               style={[
                 styles.subtitleContainer,
                 {
@@ -315,14 +321,14 @@ const NotificationsScreen: React.FC = () => {
                 }
               ]}
             >
-              <Typography variant="body" style={styles.headerSubtitle}>
+              <Typography style={styles.headerSubtitle}>
                 Stay updated with water alerts and community news
               </Typography>
             </Animated.View>
           </Animated.View>
 
           {/* Collapsed Header Content */}
-          <Animated.View 
+          <Animated.View
             style={[
               styles.collapsedContent,
               {
@@ -332,20 +338,20 @@ const NotificationsScreen: React.FC = () => {
             ]}
           >
             <View style={styles.collapsedBar}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.collapsedBackButton}
                 onPress={() => navigation.goBack()}
               >
                 <Feather name="arrow-left" size={18} color="white" />
               </TouchableOpacity>
-              
+
               <View style={styles.collapsedTitle}>
                 <Ionicons name="notifications" size={18} color="white" />
-                <Typography variant="h3" style={styles.collapsedTitleText}>
+                <Typography style={styles.collapsedTitleText}>
                   Notifications {unreadCount > 0 && `(${unreadCount})`}
                 </Typography>
               </View>
-              
+
               <TouchableOpacity
                 style={styles.collapsedAction}
                 onPress={handleMarkAllAsRead}
@@ -355,19 +361,15 @@ const NotificationsScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
           </Animated.View>
-          
-          {/* Bottom Curve */}
-          <View style={styles.headerCurve} />
         </LinearGradient>
       </Animated.View>
 
-      {/* Filter Tabs - Fixed positioning to prevent overlap */}
+      {/* Filter Tabs - FIXED: Positioned absolutely but not part of header animation */}
       <Animated.View
         style={[
           styles.filterContainer,
           {
-            transform: [{ translateY: filterContainerTranslateY }],
-            opacity: filterContainerOpacity
+            top: filterTop,
           }
         ]}
       >
@@ -386,7 +388,7 @@ const NotificationsScreen: React.FC = () => {
               onPress={() => setActiveFilter(filter as any)}
               activeOpacity={0.7}
             >
-              <Typography variant="caption" style={[
+              <Typography style={[
                 styles.filterText,
                 activeFilter === filter && styles.filterTextActive
               ]}>
@@ -394,7 +396,7 @@ const NotificationsScreen: React.FC = () => {
               </Typography>
               {filter === 'Unread' && unreadCount > 0 && (
                 <View style={styles.filterBadge}>
-                  <Typography variant="caption" style={styles.filterBadgeText}>
+                  <Typography style={styles.filterBadgeText}>
                     {unreadCount}
                   </Typography>
                 </View>
@@ -404,7 +406,7 @@ const NotificationsScreen: React.FC = () => {
         </ScrollView>
       </Animated.View>
 
-      {/* Main Content */}
+      {/* Main Content - FIXED: Added proper padding for filters */}
       <Animated.ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -427,19 +429,20 @@ const NotificationsScreen: React.FC = () => {
         {/* Add spacer for header height */}
         <View style={styles.headerSpacer} />
 
-        {/* Refresh Info */}
+        {/* Refresh Info with Spinner */}
         {refreshing && (
-          <View style={styles.refreshInfo}>
-            <Typography variant="caption" style={styles.refreshText}>
+          <View style={styles.refreshContainer}>
+            <ActivityIndicator size="small" color="#0c6dff" />
+            <Typography style={styles.refreshText}>
               Updating notifications...
             </Typography>
           </View>
         )}
 
-        {/* Notifications List - FIXED OVERLAP ISSUE */}
+        {/* Notifications List */}
         <View style={styles.notificationsContainer}>
           {filteredNotifications.length > 0 ? (
-            filteredNotifications.map((notification, index) => (
+            filteredNotifications.map((notification) => (
               <View key={notification.id} style={styles.notificationWrapper}>
                 <TouchableOpacity
                   style={[
@@ -459,41 +462,63 @@ const NotificationsScreen: React.FC = () => {
                       <View style={styles.unreadDot} />
                     )}
                   </View>
-                  
-                  {/* Main Content - FIXED LAYOUT */}
+
+                  {/* Main Content - FIXED: Improved layout for categories */}
                   <View style={styles.cardContent}>
-                    {/* Header */}
+                    {/* Header with Category Tags - FIXED: Better layout */}
                     <View style={styles.cardHeader}>
                       <View style={styles.headerLeft}>
                         <View style={[
                           styles.typeIcon,
                           { backgroundColor: getNotificationColor(notification.type) + '15' }
                         ]}>
-                          <MaterialIcons 
-                            name={getNotificationIcon(notification.type) as any} 
-                            size={16} 
-                            color={getNotificationColor(notification.type)} 
+                          <MaterialIcons
+                            name={getNotificationIcon(notification.type) as any}
+                            size={16}
+                            color={getNotificationColor(notification.type)}
                           />
                         </View>
                         <View style={styles.titleSection}>
-                          <Typography variant="h3" style={styles.notificationTitle}>
+                          <Typography style={styles.notificationTitle}>
                             {notification.title}
                           </Typography>
+
+                          {/* TAGS CONTAINER - FIXED: Made always visible */}
                           <View style={styles.tagsContainer}>
                             <View style={[
                               styles.priorityTag,
-                              { backgroundColor: getPriorityColor(notification.priority) + '15' }
+                              {
+                                backgroundColor: getPriorityColor(notification.priority) + '15',
+                                borderColor: getPriorityColor(notification.priority) + '30'
+                              }
                             ]}>
-                              <Typography variant="caption" style={[
+                              <Typography style={[
                                 styles.priorityText,
-                                { color: getPriorityColor(notification.priority) }
+                                {
+                                  color: getPriorityColor(notification.priority),
+                                  fontWeight: '700'
+                                }
                               ]}>
                                 {notification.priority}
                               </Typography>
                             </View>
+
+                            {/* CATEGORY TAG - FIXED: Always visible */}
                             {notification.category && (
-                              <View style={styles.categoryTag}>
-                                <Typography variant="caption" style={styles.categoryText}>
+                              <View style={[
+                                styles.categoryTag,
+                                {
+                                  backgroundColor: getNotificationColor(notification.type) + '10',
+                                  borderColor: getNotificationColor(notification.type) + '30'
+                                }
+                              ]}>
+                                <Typography style={[
+                                  styles.categoryText,
+                                  {
+                                    color: getNotificationColor(notification.type),
+                                    fontWeight: '600'
+                                  }
+                                ]}>
                                   {notification.category}
                                 </Typography>
                               </View>
@@ -501,15 +526,14 @@ const NotificationsScreen: React.FC = () => {
                           </View>
                         </View>
                       </View>
-                      <Typography variant="caption" style={styles.timestamp}>
+                      <Typography style={styles.timestamp}>
                         {notification.timestamp}
                       </Typography>
                     </View>
-                    
-                    {/* Message - FIXED HEIGHT WITH FLEX */}
+
+                    {/* Message - FIXED: Reduced lines to make room for categories */}
                     <View style={styles.messageContainer}>
-                      <Typography 
-                        variant="body" 
+                      <Typography
                         style={styles.notificationMessage}
                         numberOfLines={2}
                         ellipsizeMode="tail"
@@ -517,28 +541,39 @@ const NotificationsScreen: React.FC = () => {
                         {notification.message}
                       </Typography>
                     </View>
-                    
+
+                    {/* View More Details Link */}
+                    <TouchableOpacity
+                      style={styles.viewMoreContainer}
+                      onPress={() => handleViewDetails(notification)}
+                    >
+                      <Typography style={styles.viewMoreText}>
+                        View more details
+                      </Typography>
+                      <Feather name="arrow-right" size={12} color="#0c6dff" />
+                    </TouchableOpacity>
+
                     {/* Footer */}
                     <View style={styles.cardFooter}>
-                      <Typography variant="caption" style={styles.exactTime}>
+                      <Typography style={styles.exactTime}>
                         {notification.timeExact}
                       </Typography>
                       <View style={styles.footerActions}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={styles.actionButton}
                           onPress={() => handleMarkAsRead(notification.id)}
                         >
-                          <Feather 
-                            name={notification.read ? "check-circle" : "circle"} 
-                            size={14} 
-                            color={notification.read ? "#10b981" : "#94a3b8"} 
+                          <Feather
+                            name={notification.read ? "check-circle" : "circle"}
+                            size={14}
+                            color={notification.read ? "#10b981" : "#94a3b8"}
                           />
-                          <Typography variant="caption" style={styles.actionText}>
-                            {notification.read ? 'Read' : 'Read'}
+                          <Typography style={styles.actionText}>
+                            {notification.read ? 'Read' : 'Mark as read'}
                           </Typography>
                         </TouchableOpacity>
-                        
-                        <TouchableOpacity 
+
+                        <TouchableOpacity
                           style={styles.actionButton}
                           onPress={() => handleDelete(notification.id)}
                         >
@@ -552,7 +587,7 @@ const NotificationsScreen: React.FC = () => {
             ))
           ) : renderEmptyState()}
         </View>
-        
+
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
       </Animated.ScrollView>
@@ -565,7 +600,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-  // Header Container - COLLAPSIBLE
+  // Header Container - FIXED: Simplified
   headerContainer: {
     position: 'absolute',
     top: 0,
@@ -579,15 +614,17 @@ const styles = StyleSheet.create({
   },
   expandedContent: {
     flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 35 : 15,
-    paddingBottom: 16,
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingBottom: 20,
     paddingHorizontal: 20,
+    justifyContent: 'center',
   },
   headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    width: '100%',
   },
   backButton: {
     width: 36,
@@ -602,9 +639,10 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     justifyContent: 'center',
     position: 'relative',
+    flex: 1,
+    marginHorizontal: 10,
   },
   titleIcon: {
     width: 30,
@@ -622,6 +660,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: 'white',
     letterSpacing: -0.3,
+    textAlign: 'center',
   },
   headerBadge: {
     position: 'absolute',
@@ -654,6 +693,7 @@ const styles = StyleSheet.create({
   },
   subtitleContainer: {
     alignItems: 'center',
+    width: '100%',
   },
   headerSubtitle: {
     color: 'rgba(255, 255, 255, 0.85)',
@@ -661,11 +701,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 18,
+    paddingHorizontal: 40,
   },
   // Collapsed Header
   collapsedContent: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 35 : 15,
+    top: Platform.OS === 'ios' ? 40 : 20,
     left: 0,
     right: 0,
     paddingHorizontal: 20,
@@ -704,16 +745,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerCurve: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 20,
-    backgroundColor: '#f8fafc',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
   // Scroll View
   scrollView: {
     flex: 1,
@@ -722,68 +753,14 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   headerSpacer: {
-    height: 220, // Accounts for header + filter tabs
+    height: 240, // Increased for header + filters
   },
-  // Filter Tabs - Animated (in header when collapsed)
-  filterContainer: {
-    position: 'absolute',
-    top: 80, // Collapsed header height
-    left: 0,
-    right: 0,
-    backgroundColor: 'white',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    zIndex: 500, // Lower than header but higher than content
-  },
-  filterScroll: {
-    paddingHorizontal: 20,
-    gap: 12,
-  },
-  filterButton: {
+  // Refresh Container with Spinner
+  refreshContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#f1f5f9',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    gap: 4,
-  },
-  filterButtonActive: {
-    backgroundColor: '#0c6dff',
-    borderColor: '#0c6dff',
-  },
-  filterText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  filterTextActive: {
-    color: 'white',
-  },
-  filterBadge: {
-    backgroundColor: '#ef4444',
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 3,
-  },
-  filterBadgeText: {
-    color: 'white',
-    fontSize: 9,
-    fontWeight: 'bold',
-  },
-  refreshInfo: {
-    alignItems: 'center',
+    gap: 10,
     paddingVertical: 12,
     paddingHorizontal: 20,
     backgroundColor: '#f8fafc',
@@ -793,29 +770,86 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
-  // Notifications Container - FIXED OVERLAP
+  // Filter Tabs - FIXED: Proper positioning
+  filterContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 56,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 950,
+  },
+  filterScroll: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    gap: 6,
+  },
+  filterButtonActive: {
+    backgroundColor: '#0c6dff',
+    borderColor: '#0c6dff',
+  },
+  filterText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  filterTextActive: {
+    color: 'white',
+  },
+  filterBadge: {
+    backgroundColor: '#ef4444',
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  // Notifications Container
   notificationsContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 20,
   },
   notificationWrapper: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  // Notification Card Styles - FIXED OVERLAP
+  // Notification Card Styles - FIXED: Better layout for categories
   notificationCard: {
     flexDirection: 'row',
     backgroundColor: 'white',
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowRadius: 8,
+    elevation: 2,
     overflow: 'hidden',
-    minHeight: 140, // Increased minimum height to prevent content overflow
-    paddingBottom: 5,
+    minHeight: 180, // Increased for categories
   },
   unreadCard: {
     borderLeftColor: '#0c6dff',
@@ -841,112 +875,133 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
-    padding: 14,
-    paddingLeft: 12,
+    padding: 16,
+    paddingLeft: 14,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
-    minHeight: 40, // Fixed header height
+    marginBottom: 12,
+    minHeight: 70, // Increased for tags
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     flex: 1,
+    minHeight: 70,
   },
   typeIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   titleSection: {
     flex: 1,
   },
   notificationTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#0f172a',
-    marginBottom: 4,
-    lineHeight: 18,
+    marginBottom: 8,
+    lineHeight: 20,
   },
+  // TAGS CONTAINER - FIXED: Always visible
   tagsContainer: {
     flexDirection: 'row',
-    gap: 4,
+    gap: 8,
     flexWrap: 'wrap',
+    alignItems: 'center',
+    marginTop: 4,
   },
   priorityTag: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
   },
   priorityText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
+  // CATEGORY TAG - FIXED: Always visible
   categoryTag: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
   },
   categoryText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#64748b',
+    letterSpacing: 0.3,
   },
   timestamp: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#94a3b8',
     fontWeight: '500',
-    marginLeft: 6,
-    minWidth: 60,
+    minWidth: 70,
     textAlign: 'right',
+    marginTop: 2,
   },
-  // Message Container - FIXED OVERLAP
+  // Message Container
   messageContainer: {
-    flex: 1,
-    minHeight: 40, // Fixed message container height
-    marginBottom: 8,
-    justifyContent: 'flex-start', // Ensure content starts at top
+    marginBottom: 12,
+    minHeight: 40,
   },
   notificationMessage: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#334155',
-    lineHeight: 18,
+    lineHeight: 20,
+  },
+  // View More Link
+  viewMoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#f0f7ff',
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  viewMoreText: {
+    fontSize: 13,
+    color: '#0c6dff',
+    fontWeight: '600',
+    marginRight: 6,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 10,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    minHeight: 30, // Fixed footer height
   },
   exactTime: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#94a3b8',
     fontWeight: '500',
   },
   footerActions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   actionText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#64748b',
     fontWeight: '500',
   },
@@ -988,13 +1043,13 @@ const styles = StyleSheet.create({
   },
   emptyButton: {
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: '#0c6dff',
-    borderRadius: 10,
+    borderRadius: 12,
   },
   emptyButtonText: {
     color: 'white',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
   bottomSpacing: {
