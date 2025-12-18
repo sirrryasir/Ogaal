@@ -18,6 +18,14 @@ enum UserRole {
   COMMUNITY_MEMBER
 }
 
+enum ReportStatus {
+  WORKING
+  BROKEN
+  DRY
+  LOW_WATER
+  CONTAMINATION
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   fullName  String
@@ -134,7 +142,7 @@ model Report {
 
   reporter_type  String?   // User (App), USSD
   content        String?
-  status         String?   // Working, Low Water, Dry, Broken, Other
+  status         ReportStatus?
   is_verified    Boolean   @default(false)
   timestamp      DateTime  @default(now())
 
