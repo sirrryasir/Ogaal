@@ -229,6 +229,92 @@ export const getDashboardStats = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+// Get Admin Water Sources (hierarchical with filtering)
+export const getAdminWaterSources = async (req, res) => {
+    try {
+        const { status, type } = req.query;
+        const regions = await prisma.region.findMany({
+            include: {
+                districts: {
+                    include: {
+                        villages: {
+                            include: {
+                                water_sources: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        // Map to frontend structure
+        const mappedRegions = regions.map(region => {
+            const districts = region.districts.map(district => {
+                const villages = district.villages.map(village => {
+                    let sources = village.water_sources.map(source => {
+                        let mappedStatus = 'functional'; // default
+                        if (source.status === 'Working')
+                            mappedStatus = 'functional';
+                        else if (source.status === 'Needed Maintenance')
+                            mappedStatus = 'needs_repair';
+                        else if (source.status === 'Broken')
+                            mappedStatus = 'non_functional';
+                        else
+                            mappedStatus = source.status?.toLowerCase().replace(' ', '_') || 'functional';
+                        return {
+                            id: source.id,
+                            source_name: source.name,
+                            water_source_type: source.type,
+                            status: mappedStatus,
+                            lat: source.latitude,
+                            lng: source.longitude
+                        };
+                    });
+                    // Filter sources if status or type provided
+                    if (status) {
+                        sources = sources.filter(s => s.status === status);
+                    }
+                    if (type) {
+                        sources = sources.filter(s => s.water_source_type === type);
+                    }
+                    const totalSources = sources.length;
+                    const functional = sources.filter(s => s.status === 'functional').length;
+                    const needsRepair = sources.filter(s => s.status === 'needs_repair').length;
+                    const nonFunctional = sources.filter(s => s.status === 'non_functional').length;
+                    const avgStatus = totalSources > 0 ? Math.round((functional / totalSources) * 100) : 0;
+                    return {
+                        name: village.name,
+                        totalSources,
+                        avgStatus,
+                        functional,
+                        needsRepair,
+                        nonFunctional,
+                        sources
+                    };
+                });
+                const totalSources = villages.reduce((sum, v) => sum + v.totalSources, 0);
+                const avgStatus = villages.length > 0 ? Math.round(villages.reduce((sum, v) => sum + v.avgStatus, 0) / villages.length) : 0;
+                return {
+                    name: district.name,
+                    totalSources,
+                    avgStatus,
+                    villages
+                };
+            });
+            const totalSources = districts.reduce((sum, d) => sum + d.totalSources, 0);
+            const avgStatus = districts.length > 0 ? Math.round(districts.reduce((sum, d) => sum + d.avgStatus, 0) / districts.length) : 0;
+            return {
+                region: region.name,
+                totalSources,
+                avgStatus,
+                districts
+            };
+        });
+        res.json(mappedRegions);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 export default {
     getVillages,
     getWaterSources, // Renamed
@@ -240,5 +326,6 @@ export default {
     sendSms,
     updateRisk,
     getDashboardStats,
+    getAdminWaterSources,
 };
 //# sourceMappingURL=apiController.js.map
