@@ -110,6 +110,7 @@ const STATUS_CONFIG = {
 export default function DashboardPage() {
   // State for hierarchical data
   const [somalilandRegions, setSomalilandRegions] = useState<Region[]>([]);
+  const [filteredRegions, setFilteredRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,6 +132,7 @@ export default function DashboardPage() {
         setLoading(true);
         const response = await api.get('/admin/water-sources');
         setSomalilandRegions(response.data);
+        setFilteredRegions(response.data);
         setError(null);
       } catch (err) {
         console.error('Error fetching water sources:', err);
@@ -142,20 +144,48 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Filter regions based on search query
+      if (searchQuery.trim()) {
+        const filtered = somalilandRegions.map(region => ({
+          ...region,
+          districts: region.districts.map(district => ({
+            ...district,
+            villages: district.villages.filter(village =>
+              village.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              district.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              region.region.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+          })).filter(district => district.villages.length > 0)
+        })).filter(region => region.districts.length > 0);
+
+        // Update the displayed data (this is client-side filtering since we already have the data)
+        // In a real app, you'd make an API call with search parameters
+        setFilteredRegions(filtered);
+      } else {
+        setFilteredRegions(somalilandRegions);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, somalilandRegions]);
+
   // Get current view data
-  const currentRegion = selectedRegion ? somalilandRegions.find((r: Region) => r.region === selectedRegion) : null;
+  const currentRegion = selectedRegion ? filteredRegions.find((r: Region) => r.region === selectedRegion) : null;
   const currentDistrict = selectedDistrict ? currentRegion?.districts.find((d: District) => d.name === selectedDistrict) : null;
   const currentVillage = selectedVillage ? currentDistrict?.villages.find((v: Village) => v.name === selectedVillage) : null;
 
   // Prepare chart data
-  const regionChartData = somalilandRegions.map((region: Region) => ({
+  const regionChartData = filteredRegions.map((region: Region) => ({
     name: region.region,
     sources: region.totalSources,
     status: region.avgStatus
   }));
 
   // Calculate status distribution
-  const statusDistribution = somalilandRegions.reduce((acc, region: Region) => {
+  const statusDistribution = filteredRegions.reduce((acc, region: Region) => {
     region.districts.forEach((district: District) => {
       district.villages.forEach((village: Village) => {
         acc.functional += village.functional;
@@ -174,12 +204,12 @@ export default function DashboardPage() {
 
   // Calculate overall stats
   const overallStats = {
-    totalSources: somalilandRegions.reduce((sum, region: Region) => sum + region.totalSources, 0),
-    avgStatus: somalilandRegions.length > 0 ? Math.round(somalilandRegions.reduce((sum, region: Region) => sum + region.avgStatus, 0) / somalilandRegions.length) : 0,
-    totalVillages: somalilandRegions.reduce((sum, region: Region) =>
+    totalSources: filteredRegions.reduce((sum, region: Region) => sum + region.totalSources, 0),
+    avgStatus: filteredRegions.length > 0 ? Math.round(filteredRegions.reduce((sum, region: Region) => sum + region.avgStatus, 0) / filteredRegions.length) : 0,
+    totalVillages: filteredRegions.reduce((sum, region: Region) =>
       sum + region.districts.reduce((dSum, district: District) => dSum + district.villages.length, 0), 0
     ),
-    totalDistricts: somalilandRegions.reduce((sum, region: Region) => sum + region.districts.length, 0)
+    totalDistricts: filteredRegions.reduce((sum, region: Region) => sum + region.districts.length, 0)
   };
 
   // Toggle functions with proper state management
@@ -278,6 +308,49 @@ export default function DashboardPage() {
     });
   };
 
+  // Export functionality
+  const handleExport = () => {
+    const csvData: string[] = [];
+
+    // CSV Headers
+    csvData.push('Region,District,Village,Source Name,Type,Status,Latitude,Longitude,Functional,Needs Repair,Non-Functional');
+
+    // Flatten the hierarchical data
+    filteredRegions.forEach(region => {
+      region.districts.forEach(district => {
+        district.villages.forEach(village => {
+          village.sources.forEach(source => {
+            csvData.push([
+              region.region,
+              district.name,
+              village.name,
+              `"${source.source_name}"`,
+              source.water_source_type,
+              source.status,
+              source.lat.toString(),
+              source.lng.toString(),
+              village.functional.toString(),
+              village.needsRepair.toString(),
+              village.nonFunctional.toString()
+            ].join(','));
+          });
+        });
+      });
+    });
+
+    // Create and download CSV
+    const csvContent = csvData.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `water-sources-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 md:p-6 flex items-center justify-center">
@@ -305,23 +378,29 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div className="flex flex-col gap-4 mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Somaliland Water Sources Dashboard</h1>
-              <p className="text-gray-600">Monitoring {overallStats.totalSources} water sources across {somalilandRegions.length} regions</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Somaliland Water Sources Dashboard</h1>
+              <p className="text-gray-600">
+                Monitoring {overallStats.totalSources} water sources across {filteredRegions.length} regions
+                {searchQuery && ` (filtered from ${somalilandRegions.length} regions)`}
+              </p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search region, district, or village..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+              >
                 <Download className="w-4 h-4" />
                 Export
               </button>
@@ -329,39 +408,42 @@ export default function DashboardPage() {
           </div>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex flex-wrap items-center gap-2 mb-6">
             <button
               onClick={() => setViewMode('cards')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                viewMode === 'cards' 
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+              className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg transition-colors text-sm ${
+                viewMode === 'cards'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
               }`}
             >
               <Table className="w-4 h-4" />
-              Hierarchy View
+              <span className="hidden sm:inline">Hierarchy View</span>
+              <span className="sm:hidden">Hierarchy</span>
             </button>
             <button
               onClick={() => setViewMode('charts')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                viewMode === 'charts' 
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+              className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg transition-colors text-sm ${
+                viewMode === 'charts'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
               }`}
             >
               <BarChart3 className="w-4 h-4" />
-              Analytics View
+              <span className="hidden sm:inline">Analytics View</span>
+              <span className="sm:hidden">Analytics</span>
             </button>
             <button
               onClick={() => setViewMode('map')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                viewMode === 'map' 
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+              className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg transition-colors text-sm ${
+                viewMode === 'map'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
               }`}
             >
               <Map className="w-4 h-4" />
-              Map View
+              <span className="hidden sm:inline">Map View</span>
+              <span className="sm:hidden">Map</span>
             </button>
           </div>
 
@@ -423,8 +505,8 @@ export default function DashboardPage() {
 
         {/* Breadcrumb Navigation */}
         {(selectedRegion || selectedDistrict || selectedVillage) && (
-          <div className="flex items-center gap-2 mb-6 text-sm bg-white p-3 rounded-lg border border-gray-200">
-            <button 
+          <div className="flex flex-wrap items-center gap-2 mb-6 text-sm bg-white p-3 rounded-lg border border-gray-200">
+            <button
               onClick={handleBackToRegions}
               className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
             >
@@ -433,7 +515,7 @@ export default function DashboardPage() {
             {selectedRegion && (
               <>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
-                <button 
+                <button
                   onClick={selectedDistrict || selectedVillage ? handleBackToDistricts : undefined}
                   className={`flex items-center gap-1 ${selectedDistrict || selectedVillage ? 'text-blue-600 hover:text-blue-800 hover:underline' : 'text-gray-900'}`}
                 >
@@ -444,7 +526,7 @@ export default function DashboardPage() {
             {selectedDistrict && (
               <>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
-                <button 
+                <button
                   onClick={selectedVillage ? handleBackToVillages : undefined}
                   className={`flex items-center gap-1 ${selectedVillage ? 'text-blue-600 hover:text-blue-800 hover:underline' : 'text-gray-900'}`}
                 >
@@ -525,7 +607,7 @@ export default function DashboardPage() {
             {/* Region Cards with Expand/Collapse */}
             {!selectedRegion ? (
               // All Regions View
-              somalilandRegions.map((region: Region) => (
+              filteredRegions.map((region: Region) => (
                 <div key={region.region} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                   {/* Region Header - Clickable */}
                   <div 
@@ -741,13 +823,13 @@ export default function DashboardPage() {
                         <h4 className="font-medium text-gray-900 mb-4">Water Sources in {village.name}</h4>
                         
                         {/* Filters */}
-                        <div className="flex gap-4 mb-4">
+                        <div className="flex flex-col sm:flex-row gap-4 mb-4">
                           <div className="flex items-center gap-2">
                             <FilterIcon className="w-4 h-4 text-gray-500" />
-                            <select 
+                            <select
                               value={statusFilter}
                               onChange={(e) => setStatusFilter(e.target.value)}
-                              className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0 flex-1 sm:flex-none"
                             >
                               <option value="all">All Status</option>
                               {Object.entries(STATUS_CONFIG).map(([key, config]) => (
@@ -757,10 +839,10 @@ export default function DashboardPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <FilterIcon className="w-4 h-4 text-gray-500" />
-                            <select 
+                            <select
                               value={typeFilter}
                               onChange={(e) => setTypeFilter(e.target.value)}
-                              className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0 flex-1 sm:flex-none"
                             >
                               <option value="all">All Types</option>
                               {Object.keys(WATER_SOURCE_TYPES).map(type => (
@@ -913,14 +995,14 @@ export default function DashboardPage() {
                     </div>
                     
                     {/* Action Buttons */}
-                    <div className="flex justify-end gap-3">
-                      <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <div className="flex flex-col sm:flex-row justify-end gap-3">
+                      <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors order-3 sm:order-1">
                         View Detailed Report
                       </button>
-                      <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                      <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors order-2">
                         Schedule Maintenance
                       </button>
-                      <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                      <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors order-1 sm:order-3">
                         Add New Source
                       </button>
                     </div>

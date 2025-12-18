@@ -8,6 +8,8 @@ import {
   Droplet,
   Database,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
@@ -21,6 +23,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const { role, setRole } = useAppStore();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Simple Mock Auth
   if (!isAuthenticated && role !== "admin") {
@@ -81,14 +84,45 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-100 flex -mt-20">
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-20 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <Link href="/" className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
+            <Droplet className="w-5 h-5 text-white" />
+          </div>
+          <span className="font-bold text-xl tracking-tight">Ogaal</span>
+        </Link>
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex-shrink-0 fixed h-full top-0 left-0 z-10 hidden md:flex flex-col">
-        <div className="p-6 border-b border-gray-100">
+      <aside className={cn(
+        "w-64 bg-white border-r border-gray-200 flex-shrink-0 fixed h-full top-0 left-0 z-10 flex flex-col transition-transform duration-300 ease-in-out",
+        "md:translate-x-0", // Always visible on desktop
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0" // Hidden on mobile unless open
+      )}>
+        {/* Desktop Logo */}
+        <div className="hidden md:block p-6 border-b border-gray-100">
           <Link href="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
               <Droplet className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-xl tracking-tight">Ogaal</span>
+          </Link>
+        </div>
+
+        {/* Mobile Logo - smaller padding */}
+        <div className="md:hidden p-4 border-b border-gray-100">
+          <Link href="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-200">
+              <Droplet className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-lg tracking-tight">Ogaal</span>
           </Link>
         </div>
 
@@ -100,6 +134,7 @@ export default function AdminLayout({
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
                   "flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
                   isActive
@@ -124,6 +159,7 @@ export default function AdminLayout({
             onClick={() => {
               setIsAuthenticated(false);
               setRole("community");
+              setIsMobileMenuOpen(false);
             }}
             className="flex items-center space-x-3 px-4 py-3 w-full text-left rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
@@ -133,8 +169,16 @@ export default function AdminLayout({
         </div>
       </aside>
 
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-5"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 p-8 overflow-y-auto pt-8">
+      <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto pt-16 md:pt-8 min-h-screen">
         {children}
       </main>
     </div>
