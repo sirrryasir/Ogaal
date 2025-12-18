@@ -9,16 +9,22 @@ interface SidebarDetailsProps {
 
 const statusColors: Record<string, string> = {
   working: "text-green-600 bg-green-50",
+  "low water": "text-yellow-600 bg-yellow-50",
   low: "text-yellow-600 bg-yellow-50",
+  dry: "text-red-600 bg-red-50",
   no_water: "text-red-600 bg-red-50",
   broken: "text-gray-600 bg-gray-50",
+  contaminated: "text-purple-600 bg-purple-50",
 };
 
 const statusLabels: Record<string, string> = {
   working: "Working",
+  "low water": "Low Water",
   low: "Low Water",
+  dry: "Dry",
   no_water: "No Water",
   broken: "Broken",
+  contaminated: "Contaminated",
 };
 
 export default function SidebarDetails({

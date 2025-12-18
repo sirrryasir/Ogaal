@@ -11,20 +11,24 @@ interface WaterSourceListProps {
 const statusColors: Record<string, string> = {
   working: "bg-green-100 text-green-700",
   good: "bg-green-100 text-green-700",
-  low: "bg-orange-100 text-orange-700",
+  "low water": "bg-yellow-100 text-yellow-700",
+  low: "bg-yellow-100 text-yellow-700",
   maintenance: "bg-orange-100 text-orange-700",
   dry: "bg-red-100 text-red-700",
   broken: "bg-black text-white",
   critical: "bg-red-100 text-red-700",
+  contaminated: "bg-purple-100 text-purple-700",
 };
 
 const statusLabels: Record<string, string> = {
   working: "Working",
   good: "Working",
+  "low water": "Low Water",
   low: "Low Water",
   maintenance: "Maintenance",
   dry: "Dry",
   broken: "Broken",
+  contaminated: "Contaminated",
 };
 
 export default function WaterSourceList({

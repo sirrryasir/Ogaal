@@ -20,7 +20,7 @@ const getAll = async (req, res) => {
 // Create a new report
 const create = async (req, res) => {
     try {
-        const { village_id, water_source_id, content, reporter_type } = req.body;
+        const { village_id, water_source_id, content, reporter_type, status } = req.body;
         console.log("Raw req.body:", JSON.stringify(req.body, null, 2));
         console.log("Extracted data:", {
             village_id,
@@ -50,6 +50,7 @@ const create = async (req, res) => {
                 water_source_id: Number(water_source_id),
                 content: trimmedContent,
                 reporter_type: reporter_type || "App",
+                status: status,
                 timestamp: new Date(),
             },
         });
