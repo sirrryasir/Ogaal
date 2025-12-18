@@ -3,6 +3,12 @@ import apiController from "../controllers/apiController.js";
 
 const router = express.Router();
 
+// Get all Regions
+router.get("/regions", apiController.getRegions);
+
+// Get all Districts
+router.get("/districts", apiController.getDistricts);
+
 // Get all Villages
 router.get("/villages", apiController.getVillages);
 

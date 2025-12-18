@@ -1,6 +1,26 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 
+// Get all Regions
+export const getRegions = async (req: Request, res: Response) => {
+  try {
+    const regions = await prisma.region.findMany();
+    res.json(regions);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get all Districts
+export const getDistricts = async (req: Request, res: Response) => {
+  try {
+    const districts = await prisma.district.findMany();
+    res.json(districts);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Get all Villages
 export const getVillages = async (req: Request, res: Response) => {
   try {
@@ -504,6 +524,8 @@ export default {
   sendSms,
   updateRisk,
   getDashboardStats,
+  getRegions,
+  getDistricts,
   getAdminWaterSources,
   getAnalyticsData,
 };

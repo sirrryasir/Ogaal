@@ -22,7 +22,7 @@ const getAll = async (req: Request, res: Response): Promise<void> => {
 // Create a new report
 const create = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { village_id, water_source_id, content, reporter_type } = req.body;
+    const { village_id, water_source_id, content, reporter_type, status } = req.body;
 
     console.log("Raw req.body:", JSON.stringify(req.body, null, 2));
     console.log("Extracted data:", {
@@ -62,6 +62,7 @@ const create = async (req: Request, res: Response): Promise<void> => {
         water_source_id: Number(water_source_id),
         content: trimmedContent,
         reporter_type: reporter_type || "App",
+        status: status,
         timestamp: new Date(),
       },
     });
