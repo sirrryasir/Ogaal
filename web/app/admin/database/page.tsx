@@ -210,16 +210,16 @@ export default function DatabasePage() {
     <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
               National Water Database
             </h1>
             <p className="text-gray-500 mt-1">
               Manage and monitor water resources across all regions
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={() => fetchData(meta.page)}
               className="p-2.5 text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-all shadow-sm"
@@ -231,9 +231,9 @@ export default function DatabasePage() {
             </button>
             <button
               onClick={handleExport}
-              className="group flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-lg shadow-gray-200 hover:shadow-xl"
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-lg shadow-gray-200 hover:shadow-xl"
             >
-              <Download className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
+              <Download className="w-4 h-4" />
               <span>Export CSV</span>
             </button>
           </div>
@@ -254,8 +254,8 @@ export default function DatabasePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg min-w-fit">
+          <div className="flex flex-col sm:flex-row gap-3 w-full overflow-x-auto pb-2 sm:pb-0">
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg flex-shrink-0">
               <Filter className="w-4 h-4 text-gray-500" />
               <span className="text-sm font-medium text-gray-600">
                 Filters:
@@ -265,7 +265,7 @@ export default function DatabasePage() {
             <select
               value={region}
               onChange={(e) => setRegion(e.target.value)}
-              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none cursor-pointer hover:border-gray-300 transition-colors"
+              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none cursor-pointer hover:border-gray-300 transition-colors min-w-0 flex-1 sm:flex-none"
             >
               <option value="">All Regions</option>
               <option value="Awdal">Awdal</option>
@@ -277,7 +277,7 @@ export default function DatabasePage() {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none cursor-pointer hover:border-gray-300 transition-colors"
+              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none cursor-pointer hover:border-gray-300 transition-colors min-w-0 flex-1 sm:flex-none"
             >
               <option value="">All Status</option>
               <option value="Working">Working</option>
@@ -300,8 +300,8 @@ export default function DatabasePage() {
           </div>
         )}
 
-        {/* Data Table */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden min-h-[400px]">
+        {/* Data Table - Desktop */}
+        <div className="hidden md:block bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden min-h-[400px]">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -481,40 +481,163 @@ export default function DatabasePage() {
               </tbody>
             </table>
           </div>
+        </div>
 
-          {/* Pagination Footer */}
-          <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30">
-            <p className="text-sm text-gray-500">
-              Showing{" "}
-              <span className="font-medium text-gray-900">
-                {meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1}
-              </span>{" "}
-              to{" "}
-              <span className="font-medium text-gray-900">
-                {Math.min(meta.page * meta.limit, meta.total)}
-              </span>{" "}
-              of <span className="font-medium text-gray-900">{meta.total}</span>{" "}
-              results
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handlePageChange(meta.page - 1)}
-                disabled={meta.page === 1}
-                className="p-2 border border-gray-200 rounded-lg hover:bg-white hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronLeft className="w-4 h-4 text-gray-600" />
-              </button>
-              <span className="text-sm font-medium text-gray-700 px-2">
-                Page {meta.page} of {meta.totalPages}
-              </span>
-              <button
-                onClick={() => handlePageChange(meta.page + 1)}
-                disabled={meta.page === meta.totalPages}
-                className="p-2 border border-gray-200 rounded-lg hover:bg-white hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                <ChevronRight className="w-4 h-4 text-gray-600" />
-              </button>
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-4">
+          {loading ? (
+            // Skeleton Loading Cards
+            [...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 animate-pulse">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3 flex-1">
+                    <div className="w-10 h-10 bg-gray-100 rounded-lg"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-100 rounded w-32 mb-1"></div>
+                      <div className="h-3 bg-gray-100 rounded w-24"></div>
+                    </div>
+                  </div>
+                  <div className="h-6 bg-gray-100 rounded w-20"></div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3 bg-gray-100 rounded w-16"></div>
+                  <div className="h-3 bg-gray-100 rounded w-28"></div>
+                  <div className="h-3 bg-gray-100 rounded w-20"></div>
+                </div>
+              </div>
+            ))
+          ) : data.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">
+              <div className="flex flex-col items-center justify-center">
+                <div className="p-4 bg-gray-50 rounded-full mb-3">
+                  <Search className="w-6 h-6 text-gray-400" />
+                </div>
+                <p className="text-lg font-medium text-gray-900">
+                  No water sources found
+                </p>
+                <p className="text-sm">
+                  Try adjusting your search or filters
+                </p>
+              </div>
             </div>
+          ) : (
+            data.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg flex-shrink-0">
+                      <Droplet className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">
+                        {item.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 truncate">
+                        #{item.id} • {item.type}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border flex-shrink-0 ${getStatusColor(
+                      item.status
+                    )}`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                        item.status === "Working"
+                          ? "bg-green-500"
+                          : item.status === "Needs Maintenance"
+                          ? "bg-orange-500"
+                          : "bg-red-500"
+                      }`}
+                    ></span>
+                    {item.status}
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-sm text-gray-600 mb-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Location:</span>
+                    <span className="text-gray-900 text-right">
+                      {item.village?.district?.region?.name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">District:</span>
+                    <span className="text-gray-900 text-right">
+                      {item.village?.district?.name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Village:</span>
+                    <span className="text-gray-900 text-right">
+                      {item.village?.name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Last Update:</span>
+                    <span className="text-gray-900 text-right">
+                      {item.last_maintained
+                        ? new Date(item.last_maintained).toLocaleDateString()
+                        : "Never"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => alert("Details view to be implemented")}
+                    className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Pagination Footer */}
+        <div className="px-4 md:px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
+          <p className="text-sm text-gray-500 text-center sm:text-left">
+            Showing{" "}
+            <span className="font-medium text-gray-900">
+              {meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1}
+            </span>{" "}
+            to{" "}
+            <span className="font-medium text-gray-900">
+              {Math.min(meta.page * meta.limit, meta.total)}
+            </span>{" "}
+            of <span className="font-medium text-gray-900">{meta.total}</span>{" "}
+            results
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange(meta.page - 1)}
+              disabled={meta.page === 1}
+              className="p-2 border border-gray-200 rounded-lg hover:bg-white hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft className="w-4 h-4 text-gray-600" />
+            </button>
+            <span className="text-sm font-medium text-gray-700 px-2 whitespace-nowrap">
+              Page {meta.page} of {meta.totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(meta.page + 1)}
+              disabled={meta.page === meta.totalPages}
+              className="p-2 border border-gray-200 rounded-lg hover:bg-white hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight className="w-4 h-4 text-gray-600" />
+            </button>
           </div>
         </div>
       </div>

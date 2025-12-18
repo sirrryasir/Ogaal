@@ -30,9 +30,9 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <header className="mb-8 flex justify-between items-end">
+      <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Dashboard Overview
           </h1>
           <p className="text-gray-500">Real-time water security monitoring.</p>
@@ -80,8 +80,8 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
           <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
           <Link
             href="/admin/reports"
@@ -97,24 +97,24 @@ export default function AdminDashboardPage() {
             stats.recentReports.map((report: any) => (
               <div
                 key={report.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-xl gap-3"
               >
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0">
                     {report.reporter_type === "USSD" ? "SMS" : "WEB"}
                   </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-gray-900 text-sm truncate">
                       Report: {report.water_source?.name || "Unknown Source"}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 truncate">
                       {report.village?.name} •{" "}
                       {new Date(report.timestamp).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
                 <span
-                  className={`px-3 py-1 text-xs font-bold rounded-full ${
+                  className={`px-3 py-1 text-xs font-bold rounded-full flex-shrink-0 ${
                     report.is_verified
                       ? "bg-green-100 text-green-700"
                       : "bg-yellow-100 text-yellow-700"
