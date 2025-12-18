@@ -5,13 +5,19 @@ import * as path from "path";
 import * as readline from "readline";
 
 // Files to process
-const CSV_FILES = [
-  "SWIMS_LiveMap_Dataset_20251217-145352.csv",
-  "SWIMS_LiveMap_Dataset_20251217-151007.csv",
-];
+const CSV_FILES = ["SWIMS_LiveMap_Dataset_20251218-081345.csv"];
 
-// Target regions to process
-const TARGET_REGIONS = ["Awdal", "Togdheer", "Woqooyi Galbeed"];
+// Target regions to process - Note: We include "Woqooyi Galbeed" because it's in the CSV,
+// but we will map it to Maroodi Jeex or Saaxil before inserting.
+const TARGET_REGIONS = [
+  "Awdal",
+  "Togdheer",
+  "Woqooyi Galbeed",
+  "Sanaag",
+  "Sool",
+  "Maroodi Jeex",
+  "Saaxil",
+];
 
 // Mapping rules
 const REGION_MAPPING: Record<string, string> = {
@@ -21,6 +27,9 @@ const REGION_MAPPING: Record<string, string> = {
   Gabiley: "Maroodi Jeex",
   Berbera: "Saaxil",
 };
+
+// Limit for seed data
+const MAX_IMPORT_COUNT = 1000;
 
 async function main() {
   console.log("Starting SWIMS data import...");
@@ -46,7 +55,12 @@ async function main() {
     process.exit(1);
   }
 
+  let totalImported = 0;
+
   for (const filePath of CSV_FILES) {
+    if (totalImported >= MAX_IMPORT_COUNT) {
+      break;
+    }
     const absolutePath = path.resolve(process.cwd(), filePath);
     if (!fs.existsSync(absolutePath)) {
       console.warn(`File not found: ${absolutePath}`);
@@ -54,13 +68,17 @@ async function main() {
     }
 
     console.log(`Processing file: ${filePath}`);
-    await processFile(absolutePath);
+    const count = await processFile(absolutePath, totalImported);
+    totalImported = count;
   }
 
-  console.log("Import completed.");
+  console.log(`Import completed. Total imported: ${totalImported}`);
 }
 
-async function processFile(filePath: string) {
+async function processFile(
+  filePath: string,
+  currentTotal: number
+): Promise<number> {
   const fileStream = fs.createReadStream(filePath);
   const rl = readline.createInterface({
     input: fileStream,
@@ -69,9 +87,14 @@ async function processFile(filePath: string) {
 
   let header: string[] | null = null;
   let rowCount = 0;
-  let importedCount = 0;
+  let importedCount = 0; // Count for *this* file
+  let totalCount = currentTotal;
 
   for await (const line of rl) {
+    if (totalCount >= MAX_IMPORT_COUNT) {
+      break;
+    }
+
     rowCount++;
     // Simple CSV parser that handles quotes
     const row = parseCSVLine(line);
@@ -121,6 +144,18 @@ async function processFile(filePath: string) {
       } else if (districtLower.includes("berbera")) {
         finalRegionName = "Saaxil";
       }
+    }
+
+    // Double check we are not inserting "Woqooyi Galbeed" as a region name if it wasn't mapped
+    if (finalRegionName === "Woqooyi Galbeed") {
+      // Fallback or skip?
+      // User requested: "Hargeisa iyo Gebiley ha noqdan mMarodji Jeex Berberana ha noqoto Saaxil"
+      // If it's W.G. but not one of those districts, maybe skip or map to one?
+      // Let's check district again.
+      // If undefined/unknown district in W.G., we might want to skip to be safe,
+      // OR default to Maroodi Jeex as it's the capital region.
+      // For now, let's skip if we can't map it, to avoid "Woqooyi Galbeed" appearing in DB.
+      continue;
     }
 
     // Prepare status
@@ -198,6 +233,7 @@ async function processFile(filePath: string) {
           },
         });
         importedCount++;
+        totalCount++;
       }
     } catch (e) {
       console.error(`Error processing row ${rowCount}:`, e);
@@ -205,6 +241,7 @@ async function processFile(filePath: string) {
   }
 
   console.log(`Imported ${importedCount} water sources from ${filePath}`);
+  return totalCount;
 }
 
 // Custom CSV Tokenizer

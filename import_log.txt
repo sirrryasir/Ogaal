@@ -1,0 +1,45 @@
+Starting SWIMS data import...
+Wiping existing data for target regions...
+prisma:error 
+Invalid `prisma.sensorReading.deleteMany()` invocation in
+/home/hyaas/Barwaaqo/backend/scripts/import_swims_data.ts:41:32
+
+  38 console.log("Wiping existing data for target regions...");
+  39 try {
+  40   // Delete children first
+→ 41   await prisma.sensorReading.deleteMany(
+Can't reach database server at 127.0.0.1:5432
+Wipe failed: PrismaClientKnownRequestError: 
+Invalid `prisma.sensorReading.deleteMany()` invocation in
+/home/hyaas/Barwaaqo/backend/scripts/import_swims_data.ts:41:32
+
+  38 console.log("Wiping existing data for target regions...");
+  39 try {
+  40   // Delete children first
+→ 41   await prisma.sensorReading.deleteMany(
+Can't reach database server at 127.0.0.1:5432
+    at qr.handleRequestError (/home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+client@7.1.0_prisma@7.1.0_@types+react@19.2.7_react-dom@19.2.3_react@19.2.3__re_a23a12fe34cf02b5b66c81fdf2bc14b3/node_modules/@prisma/client/src/runtime/RequestHandler.ts:228:13)
+    at qr.handleAndLogRequestError (/home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+client@7.1.0_prisma@7.1.0_@types+react@19.2.7_react-dom@19.2.3_react@19.2.3__re_a23a12fe34cf02b5b66c81fdf2bc14b3/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at qr.request (/home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+client@7.1.0_prisma@7.1.0_@types+react@19.2.7_react-dom@19.2.3_react@19.2.3__re_a23a12fe34cf02b5b66c81fdf2bc14b3/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async a (/home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+client@7.1.0_prisma@7.1.0_@types+react@19.2.7_react-dom@19.2.3_react@19.2.3__re_a23a12fe34cf02b5b66c81fdf2bc14b3/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:805:24)
+    at async main (/home/hyaas/Barwaaqo/backend/scripts/import_swims_data.ts:41:5) {
+  code: 'P1001',
+  meta: {
+    modelName: 'SensorReading',
+    driverAdapterError: DriverAdapterError: DatabaseNotReachable
+        at PrismaPgAdapter.onError (file:///home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+adapter-pg@7.1.0/node_modules/@prisma/adapter-pg/dist/index.mjs:657:11)
+        at PrismaPgAdapter.performIO (file:///home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+adapter-pg@7.1.0/node_modules/@prisma/adapter-pg/dist/index.mjs:652:12)
+        at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at async PrismaPgAdapter.executeRaw (file:///home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+adapter-pg@7.1.0/node_modules/@prisma/adapter-pg/dist/index.mjs:611:13)
+        at async <anonymous> (/home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+client@7.1.0_prisma@7.1.0_@types+react@19.2.7_react-dom@19.2.3_react@19.2.3__re_a23a12fe34cf02b5b66c81fdf2bc14b3/node_modules/@prisma/client-engine-runtime/src/tracing.ts:68:22)
+        at async fr (/home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+client@7.1.0_prisma@7.1.0_@types+react@19.2.7_react-dom@19.2.3_react@19.2.3__re_a23a12fe34cf02b5b66c81fdf2bc14b3/node_modules/@prisma/client-engine-runtime/src/tracing.ts:56:10)
+        at async e.interpretNode (/home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+client@7.1.0_prisma@7.1.0_@types+react@19.2.7_react-dom@19.2.3_react@19.2.3__re_a23a12fe34cf02b5b66c81fdf2bc14b3/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:172:18)
+        at async e.interpretNode (/home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+client@7.1.0_prisma@7.1.0_@types+react@19.2.7_react-dom@19.2.3_react@19.2.3__re_a23a12fe34cf02b5b66c81fdf2bc14b3/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:276:41)
+        at async e.run (/home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+client@7.1.0_prisma@7.1.0_@types+react@19.2.7_react-dom@19.2.3_react@19.2.3__re_a23a12fe34cf02b5b66c81fdf2bc14b3/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:96:23)
+        at async e.execute (/home/hyaas/Barwaaqo/backend/node_modules/.pnpm/@prisma+client@7.1.0_prisma@7.1.0_@types+react@19.2.7_react-dom@19.2.3_react@19.2.3__re_a23a12fe34cf02b5b66c81fdf2bc14b3/node_modules/@prisma/client/src/runtime/core/engines/client/LocalExecutor.ts:81:12) {
+      cause: [Object]
+    }
+  },
+  clientVersion: '7.1.0'
+}

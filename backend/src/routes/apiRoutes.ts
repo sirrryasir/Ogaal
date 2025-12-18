@@ -33,8 +33,10 @@ router.post("/ai/update-risk", apiController.updateRisk);
 // Dashboard Stats
 router.get("/stats", apiController.getDashboardStats);
 
+// Analytics Data (Charts)
+router.get("/analytics", apiController.getAnalyticsData);
+
 // Admin Water Sources (hierarchical)
 router.get("/admin/water-sources", apiController.getAdminWaterSources);
-
 
 export default router;
