@@ -7,13 +7,15 @@ import {
   FileText,
   Droplet,
   Database,
+  UserPlus,
   LogOut,
   Menu,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import api from "@/lib/api";
 
 export default function AdminLayout({
   children,
@@ -24,9 +26,38 @@ export default function AdminLayout({
   const { role, setRole } = useAppStore();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [email, setEmail] = useState("admin@ogaal.com");
+  const [password, setPassword] = useState("Ogaal@123");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Simple Mock Auth
-  if (!isAuthenticated && role !== "admin") {
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (token) {
+      setIsAuthenticated(true);
+      setRole("ADMIN");
+    }
+  }, [setRole]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      const response = await api.post("/auth/login", { email, password });
+      const { token, user } = response.data;
+      localStorage.setItem("adminToken", token);
+      setIsAuthenticated(true);
+      setRole("ADMIN");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Auth check
+  if (!isAuthenticated && role !== "ADMIN") {
     // Check role just in case store persisted
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -38,22 +69,17 @@ export default function AdminLayout({
             <h1 className="text-2xl font-bold text-gray-900">Ogaal Admin</h1>
             <p className="text-gray-500">Sign in to manage resources</p>
           </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              setIsAuthenticated(true);
-              setRole("admin");
-            }}
-            className="space-y-4"
-          >
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1">
                 Email
               </label>
               <input
                 type="email"
-                defaultValue="admin@Ogaal.so"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-3 bg-gray-50 rounded-lg border-2 border-gray-100 focus:border-blue-500 outline-none"
+                required
               />
             </div>
             <div>
@@ -62,12 +88,21 @@ export default function AdminLayout({
               </label>
               <input
                 type="password"
-                defaultValue="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-3 bg-gray-50 rounded-lg border-2 border-gray-100 focus:border-blue-500 outline-none"
+                required
               />
             </div>
-            <button className="w-full py-3 bg-gray-900 text-white font-bold rounded-lg hover:bg-black transition-colors">
-              Login to Dashboard
+            {error && (
+              <p className="text-red-600 text-sm">{error}</p>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-gray-900 text-white font-bold rounded-lg hover:bg-black transition-colors disabled:opacity-50"
+            >
+              {loading ? "Logging in..." : "Login to Dashboard"}
             </button>
           </form>
         </div>
@@ -80,6 +115,7 @@ export default function AdminLayout({
     { href: "/admin/reports", label: "Approvals", icon: FileText },
     { href: "/admin/sources", label: "Water Sources", icon: Droplet },
     { href: "/admin/database", label: "Database", icon: Database },
+    { href: "/admin/users", label: "Users", icon: UserPlus },
   ];
 
   return (
@@ -157,8 +193,9 @@ export default function AdminLayout({
         <div className="p-4 border-t border-gray-100">
           <button
             onClick={() => {
+              localStorage.removeItem("adminToken");
               setIsAuthenticated(false);
-              setRole("community");
+              setRole("community" as any);
               setIsMobileMenuOpen(false);
             }}
             className="flex items-center space-x-3 px-4 py-3 w-full text-left rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"

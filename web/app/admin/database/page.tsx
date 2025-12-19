@@ -11,6 +11,11 @@ import {
   RefreshCw,
   MapPin,
   Droplet,
+  X,
+  Calendar,
+  AlertCircle,
+  CheckCircle,
+  Wrench,
 } from "lucide-react";
 import api from "@/lib/api";
 
@@ -50,6 +55,8 @@ export default function DatabasePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [openActionId, setOpenActionId] = useState<number | null>(null);
+  const [selectedWaterSource, setSelectedWaterSource] = useState<WaterSource | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -204,6 +211,41 @@ export default function DatabasePage() {
       default:
         return "bg-gray-100 text-gray-700 border-gray-200";
     }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "functional":
+      case "working":
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case "needs repair":
+      case "maintenance":
+        return <Wrench className="w-5 h-5 text-orange-500" />;
+      case "non-functional":
+      case "broken":
+        return <AlertCircle className="w-5 h-5 text-red-500" />;
+      default:
+        return <AlertCircle className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
+  const handleViewDetails = (waterSource: WaterSource) => {
+    setSelectedWaterSource(waterSource);
+    setShowDetailsModal(true);
+    setOpenActionId(null); // Close action menu
+  };
+
+  const getWaterLevelColor = (level: number) => {
+    if (level >= 80) return "text-green-600";
+    if (level >= 50) return "text-orange-500";
+    return "text-red-600";
+  };
+
+  const getWaterLevelText = (level: number) => {
+    if (level >= 80) return "Optimal";
+    if (level >= 50) return "Moderate";
+    if (level >= 20) return "Low";
+    return "Critical";
   };
 
   return (
@@ -458,9 +500,7 @@ export default function DatabasePage() {
                         {openActionId === item.id && (
                           <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden ring-1 ring-black/5">
                             <button
-                              onClick={() =>
-                                alert("Details view to be implemented")
-                              }
+                              onClick={() => handleViewDetails(item)}
                               className="w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left flex items-center gap-2"
                             >
                               <span>View Details</span>
@@ -589,7 +629,7 @@ export default function DatabasePage() {
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
                   <button
-                    onClick={() => alert("Details view to be implemented")}
+                    onClick={() => handleViewDetails(item)}
                     className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
                   >
                     View Details
@@ -641,6 +681,210 @@ export default function DatabasePage() {
           </div>
         </div>
       </div>
+
+      {/* Water Source Details Modal */}
+      {showDetailsModal && selectedWaterSource && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div 
+            className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                  <Droplet className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {selectedWaterSource.name}
+                  </h2>
+                  <p className="text-gray-500">
+                    Source ID: #{selectedWaterSource.id}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-160px)]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Column */}
+                <div className="space-y-6">
+                  {/* Status Section */}
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <h3 className="text-sm font-medium text-gray-500 mb-3">
+                      STATUS
+                    </h3>
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(selectedWaterSource.status)}
+                      <div className="flex-1">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedWaterSource.status)}`}>
+                          {selectedWaterSource.status}
+                        </span>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {selectedWaterSource.status === "Working" 
+                            ? "This water source is fully operational"
+                            : selectedWaterSource.status === "Needs Maintenance"
+                            ? "Maintenance required soon"
+                            : "Out of service - needs repair"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Water Level Section */}
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <h3 className="text-sm font-medium text-gray-500 mb-3">
+                      WATER LEVEL
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl font-bold">
+                          {selectedWaterSource.water_level}%
+                        </span>
+                        <span className={`font-medium ${getWaterLevelColor(selectedWaterSource.water_level)}`}>
+                          {getWaterLevelText(selectedWaterSource.water_level)}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full ${getWaterLevelColor(selectedWaterSource.water_level).replace('text-', 'bg-')}`}
+                          style={{ width: `${selectedWaterSource.water_level}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Type Information */}
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <h3 className="text-sm font-medium text-gray-500 mb-3">
+                      SOURCE TYPE
+                    </h3>
+                    <p className="text-lg font-medium text-gray-900">
+                      {selectedWaterSource.type}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Water collection and distribution system
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                  {/* Location Details */}
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      LOCATION DETAILS
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Region</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedWaterSource.village?.district?.region?.name || "N/A"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600">District</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedWaterSource.village?.district?.name || "N/A"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-gray-600">Village</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedWaterSource.village?.name || "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Maintenance Information */}
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      MAINTENANCE HISTORY
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between py-2">
+                        <span className="text-gray-600">Last Maintained</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedWaterSource.last_maintained
+                            ? new Date(selectedWaterSource.last_maintained).toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })
+                            : "Never"}
+                        </span>
+                      </div>
+                      {selectedWaterSource.last_maintained && (
+                        <div className="text-sm text-gray-500">
+                          Last maintenance was {Math.floor((new Date().getTime() - new Date(selectedWaterSource.last_maintained).getTime()) / (1000 * 60 * 60 * 24))} days ago
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <h3 className="text-sm font-medium text-gray-500 mb-3">
+                      QUICK ACTIONS
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={() => {
+                          alert(`Marking ${selectedWaterSource.name} for maintenance`);
+                          setShowDetailsModal(false);
+                        }}
+                        className="flex-1 px-4 py-2 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg font-medium transition-colors"
+                      >
+                        Schedule Maintenance
+                      </button>
+                      <button
+                        onClick={() => {
+                          alert(`Generating report for ${selectedWaterSource.name}`);
+                          setShowDetailsModal(false);
+                        }}
+                        className="flex-1 px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg font-medium transition-colors"
+                      >
+                        Generate Report
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="px-6 py-2.5 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  handleDelete(selectedWaterSource.id);
+                  setShowDetailsModal(false);
+                }}
+                className="px-6 py-2.5 bg-red-600 text-white hover:bg-red-700 rounded-lg font-medium transition-colors"
+              >
+                Delete Source
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

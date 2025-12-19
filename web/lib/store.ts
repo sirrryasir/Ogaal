@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type UserRole = "admin" | "community";
+type UserRole = "ADMIN" | "community";
 
 interface AppState {
   role: UserRole;
