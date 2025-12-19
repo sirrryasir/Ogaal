@@ -94,21 +94,26 @@ model Village {
 }
 
 model WaterSource {
-  id              Int       @id @default(autoincrement())
-  village_id      Int
-  name            String
-  type            String    @default("Borehole") // Borehole, Dam, Berkad, Well
-  status          String?   @default("Working")   // Working, Needed Maintenance, Broken
-  water_level     Float?    @default(100.0)
-  latitude        Float?
-  longitude       Float?
-  
-  last_maintained DateTime?
-  
-  village         Village   @relation(fields: [village_id], references: [id])
-  reports         Report[]
-  interventions   Intervention[]
-  sensor_readings SensorReading[]
+  id                  Int       @id @default(autoincrement())
+  village_id          Int
+  name                String
+  type                String    @default("Borehole") // Borehole, Dam, Berkad, Well
+  status              String?   @default("Working")   // Working, Needed Maintenance, Broken
+  water_level         Float?    @default(100.0)
+  latitude            Float?
+  longitude           Float?
+
+  // New fields for enhanced water source tracking
+  inspecting_agency   String?   // Agency responsible for inspecting the water source
+  establishing_agency String?   // Agency that established/constructed the water source
+  water_source_photo  String?   // URL or path to photo of the water source
+
+  last_maintained     DateTime?
+
+  village             Village   @relation(fields: [village_id], references: [id])
+  reports             Report[]
+  interventions       Intervention[]
+  sensor_readings     SensorReading[]
 
   @@map("water_sources")
 }

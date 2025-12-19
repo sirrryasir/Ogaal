@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { prisma } from "../src/config/prisma";
 
 const statuses = ["Working", "Broken", "Low Water", "Dry", "Contaminated"];

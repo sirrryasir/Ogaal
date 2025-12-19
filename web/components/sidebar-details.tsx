@@ -1,5 +1,5 @@
 import { WaterSource } from "@/lib/data";
-import { X, MapPin, Activity, Calendar, Droplets } from "lucide-react";
+import { X, MapPin, Activity, Calendar, Droplets, Settings } from "lucide-react";
 import { format } from "date-fns";
 
 interface SidebarDetailsProps {
@@ -50,7 +50,17 @@ export default function SidebarDetails({
           <h3 className="text-xl font-bold text-gray-900">{source.name}</h3>
           <div className="flex items-center text-gray-500 mt-1">
             <MapPin className="w-4 h-4 mr-1" />
-            <span className="text-sm">{source.village}</span>
+            <span className="text-sm">{source.village}, {source.district}, {source.region}</span>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-start">
+            <Settings className="w-5 h-5 text-blue-500 mt-0.5 mr-3" />
+            <div>
+              <p className="text-xs text-gray-400 font-medium">SOURCE TYPE</p>
+              <p className="text-sm text-gray-700 font-medium">{source.source_type}</p>
+            </div>
           </div>
         </div>
 

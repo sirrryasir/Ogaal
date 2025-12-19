@@ -35,6 +35,10 @@ interface WaterSource {
   status: string;
   lat: number;
   lng: number;
+  inspecting_agency?: string;
+  establishing_agency?: string;
+  settlement_name?: string;
+  water_source_photo?: string;
 }
 
 interface Village {
@@ -313,7 +317,7 @@ export default function DashboardPage() {
     const csvData: string[] = [];
 
     // CSV Headers
-    csvData.push('Region,District,Village,Source Name,Type,Status,Latitude,Longitude,Functional,Needs Repair,Non-Functional');
+    csvData.push('Region,District,Village,Source Name,Type,Status,Latitude,Longitude,Inspecting Agency,Establishing Agency,Settlement Name,Water Source Photo,Functional,Needs Repair,Non-Functional');
 
     // Flatten the hierarchical data
     filteredRegions.forEach(region => {
@@ -329,6 +333,10 @@ export default function DashboardPage() {
               source.status,
               source.lat.toString(),
               source.lng.toString(),
+              `"${source.inspecting_agency || ""}"`,
+              `"${source.establishing_agency || ""}"`,
+              `"${source.settlement_name || ""}"`,
+              `"${source.water_source_photo || ""}"`,
               village.functional.toString(),
               village.needsRepair.toString(),
               village.nonFunctional.toString()
@@ -861,29 +869,61 @@ export default function DashboardPage() {
                             
                             return (
                               <div key={source.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${WATER_SOURCE_TYPES[source.water_source_type as keyof typeof WATER_SOURCE_TYPES]?.bgColor || 'bg-gray-50'}`}>
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex items-start gap-3 flex-1">
+                                    <div className={`p-2 rounded-lg flex-shrink-0 ${WATER_SOURCE_TYPES[source.water_source_type as keyof typeof WATER_SOURCE_TYPES]?.bgColor || 'bg-gray-50'}`}>
                                       <SourceIcon className={`w-5 h-5 ${WATER_SOURCE_TYPES[source.water_source_type as keyof typeof WATER_SOURCE_TYPES]?.color || 'text-gray-500'}`} />
                                     </div>
-                                    <div>
+                                    <div className="flex-1 min-w-0">
                                       <h5 className="font-medium text-gray-900">{source.source_name}</h5>
                                       <p className="text-sm text-gray-600 capitalize">{source.water_source_type.toLowerCase()}</p>
+
+                                      {/* New fields display */}
+                                      <div className="mt-2 space-y-1">
+                                        {source.inspecting_agency && (
+                                          <p className="text-xs text-gray-500">
+                                            <span className="font-medium">Inspecting:</span> {source.inspecting_agency}
+                                          </p>
+                                        )}
+                                        {source.establishing_agency && (
+                                          <p className="text-xs text-gray-500">
+                                            <span className="font-medium">Established by:</span> {source.establishing_agency}
+                                          </p>
+                                        )}
+                                        {source.settlement_name && (
+                                          <p className="text-xs text-gray-500">
+                                            <span className="font-medium">Settlement:</span> {source.settlement_name}
+                                          </p>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-4">
-                                    <div className="text-right">
-                                      <div className="text-sm text-gray-600">
-                                        {source.lat.toFixed(4)}, {source.lng.toFixed(4)}
-                                      </div>
-                                      <div className="text-xs text-gray-500">Coordinates</div>
-                                    </div>
+
+                                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
                                     <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${statusConfig?.bgColor} ${statusConfig?.color}`}>
                                       <StatusIcon className="w-3 h-3" />
                                       {statusConfig?.label}
                                     </div>
+                                    <div className="text-right">
+                                      <div className="text-xs text-gray-600">
+                                        {source.lat.toFixed(4)}, {source.lng.toFixed(4)}
+                                      </div>
+                                      <div className="text-xs text-gray-500">Coordinates</div>
+                                    </div>
                                   </div>
                                 </div>
+
+                                {/* Photo display if available */}
+                                {source.water_source_photo && (
+                                  <div className="mt-3 pt-3 border-t border-gray-100">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
+                                        <Droplet className="w-4 h-4 text-gray-500" />
+                                      </div>
+                                      <span className="text-xs text-gray-600">Photo available</span>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -968,24 +1008,54 @@ export default function DashboardPage() {
                           
                           return (
                             <div key={source.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                  <div className={`p-3 rounded-lg ${WATER_SOURCE_TYPES[source.water_source_type as keyof typeof WATER_SOURCE_TYPES]?.bgColor || 'bg-gray-50'}`}>
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-start gap-4 flex-1">
+                                  <div className={`p-3 rounded-lg flex-shrink-0 ${WATER_SOURCE_TYPES[source.water_source_type as keyof typeof WATER_SOURCE_TYPES]?.bgColor || 'bg-gray-50'}`}>
                                     <SourceIcon className={`w-6 h-6 ${WATER_SOURCE_TYPES[source.water_source_type as keyof typeof WATER_SOURCE_TYPES]?.color || 'text-gray-500'}`} />
                                   </div>
-                                  <div>
+                                  <div className="flex-1 min-w-0">
                                     <h4 className="font-semibold text-gray-900">{source.source_name}</h4>
-                                    <div className="flex items-center gap-4 mt-1">
+                                    <div className="flex flex-wrap items-center gap-4 mt-1">
                                       <span className="text-sm text-gray-600 capitalize">{source.water_source_type.toLowerCase()}</span>
                                       <span className="text-sm text-gray-500">
                                         {source.lat.toFixed(4)}, {source.lng.toFixed(4)}
                                       </span>
                                     </div>
+
+                                    {/* New fields display */}
+                                    <div className="mt-2 space-y-1">
+                                      {source.inspecting_agency && (
+                                        <p className="text-xs text-gray-500">
+                                          <span className="font-medium">Inspecting Agency:</span> {source.inspecting_agency}
+                                        </p>
+                                      )}
+                                      {source.establishing_agency && (
+                                        <p className="text-xs text-gray-500">
+                                          <span className="font-medium">Establishing Agency:</span> {source.establishing_agency}
+                                        </p>
+                                      )}
+                                      {source.settlement_name && (
+                                        <p className="text-xs text-gray-500">
+                                          <span className="font-medium">Settlement:</span> {source.settlement_name}
+                                        </p>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                                <div className={`px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 ${statusConfig?.bgColor} ${statusConfig?.color}`}>
-                                  <StatusIcon className="w-4 h-4" />
-                                  {statusConfig?.label}
+
+                                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                  <div className={`px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 ${statusConfig?.bgColor} ${statusConfig?.color}`}>
+                                    <StatusIcon className="w-4 h-4" />
+                                    {statusConfig?.label}
+                                  </div>
+
+                                  {/* Photo indicator if available */}
+                                  {source.water_source_photo && (
+                                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                                      <Droplet className="w-3 h-3" />
+                                      <span>Photo</span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
