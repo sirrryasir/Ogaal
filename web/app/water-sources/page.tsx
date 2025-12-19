@@ -28,7 +28,7 @@ export default function WaterSourcesPage() {
   useEffect(() => {
     async function fetchSources() {
       try {
-        const data = await getWaterSources();
+        const data = await getWaterSources({ limit: 1000 });
         setSources(data);
       } catch (err) {
         console.error("Failed to fetch sources", err);
