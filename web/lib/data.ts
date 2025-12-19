@@ -61,10 +61,18 @@ export async function getDistricts(): Promise<District[]> {
   }
 }
 
-export async function getWaterSources(): Promise<WaterSource[]> {
+export async function getWaterSources(params?: {
+  limit?: number;
+  search?: string;
+  page?: number;
+}): Promise<WaterSource[]> {
   try {
-    const res = await api.get("/water-sources");
-    return res.data.map((b: any) => ({
+    const res = await api.get("/water-sources", { params });
+    // Handle paginated response ({ data: [], meta: {} }) or flat array
+    const sourcesData = Array.isArray(res.data)
+      ? res.data
+      : res.data.data || [];
+    return sourcesData.map((b: any) => ({
       id: b.id,
       name: b.name,
       lat: b.latitude ?? b.village?.latitude ?? 0,
