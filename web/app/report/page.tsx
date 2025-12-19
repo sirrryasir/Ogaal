@@ -15,7 +15,14 @@ import {
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import Footer from "@/components/footer";
-import { MapPin, Droplet, AlertCircle, CheckCircle, XCircle, ChevronDown } from "lucide-react";
+import {
+  MapPin,
+  Droplet,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  ChevronDown,
+} from "lucide-react";
 
 const ReportPage = () => {
   const router = useRouter();
@@ -62,7 +69,8 @@ const ReportPage = () => {
       label: "Dry - No Water",
       description: "Source is completely dry",
       icon: XCircle,
-      color: "border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-800",
+      color:
+        "border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-800",
       activeColor: "border-orange-500 bg-orange-100 ring-2 ring-orange-300",
     },
     {
@@ -70,7 +78,8 @@ const ReportPage = () => {
       label: "Low Water - Reduced Supply",
       description: "Water available but at low levels",
       icon: AlertCircle,
-      color: "border-yellow-200 bg-yellow-50 hover:bg-yellow-100 text-yellow-800",
+      color:
+        "border-yellow-200 bg-yellow-50 hover:bg-yellow-100 text-yellow-800",
       activeColor: "border-yellow-500 bg-yellow-100 ring-2 ring-yellow-300",
     },
     {
@@ -78,7 +87,8 @@ const ReportPage = () => {
       label: "Contamination - Unsafe",
       description: "Water is contaminated and unsafe for drinking",
       icon: XCircle,
-      color: "border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-800",
+      color:
+        "border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-800",
       activeColor: "border-purple-500 bg-purple-100 ring-2 ring-purple-300",
     },
   ];
@@ -87,13 +97,14 @@ const ReportPage = () => {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [regionsData, districtsData, villagesData, sourcesData] = await Promise.all([
-          getRegions(),
-          getDistricts(),
-          getVillages(),
-          getWaterSources()
-        ]);
-        
+        const [regionsData, districtsData, villagesData, sourcesData] =
+          await Promise.all([
+            getRegions(),
+            getDistricts(),
+            getVillages(),
+            getWaterSources(),
+          ]);
+
         setRegions(regionsData);
         setDistricts(districtsData);
         setVillages(villagesData);
@@ -113,13 +124,13 @@ const ReportPage = () => {
       const regionId = parseInt(formData.regionId);
       const filtered = districts.filter((d) => d.region_id === regionId);
       setFilteredDistricts(filtered);
-      
+
       // Reset downstream selections
-      setFormData(prev => ({ 
-        ...prev, 
-        districtId: "", 
-        villageId: "", 
-        sourceId: "" 
+      setFormData((prev) => ({
+        ...prev,
+        districtId: "",
+        villageId: "",
+        sourceId: "",
       }));
       setFilteredVillages([]);
       setFilteredSources([]);
@@ -134,12 +145,12 @@ const ReportPage = () => {
       const districtId = parseInt(formData.districtId);
       const filtered = villages.filter((v) => v.district_id === districtId);
       setFilteredVillages(filtered);
-      
+
       // Reset downstream selections
-      setFormData(prev => ({ 
-        ...prev, 
-        villageId: "", 
-        sourceId: "" 
+      setFormData((prev) => ({
+        ...prev,
+        villageId: "",
+        sourceId: "",
       }));
       setFilteredSources([]);
     } else {
@@ -153,9 +164,9 @@ const ReportPage = () => {
       const villageId = parseInt(formData.villageId);
       const filtered = allSources.filter((s) => s.village_id === villageId);
       setFilteredSources(filtered);
-      
+
       // Reset source selection
-      setFormData(prev => ({ ...prev, sourceId: "" }));
+      setFormData((prev) => ({ ...prev, sourceId: "" }));
     } else {
       setFilteredSources([]);
     }
@@ -220,7 +231,8 @@ const ReportPage = () => {
               <h1 className="text-2xl font-bold">Submit Water Source Report</h1>
             </div>
             <p className="text-blue-100">
-              Help monitor water availability in Somaliland. Select your location and report the current status.
+              Help monitor water availability in Somaliland. Select your
+              location and report the current status.
             </p>
           </div>
 
@@ -234,7 +246,7 @@ const ReportPage = () => {
                   </span>
                   Select Location
                 </h2>
-                
+
                 {/* Location Selection Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Region Dropdown */}
@@ -275,15 +287,22 @@ const ReportPage = () => {
                         disabled={!formData.regionId}
                         className={cn(
                           "w-full pl-10 pr-10 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none",
-                          formData.regionId ? "bg-white cursor-pointer" : "bg-slate-100 cursor-not-allowed"
+                          formData.regionId
+                            ? "bg-white cursor-pointer"
+                            : "bg-slate-100 cursor-not-allowed"
                         )}
                         value={formData.districtId}
                         onChange={(e) =>
-                          setFormData({ ...formData, districtId: e.target.value })
+                          setFormData({
+                            ...formData,
+                            districtId: e.target.value,
+                          })
                         }
                       >
                         <option value="">
-                          {formData.regionId ? "Select District" : "Select Region First"}
+                          {formData.regionId
+                            ? "Select District"
+                            : "Select Region First"}
                         </option>
                         {filteredDistricts.map((district) => (
                           <option key={district.id} value={district.id}>
@@ -307,15 +326,22 @@ const ReportPage = () => {
                         disabled={!formData.districtId}
                         className={cn(
                           "w-full pl-10 pr-10 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none",
-                          formData.districtId ? "bg-white cursor-pointer" : "bg-slate-100 cursor-not-allowed"
+                          formData.districtId
+                            ? "bg-white cursor-pointer"
+                            : "bg-slate-100 cursor-not-allowed"
                         )}
                         value={formData.villageId}
                         onChange={(e) =>
-                          setFormData({ ...formData, villageId: e.target.value })
+                          setFormData({
+                            ...formData,
+                            villageId: e.target.value,
+                          })
                         }
                       >
                         <option value="">
-                          {formData.districtId ? "Select Village" : "Select District First"}
+                          {formData.districtId
+                            ? "Select Village"
+                            : "Select District First"}
                         </option>
                         {filteredVillages.map((village) => (
                           <option key={village.id} value={village.id}>
@@ -329,20 +355,32 @@ const ReportPage = () => {
                 </div>
 
                 {/* Selected Location Summary */}
-                {(formData.regionId || formData.districtId || formData.villageId) && (
+                {(formData.regionId ||
+                  formData.districtId ||
+                  formData.villageId) && (
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mt-2">
-                    <h3 className="font-medium text-blue-800 mb-1">Selected Location:</h3>
+                    <h3 className="font-medium text-blue-800 mb-1">
+                      Selected Location:
+                    </h3>
                     <div className="flex items-center text-blue-700">
                       {formData.regionId && (
                         <span className="font-semibold bg-blue-100 px-3 py-1 rounded-lg">
-                          {regions.find(r => r.id === parseInt(formData.regionId))?.name}
+                          {
+                            regions.find(
+                              (r) => r.id === parseInt(formData.regionId)
+                            )?.name
+                          }
                         </span>
                       )}
                       {formData.districtId && (
                         <>
                           <span className="mx-2 text-blue-400">→</span>
                           <span className="font-semibold bg-green-100 px-3 py-1 rounded-lg">
-                            {districts.find(d => d.id === parseInt(formData.districtId))?.name}
+                            {
+                              districts.find(
+                                (d) => d.id === parseInt(formData.districtId)
+                              )?.name
+                            }
                           </span>
                         </>
                       )}
@@ -350,7 +388,11 @@ const ReportPage = () => {
                         <>
                           <span className="mx-2 text-blue-400">→</span>
                           <span className="font-semibold bg-purple-100 px-3 py-1 rounded-lg">
-                            {villages.find(v => v.id === parseInt(formData.villageId))?.name}
+                            {
+                              villages.find(
+                                (v) => v.id === parseInt(formData.villageId)
+                              )?.name
+                            }
                           </span>
                         </>
                       )}
@@ -368,7 +410,7 @@ const ReportPage = () => {
                     </span>
                     Select Water Source
                   </h2>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Water Source <span className="text-red-500">*</span>
@@ -386,7 +428,8 @@ const ReportPage = () => {
                         <option value="">Select a Water Source</option>
                         {filteredSources.map((source) => (
                           <option key={source.id} value={source.id}>
-                            {source.name} ({source.water_source_type}) - Currently: {source.status}
+                            {source.name} ({source.source_type}) - Currently:{" "}
+                            {source.status}
                           </option>
                         ))}
                       </select>
@@ -394,42 +437,72 @@ const ReportPage = () => {
                     </div>
                     {filteredSources.length === 0 && formData.villageId && (
                       <p className="text-sm text-slate-500 mt-2">
-                        No water sources found in this village. Please select a different village.
+                        No water sources found in this village. Please select a
+                        different village.
                       </p>
                     )}
-                    
+
                     {/* Selected Water Source Details */}
                     {formData.sourceId && (
                       <div className="mt-4 bg-slate-50 border border-slate-200 rounded-xl p-4">
-                        <h4 className="font-medium text-slate-800 mb-2">Selected Water Source:</h4>
+                        <h4 className="font-medium text-slate-800 mb-2">
+                          Selected Water Source:
+                        </h4>
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div>
                             <span className="text-slate-600">Name:</span>
                             <span className="font-medium ml-2">
-                              {filteredSources.find(s => s.id === parseInt(formData.sourceId))?.name}
+                              {
+                                filteredSources.find(
+                                  (s) => s.id === parseInt(formData.sourceId)
+                                )?.name
+                              }
                             </span>
                           </div>
                           <div>
                             <span className="text-slate-600">Type:</span>
                             <span className="font-medium ml-2 capitalize">
-                              {filteredSources.find(s => s.id === parseInt(formData.sourceId))?.water_source_type?.toLowerCase()}
+                              {filteredSources
+                                .find(
+                                  (s) => s.id === parseInt(formData.sourceId)
+                                )
+                                ?.source_type?.toLowerCase()}
                             </span>
                           </div>
                           <div>
-                            <span className="text-slate-600">Current Status:</span>
-                            <span className={cn(
-                              "font-medium ml-2 px-2 py-1 rounded-full text-xs capitalize",
-                              filteredSources.find(s => s.id === parseInt(formData.sourceId))?.status === "functional" 
-                                ? "bg-green-100 text-green-800"
-                                : filteredSources.find(s => s.id === parseInt(formData.sourceId))?.status === "needs_repair"
-                                ? "bg-orange-100 text-orange-800"
-                                : filteredSources.find(s => s.id === parseInt(formData.sourceId))?.status === "alaw_water"
-                                ? "bg-blue-100 text-blue-800"
-                                : filteredSources.find(s => s.id === parseInt(formData.sourceId))?.status === "contaminated"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-red-100 text-red-800"
-                            )}>
-                              {filteredSources.find(s => s.id === parseInt(formData.sourceId))?.status?.replace('_', ' ')}
+                            <span className="text-slate-600">
+                              Current Status:
+                            </span>
+                            <span
+                              className={cn(
+                                "font-medium ml-2 px-2 py-1 rounded-full text-xs capitalize",
+                                filteredSources.find(
+                                  (s) => s.id === parseInt(formData.sourceId)
+                                )?.status === "functional"
+                                  ? "bg-green-100 text-green-800"
+                                  : filteredSources.find(
+                                      (s) =>
+                                        s.id === parseInt(formData.sourceId)
+                                    )?.status === "needs_repair"
+                                  ? "bg-orange-100 text-orange-800"
+                                  : filteredSources.find(
+                                      (s) =>
+                                        s.id === parseInt(formData.sourceId)
+                                    )?.status === "alaw_water"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : filteredSources.find(
+                                      (s) =>
+                                        s.id === parseInt(formData.sourceId)
+                                    )?.status === "contaminated"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-red-100 text-red-800"
+                              )}
+                            >
+                              {filteredSources
+                                .find(
+                                  (s) => s.id === parseInt(formData.sourceId)
+                                )
+                                ?.status?.replace("_", " ")}
                             </span>
                           </div>
                         </div>
@@ -448,7 +521,7 @@ const ReportPage = () => {
                     </span>
                     Report Status
                   </h2>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-3">
                       Current Status <span className="text-red-500">*</span>
@@ -457,14 +530,20 @@ const ReportPage = () => {
                       {statusOptions.map((option) => {
                         const Icon = option.icon;
                         return (
-                          <label key={option.value} className="relative cursor-pointer">
+                          <label
+                            key={option.value}
+                            className="relative cursor-pointer"
+                          >
                             <input
                               type="radio"
                               name="status"
                               value={option.value}
                               checked={formData.status === option.value}
                               onChange={(e) =>
-                                setFormData({ ...formData, status: e.target.value })
+                                setFormData({
+                                  ...formData,
+                                  status: e.target.value,
+                                })
                               }
                               className="peer sr-only"
                             />
@@ -472,25 +551,41 @@ const ReportPage = () => {
                               className={cn(
                                 "p-4 rounded-xl border-2 transition-all h-full flex flex-col items-center text-center",
                                 "hover:shadow-md hover:scale-[1.02] active:scale-[0.98]",
-                                formData.status === option.value ? option.activeColor : option.color
+                                formData.status === option.value
+                                  ? option.activeColor
+                                  : option.color
                               )}
                             >
                               <div className="mb-3">
-                                <div className={cn(
-                                  "p-3 rounded-full",
-                                  formData.status === option.value ? "bg-white" : "bg-white/80"
-                                )}>
-                                  <Icon className={cn(
-                                    "w-6 h-6",
-                                    formData.status === option.value 
-                                      ? option.color.split(' ')[2].replace('text-', 'text-')
-                                      : option.color.split(' ')[2]
-                                  )} />
+                                <div
+                                  className={cn(
+                                    "p-3 rounded-full",
+                                    formData.status === option.value
+                                      ? "bg-white"
+                                      : "bg-white/80"
+                                  )}
+                                >
+                                  <Icon
+                                    className={cn(
+                                      "w-6 h-6",
+                                      formData.status === option.value
+                                        ? option.color
+                                            .split(" ")[2]
+                                            .replace("text-", "text-")
+                                        : option.color.split(" ")[2]
+                                    )}
+                                  />
                                 </div>
                               </div>
-                              <div className="font-semibold mb-1">{option.label.split(' - ')[0]}</div>
-                              <div className="text-xs opacity-75">{option.label.split(' - ')[1]}</div>
-                              <div className="text-xs mt-2 opacity-60">{option.description}</div>
+                              <div className="font-semibold mb-1">
+                                {option.label.split(" - ")[0]}
+                              </div>
+                              <div className="text-xs opacity-75">
+                                {option.label.split(" - ")[1]}
+                              </div>
+                              <div className="text-xs mt-2 opacity-60">
+                                {option.description}
+                              </div>
                             </div>
                           </label>
                         );
@@ -509,7 +604,7 @@ const ReportPage = () => {
                     </span>
                     Additional Details
                   </h2>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Observations & Comments
@@ -525,7 +620,8 @@ const ReportPage = () => {
                         }
                       />
                       <div className="text-xs text-slate-500 mt-2">
-                        Tip: Include details about water level, color, smell, or any visible issues with the source.
+                        Tip: Include details about water level, color, smell, or
+                        any visible issues with the source.
                       </div>
                     </div>
                   </div>
@@ -537,7 +633,9 @@ const ReportPage = () => {
                 <div className="flex flex-col md:flex-row gap-3">
                   <button
                     type="submit"
-                    disabled={isSubmitting || !formData.villageId || !formData.sourceId}
+                    disabled={
+                      isSubmitting || !formData.villageId || !formData.sourceId
+                    }
                     className={cn(
                       "flex-1 py-4 rounded-xl font-semibold text-lg transition-all",
                       "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white",
@@ -558,7 +656,7 @@ const ReportPage = () => {
                       </>
                     )}
                   </button>
-                  
+
                   <button
                     type="button"
                     onClick={() => router.push("/dashboard")}
@@ -567,10 +665,11 @@ const ReportPage = () => {
                     Cancel
                   </button>
                 </div>
-                
+
                 <div className="text-center mt-4">
                   <p className="text-xs text-slate-500">
-                    Your report will help improve water resource management in Somaliland.
+                    Your report will help improve water resource management in
+                    Somaliland.
                   </p>
                 </div>
               </div>
