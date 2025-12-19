@@ -1,5 +1,6 @@
 import express from "express";
 import apiController from "../controllers/apiController.js";
+import waterSourceController from "../controllers/waterSourceController.js";
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ router.get("/districts", apiController.getDistricts);
 router.get("/villages", apiController.getVillages);
 
 // Get all Water Sources (with Village data)
-router.get("/water-sources", apiController.getWaterSources);
+router.get("/water-sources", waterSourceController.getAll);
 
 // Submit Report (Agent App)
 router.post("/reports", apiController.submitReport);
