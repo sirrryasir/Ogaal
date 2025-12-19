@@ -153,8 +153,9 @@ const SplashScreen: React.FC = () => {
               }
             ]}
           >
-            <Logo size="xlarge" showTagline={true} animated={true} />
           </Animated.View>
+            <Logo size="xlarge" showTagline={true} animated={true} />
+
           
           {/* Loading indicator */}
           <Animated.View style={[styles.loadingContainer, { opacity: fadeAnim }]}>

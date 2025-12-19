@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 
 interface LogoProps {
   size?: 'small' | 'medium' | 'large' | 'xlarge';
@@ -13,32 +13,30 @@ const Logo: React.FC<LogoProps> = ({
   animated = false 
 }) => {
   const sizeStyles = {
-    small: { fontSize: 24, letterSpacing: 2 },
-    medium: { fontSize: 36, letterSpacing: 3 },
-    large: { fontSize: 48, letterSpacing: 4 },
-    xlarge: { fontSize: 64, letterSpacing: 5 },
+    small: { width: 40, height: 40 },
+    medium: { width: 60, height: 60 },
+    large: { width: 80, height: 80 },
+    xlarge: { width: 100, height: 100 },
   };
-
-  const gradientColors = ['#0c6dff', '#8a2be2', '#00d4ff'];
   
   return (
     <View style={styles.container}>
       <View style={[styles.logoWrapper, animated && styles.animatedWrapper]}>
-        {/* Modern logo with gradient effect simulation */}
-        <View style={styles.gradientBackground}>
-          <Text style={[
-            styles.logoText, 
-            sizeStyles[size], 
-            styles.textShadow
-          ]}>
-            OGAAL
-          </Text>
+        {/* Logo Icon/Image */}
+        <View>
+          <Image 
+            source={require('../../assets/logo.png')} // Update this path
+            style={[styles.logoIcon, sizeStyles[size]]}
+            resizeMode="contain"
+          />
         </View>
         
         {/* Optional AI tag */}
-        <View style={styles.aiBadge}>
-          <Text style={styles.aiText}>AI</Text>
-        </View>
+        {showTagline && (
+          <View style={styles.aiBadge}>
+            <Text style={styles.aiText}>AI</Text>
+          </View>
+        )}
       </View>
       
       {showTagline && (
@@ -63,11 +61,10 @@ const styles = StyleSheet.create({
   animatedWrapper: {
     transform: [{ scale: 1 }],
   },
-  gradientBackground: {
-    backgroundColor: '#0c6dff',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+  iconContainer: {
+    padding: 10,
     borderRadius: 16,
+    // backgroundColor: '#0c6dff',
     shadowColor: '#0c6dff',
     shadowOffset: {
       width: 0,
@@ -77,16 +74,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  logoText: {
-    fontWeight: '800',
-    color: '#ffffff',
-    textAlign: 'center',
-    fontFamily: 'System', // Consider using a custom font like 'Inter-Black'
-  },
-  textShadow: {
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+  logoIcon: {
+    // Dimensions set dynamically based on size prop
   },
   aiBadge: {
     backgroundColor: '#00d4ff',
