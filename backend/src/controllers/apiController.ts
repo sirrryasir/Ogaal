@@ -31,7 +31,6 @@ export const getVillages = async (req: Request, res: Response) => {
   }
 };
 
-// Get all WaterSources (with Village data), optionally filter by village_id
 export const getWaterSources = async (req: Request, res: Response) => {
   try {
     const { village_id } = req.query;
@@ -40,22 +39,24 @@ export const getWaterSources = async (req: Request, res: Response) => {
     const sources = await prisma.waterSource.findMany({
       where: whereClause,
       include: {
-        village: true,
+        village: {
+          include: {
+            district: {
+              include: {
+                region: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    // Map to flat structure
-    const flatSources = sources.map((b: any) => ({
-      ...b,
-      village_name: b.village.name,
-      drought_risk_level: b.village.drought_risk_level,
-    }));
-
-    res.json(flatSources);
+    res.json(sources);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Submit Report (Agent App)
 export const submitReport = async (req: Request, res: Response) => {

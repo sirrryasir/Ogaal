@@ -7,8 +7,7 @@ import * as readline from "readline";
 // Files to process
 const CSV_FILES = ["SWIMS_LiveMap_Dataset_20251218-081345.csv"];
 
-// Target regions to process - Note: We include "Woqooyi Galbeed" because it's in the CSV,
-// but we will map it to Maroodi Jeex or Saaxil before inserting.
+// Target regions to process
 const TARGET_REGIONS = [
   "Awdal",
   "Togdheer",
@@ -87,7 +86,7 @@ async function processFile(
 
   let header: string[] | null = null;
   let rowCount = 0;
-  let importedCount = 0; // Count for *this* file
+  let importedCount = 0;
   let totalCount = currentTotal;
 
   for await (const line of rl) {
@@ -96,7 +95,6 @@ async function processFile(
     }
 
     rowCount++;
-    // Simple CSV parser that handles quotes
     const row = parseCSVLine(line);
 
     if (rowCount === 1) {
@@ -106,13 +104,11 @@ async function processFile(
 
     if (!header) continue;
 
-    // Create a map of column name to value
     const data: Record<string, string> = {};
     header.forEach((col, index) => {
       data[col] = row[index] || "";
     });
 
-    // Extract relevant fields
     const rawRegion = (data["region"] || "").trim();
     if (!TARGET_REGIONS.includes(rawRegion)) {
       continue;
@@ -129,6 +125,8 @@ async function processFile(
     const functioningStr = (data["functioning"] || "").trim();
     const latStr = (data["latitude"] || "").trim();
     const lonStr = (data["longitude"] || "").trim();
+    const establishingAgency = (data["establishingSMOWRD_agency"] || "").trim();
+    const inspectingAgency = "Somaliland MOWRD"; // Always set to "Somaliland MOWRD"
 
     // Apply Region Mapping
     let finalRegionName = rawRegion;
@@ -146,15 +144,7 @@ async function processFile(
       }
     }
 
-    // Double check we are not inserting "Woqooyi Galbeed" as a region name if it wasn't mapped
     if (finalRegionName === "Woqooyi Galbeed") {
-      // Fallback or skip?
-      // User requested: "Hargeisa iyo Gebiley ha noqdan mMarodji Jeex Berberana ha noqoto Saaxil"
-      // If it's W.G. but not one of those districts, maybe skip or map to one?
-      // Let's check district again.
-      // If undefined/unknown district in W.G., we might want to skip to be safe,
-      // OR default to Maroodi Jeex as it's the capital region.
-      // For now, let's skip if we can't map it, to avoid "Woqooyi Galbeed" appearing in DB.
       continue;
     }
 
@@ -166,7 +156,6 @@ async function processFile(
       status = "Working";
     }
 
-    // Coordinates
     const lat = parseFloat(latStr);
     const lon = parseFloat(lonStr);
 
@@ -213,10 +202,9 @@ async function processFile(
       }
 
       // Create Water Source
-      // Check by strict name AND village_id
       const existingSource = await prisma.waterSource.findFirst({
         where: {
-          name: { equals: sourceName, mode: "insensitive" }, // Case insensitive check
+          name: { equals: sourceName, mode: "insensitive" },
           village_id: village.id,
         },
       });
@@ -230,6 +218,9 @@ async function processFile(
             latitude: !isNaN(lat) ? lat : undefined,
             longitude: !isNaN(lon) ? lon : undefined,
             village_id: village.id,
+            inspecting_agency: inspectingAgency,
+            establishing_agency: establishingAgency || undefined,
+            // settlement_name REMOVED - this field no longer exists
           },
         });
         importedCount++;

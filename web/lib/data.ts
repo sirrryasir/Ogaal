@@ -24,6 +24,9 @@ export interface WaterSource {
   lng: number;
   village_id: number;
   village: string;
+  district: string;
+  region: string;
+  source_type: string;
   status: string;
   last_updated: Date;
 }
@@ -68,6 +71,9 @@ export async function getWaterSources(): Promise<WaterSource[]> {
       lng: b.longitude ?? b.village?.longitude ?? 0,
       village_id: b.village_id,
       village: b.village?.name || "Unknown",
+      district: b.village?.district?.name || "Unknown",
+      region: b.village?.district?.region?.name || "Unknown",
+      source_type: b.type || "Unknown",
       status: b.status || "unknown",
       last_updated: b.last_maintained
         ? new Date(b.last_maintained)

@@ -1,6 +1,6 @@
-# Backend API with Authentication
+# OGAAL PLATFORM - Backend API with Authentication EXPRESS/TYPESCRIPT
 
-A TypeScript Express.js backend application with user authentication, we cam add later based in our project using Prisma ORM and PostgreSQL.
+A TypeScript Express.js backend application for the OGAAL PLATFORM with user authentication, using Prisma ORM and PostgreSQL.
 
 ## Features
 
@@ -10,6 +10,10 @@ A TypeScript Express.js backend application with user authentication, we cam add
 - TypeScript support
 - CORS enabled
 - Health check endpoint
+- Report management
+- Water source management
+- USSD integration
+- API routes
 
 ## Project Structure
 
@@ -18,16 +22,33 @@ src/
 ├── app.ts              # Express app configuration
 ├── server.ts           # Server entry point
 ├── controllers/        # Route handlers
-│   └── authController.ts
+│   ├── apiController.ts
+│   ├── authController.ts
+│   ├── reportController.ts
+│   ├── ussdController.ts
+│   └── waterSourceController.ts
 ├── routes/             # API routes
-│   └── authRoutes.ts
-├── services/           # Business logic
-│   └── authService.ts
-├── middlewares/        # Custom middlewares (future use)
-├── config/             # Configuration files (future use)
-└── generated/          # Prisma generated client
+│   ├── apiRoutes.ts
+│   ├── authRoutes.ts
+│   ├── reportRoutes.ts
+│   ├── ussdRoutes.ts
+│   └── waterSourceRoutes.ts
+├── middlewares/        # Custom middlewares
+│   └── authMiddleware.ts
+├── models/             # Data models
+│   └── authModel.ts
+├── config/             # Configuration files
+│   └── prisma.ts
+├── types/              # TypeScript type definitions
+│   └── express.d.ts
 prisma/
-└── schema.prisma       # Database schema
+├── schema.prisma       # Database schema
+├── seed.ts             # Database seeding
+└── migrations/         # Database migrations
+scripts/
+├── import_swims_data.ts
+├── SCRIPT.MD
+└── seed_status.ts
 ```
 
 ## Prerequisites
@@ -38,43 +59,76 @@ prisma/
 
 ## Installation
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd backend
-   ```
+Follow these step-by-step instructions to set up the backend:
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+### Step 1: Clone the Repository
 
-3. Set up environment variables:
-   Create a `.env` file in the root directory:
-   ```
-   DATABASE_URL="postgresql://username:password@localhost:5432/dbname"
-   JWT_SECRET="your-super-secret-jwt-key"
-   PORT=3000
-   ```
+```bash
+git clone <repository-url>
+cd backend
+```
 
-4. Set up the database:
-   ```bash
-   npx prisma migrate dev --name init
-   ```
+### Step 2: Install Dependencies
 
-5. Generate Prisma client:
-   ```bash
-   npx prisma generate
-   ```
+```bash
+npm install
+```
+
+This installs all necessary dependencies including Express, Prisma, bcrypt, jsonwebtoken, etc.
+
+### Step 3: Set Up Environment Variables
+
+Create a `.env` file in the root directory:
+
+```
+DATABASE_URL="postgresql://username:password@localhost:5432/dbname"
+JWT_SECRET="your-super-secret-jwt-key"
+PORT=3000
+```
+
+### Step 4: Configure Prisma
+
+Prisma is already initialized. The schema is defined in `prisma/schema.prisma`.
+
+### Step 5: Set Up the Database
+
+Create and apply the initial database migration:
+
+```bash
+npx prisma migrate dev --name init
+```
+
+This will:
+- Create migration SQL files
+- Apply migrations to your database
+- Generate the Prisma Client
+
+### Step 6: Generate Prisma Client
+
+```bash
+npx prisma generate
+```
+
+### Step 7: Verify Database Connection (Optional)
+
+```bash
+# Push schema to database
+npx prisma db push
+
+# Open Prisma Studio to view data
+npx prisma studio
+```
 
 ## Running the Application
 
 ### Development
+
 ```bash
 npm run dev
 ```
 
 ### Production
+
 ```bash
 npm run build
 npm start
@@ -142,6 +196,23 @@ The server will start on port 3000 (or the port specified in `.env`).
   }
   ```
 
+### Reports
+- **GET** `/api/reports` - Get all reports
+- **POST** `/api/reports` - Create a report
+- **GET** `/api/reports/:id` - Get report by ID
+- **PUT** `/api/reports/:id` - Update report
+- **DELETE** `/api/reports/:id` - Delete report
+
+### Water Sources
+- **GET** `/api/water-sources` - Get all water sources
+- **POST** `/api/water-sources` - Create a water source
+- **GET** `/api/water-sources/:id` - Get water source by ID
+- **PUT** `/api/water-sources/:id` - Update water source
+- **DELETE** `/api/water-sources/:id` - Delete water source
+
+### USSD
+- **POST** `/ussd` - Handle USSD requests
+
 ## Scripts
 
 - `npm run dev` - Start development server with hot reload
@@ -149,6 +220,7 @@ The server will start on port 3000 (or the port specified in `.env`).
 - `npm start` - Start production server
 - `npx prisma studio` - Open Prisma Studio for database management
 - `npx prisma migrate dev` - Create and apply database migrations
+- `npx prisma generate` - Generate Prisma Client
 
 ## Technologies Used
 
@@ -178,8 +250,9 @@ The server will start on port 3000 (or the port specified in `.env`).
 5. Submit a pull request
 
 ## License
+
 No licence for now
 
 ISC
 
-## CREATED AND INSTRAUCTURED BY SALMAN ABDIKADIR ALI (BAASHE)
+## CREATED AND INSTRUCTURED BY SALMAN ABDIKADIR ALI (BAASHE)
