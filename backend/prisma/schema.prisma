@@ -61,7 +61,8 @@ model Region {
   id        Int        @id @default(autoincrement())
   name      String     @unique
   districts District[]
-  
+  reports   Report[]
+
   @@map("regions")
 }
 
@@ -71,7 +72,8 @@ model District {
   region_id Int
   region    Region    @relation(fields: [region_id], references: [id])
   villages  Village[]
-  
+  reports   Report[]
+
   @@map("districts")
 }
 
@@ -140,21 +142,31 @@ model Intervention {
 }
 
 model Report {
-  id             Int       @id @default(autoincrement())
-  user_id        Int?
-  village_id     Int?
-  water_source_id Int?
-
-  reporter_type  String?   // User (App), USSD
-  content        String?
-  status         ReportStatus?
-  is_verified    Boolean   @default(false)
-  timestamp      DateTime  @default(now())
-
-  user           User?         @relation(fields: [user_id], references: [id])
-  village        Village?      @relation(fields: [village_id], references: [id])
-  water_source   WaterSource?  @relation(fields: [water_source_id], references: [id])
-
+  id               Int       @id @default(autoincrement())
+  user_id          Int?
+  village_id       Int?
+  water_source_id  Int?
+  
+  // USSD SPECIFIC FIELDS (ADD THESE)
+  reporter_phone   String?   // Phone number from USSD gateway
+  reporter_name    String?   // Optional name from USSD user
+  region_id        Int?      // For tracking hierarchy
+  district_id      Int?      // For tracking hierarchy
+  
+  reporter_type    String?   // "USSD", "User (App)", "Web"
+  content          String?
+  status           ReportStatus?
+  issue_type       String?   // Store the issue code (1, 2, 3)
+  is_verified      Boolean   @default(false)
+  timestamp        DateTime  @default(now())
+  
+  // Relations (update with new relations)
+  user             User?         @relation(fields: [user_id], references: [id])
+  village          Village?      @relation(fields: [village_id], references: [id])
+  water_source     WaterSource?  @relation(fields: [water_source_id], references: [id])
+  region           Region?       @relation(fields: [region_id], references: [id]) // Add this
+  district         District?     @relation(fields: [district_id], references: [id]) // Add this
+  
   @@map("reports")
 }
 
