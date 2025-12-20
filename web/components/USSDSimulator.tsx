@@ -12,7 +12,7 @@ export default function USSDSimulator() {
   }>({
     text: "",
     sessionId: Math.random().toString(36).substring(7),
-    phoneNumber: "+252634000000",
+    phoneNumber: "252636919012",
   });
 
   const [input, setInput] = useState("");
