@@ -158,3 +158,45 @@ export async function getAnalyticsData(): Promise<AnalyticsData | null> {
     return null;
   }
 }
+
+export interface HomeStats {
+  sourcesMonitored: number;
+  regionsActive: number;
+  alertsToday: number;
+}
+
+export async function getHomeStats(): Promise<HomeStats> {
+  try {
+    const [statsRes, regionsRes, alertsRes] = await Promise.all([
+      api.get("/stats"),
+      api.get("/regions"),
+      api.get("/alerts"),
+    ]);
+
+    const stats = statsRes.data;
+    const regions = regionsRes.data;
+    const alerts = alertsRes.data;
+
+    // Count alerts created today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const alertsToday = alerts.filter((alert: any) => {
+      const alertDate = new Date(alert.created_at);
+      alertDate.setHours(0, 0, 0, 0);
+      return alertDate.getTime() === today.getTime();
+    }).length;
+
+    return {
+      sourcesMonitored: stats.totalSources || 0,
+      regionsActive: regions.length || 0,
+      alertsToday,
+    };
+  } catch (error) {
+    console.error("Failed to fetch home stats:", error);
+    return {
+      sourcesMonitored: 0,
+      regionsActive: 0,
+      alertsToday: 0,
+    };
+  }
+}
