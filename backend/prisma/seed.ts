@@ -1,6 +1,6 @@
 import "dotenv/config";
 import bcrypt from "bcrypt";
-import { prisma } from "../src/config/prisma"; // ✅ USE EXISTING CLIENT
+import { prisma } from "../src/config/prisma"; 
 
 async function main() {
   const hashedPassword = bcrypt.hashSync("Ogaal@123", 10);
