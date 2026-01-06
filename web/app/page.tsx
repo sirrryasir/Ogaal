@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   MapPin,
   Phone,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Footer from "../components/footer";
+import { getHomeStats, HomeStats } from "../lib/data";
 
 const FEATURES = [
   {
@@ -34,6 +36,20 @@ const FEATURES = [
 ];
 
 export default function Home() {
+  const [stats, setStats] = useState<HomeStats>({
+    sourcesMonitored: 0,
+    regionsActive: 0,
+    alertsToday: 0,
+  });
+
+  useEffect(() => {
+    async function fetchStats() {
+      const data = await getHomeStats();
+      setStats(data);
+    }
+    fetchStats();
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Hero Section */}
@@ -51,8 +67,8 @@ export default function Home() {
               Somaliland Water Intelligence Platform
             </span>
             <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-tight">
-              Ogaal <br />
-              <span className="text-blue-300">Platform.</span>
+              OGAAL <br />
+              <span className="text-blue-300">PLATFORM</span>
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 max-w-2xl mx-auto mb-12 leading-relaxed">
               Monitoring water resources in real-time. Empowering communities
@@ -79,20 +95,20 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Stats / Impact Banner (Placeholder for realism) */}
+      {/* Stats / Impact Banner */}
       <div className="bg-white border-b border-gray-100 py-6">
         <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center gap-8 md:gap-16 text-gray-500 font-medium text-sm md:text-base">
           <span className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500"></div> 1,240
+            <div className="w-2 h-2 rounded-full bg-green-500"></div> {stats.sourcesMonitored.toLocaleString()}
             Sources Monitored
           </span>
           <span className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500"></div> 15 Regions
-            Active
+            <div className="w-2 h-2 rounded-full bg-blue-500"></div> {stats.regionsActive}
+            Regions Active
           </span>
           <span className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-orange-500"></div> 3 Alerts
-            Today
+            <div className="w-2 h-2 rounded-full bg-orange-500"></div> {stats.alertsToday}
+            Alerts Today
           </span>
         </div>
       </div>
