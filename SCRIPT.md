@@ -1,1 +1,0 @@
-npx tsx scripts/import_swims_data.ts

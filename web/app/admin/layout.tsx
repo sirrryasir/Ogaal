@@ -26,8 +26,8 @@ export default function AdminLayout({
   const { role, setRole } = useAppStore();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [email, setEmail] = useState("admin@ogaal.com");
-  const [password, setPassword] = useState("Ogaal@123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -78,6 +78,7 @@ export default function AdminLayout({
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="Your email address"
                 className="w-full p-3 bg-gray-50 rounded-lg border-2 border-gray-100 focus:border-blue-500 outline-none"
                 required
               />
@@ -90,6 +91,7 @@ export default function AdminLayout({
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
                 className="w-full p-3 bg-gray-50 rounded-lg border-2 border-gray-100 focus:border-blue-500 outline-none"
                 required
               />
