@@ -9,7 +9,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "postinstall": "prisma generate",
-    "seed:status": "tsx scripts/seed_status.ts"
+    "seed:status": "tsx scripts/seed_status.ts",
+    "scan:secrets": "npx gitleaks detect --source . --report-path gitleaks-report.json"
   },
   "keywords": [],
   "author": "",
