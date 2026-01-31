@@ -10,6 +10,14 @@
 !.yarn/releases
 !.yarn/versions
 
+.vscode/
+
+# Prisma
+/src/generated/prisma
+
+# Ignore build outputs
+/backend/dist/
+
 # testing
 /coverage
 
