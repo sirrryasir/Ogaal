@@ -7,7 +7,7 @@ const router = Router();
 router.post('/register', AuthController.register);
 
 // POST /auth/admin/register - for creating admin users
-router.post('/admin/register', (req, res) => {
+router.post('/admin/register', (req: any, res: any) => {
   // Set role to admin for admin registration
   req.body.role = 'admin';
   AuthController.register(req, res);

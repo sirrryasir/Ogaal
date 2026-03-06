@@ -327,21 +327,18 @@ export const getAdminWaterSources = async (req: Request, res: Response) => {
 
           // Filter sources if status or type provided
           if (status) {
-            sources = sources.filter((s) => s.status === status);
+            sources = sources.filter((s: any) => s.status === status);
           }
           if (type) {
-            sources = sources.filter((s) => s.water_source_type === type);
+            sources = sources.filter((s: any) => s.water_source_type === type);
           }
 
           const totalSources = sources.length;
-          const functional = sources.filter(
-            (s) => s.status === "functional"
+          const functional = sources.filter((s: any) => s.status === "functional"
           ).length;
-          const needsRepair = sources.filter(
-            (s) => s.status === "needs_repair"
+          const needsRepair = sources.filter((s: any) => s.status === "needs_repair"
           ).length;
-          const nonFunctional = sources.filter(
-            (s) => s.status === "non_functional"
+          const nonFunctional = sources.filter((s: any) => s.status === "non_functional"
           ).length;
           const avgStatus =
             totalSources > 0
@@ -366,7 +363,7 @@ export const getAdminWaterSources = async (req: Request, res: Response) => {
         const avgStatus =
           villages.length > 0
             ? Math.round(
-                villages.reduce((sum, v) => sum + v.avgStatus, 0) /
+                villages.reduce((sum: any, v: any) => sum + v.avgStatus, 0) /
                   villages.length
               )
             : 0;
@@ -386,7 +383,7 @@ export const getAdminWaterSources = async (req: Request, res: Response) => {
       const avgStatus =
         districts.length > 0
           ? Math.round(
-              districts.reduce((sum, d) => sum + d.avgStatus, 0) /
+              districts.reduce((sum: any, d: any) => sum + d.avgStatus, 0) /
                 districts.length
             )
           : 0;
@@ -416,7 +413,7 @@ export const getAnalyticsData = async (req: Request, res: Response) => {
       },
     });
 
-    const statusData = statusCounts.map((item) => ({
+    const statusData = statusCounts.map((item: any) => ({
       status: item.status || "Unknown",
       count: item._count.id,
       color:
@@ -444,12 +441,10 @@ export const getAnalyticsData = async (req: Request, res: Response) => {
     });
 
     const villageData = villages
-      .map((v) => {
-        const functional = v.water_sources.filter(
-          (s) => s.status === "Working"
+      .map((v: any) => {
+        const functional = v.water_sources.filter((s: any) => s.status === "Working"
         ).length;
-        const nonFunctional = v.water_sources.filter(
-          (s) => s.status === "Broken"
+        const nonFunctional = v.water_sources.filter((s: any) => s.status === "Broken"
         ).length;
         // Simple population estimate logic (placeholder)
         const population = v.water_sources.length * 500;
@@ -462,7 +457,7 @@ export const getAnalyticsData = async (req: Request, res: Response) => {
           population,
         };
       })
-      .sort((a, b) => b.count - a.count) // Top villages first
+      .sort((a: any, b: any) => b.count - a.count) // Top villages first
       .slice(0, 10); // Limit to top 10 for charts
 
     // 3. Source Type Analysis
@@ -479,7 +474,7 @@ export const getAnalyticsData = async (req: Request, res: Response) => {
       { count: number; functional: number; type: string }
     > = {};
 
-    typeCounts.forEach((item) => {
+    typeCounts.forEach((item: any) => {
       const typeName = item.type || "Unknown";
       if (!typeMap[typeName]) {
         typeMap[typeName] = { type: typeName, count: 0, functional: 0 };

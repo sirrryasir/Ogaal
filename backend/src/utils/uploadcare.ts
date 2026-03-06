@@ -1,3 +1,4 @@
+// @ts-ignore
 import { uploadFile } from '@uploadcare/upload-client';
 
 const publicKey = process.env.UPLOADCARE_PUBLIC_KEY;
