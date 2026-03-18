@@ -47,7 +47,10 @@
       "bcrypt",
       "esbuild",
       "prisma"
-    ]
+    ],
+    "overrides": {
+      "@types/pg": "8.11.11"
+    }
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

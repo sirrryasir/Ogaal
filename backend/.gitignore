@@ -10,19 +10,12 @@
 !.yarn/releases
 !.yarn/versions
 
-.vscode/
-
-# Prisma
-/src/generated/prisma
-
-# Ignore build outputs
-/backend/dist/
-
 # testing
 /coverage
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -36,9 +29,6 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
-
-# vercel
-.vercel
 
 # typescript
 *.tsbuildinfo
