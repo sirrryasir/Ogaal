@@ -1,42 +1,36 @@
-# OGAAL: Somaliland Water Intelligence & Early Warning Platform
+# OGAAL: Somaliland Water Intelligence and Early Warning Platform
 
-<p align="center">
-  <img src="docs/ogaal_dashboard_preview.png" alt="OGAAL Dashboard Preview" width="100%" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);"/>
-</p>
-
-**OGAAL** (Somali for *Aware*, *Informed*, or *Vigilant*) is an integrated, real-time water intelligence monitoring and drought early warning platform custom-built for Somaliland. 
-
-Designed in alignment with the **Ministry of Water Resources Development (MOWRD)**, OGAAL leverages the **SWIMS (Somaliland Water Information Management System)** dataset to collect live water telemetry, handle emergency SMS and paginated USSD reports from remote villages, and display real-time geographic status maps and automated drought risk predictions.
+OGAAL is an integrated water intelligence monitoring and drought early warning system developed in alignment with the Somaliland Ministry of Water Resources Development. The platform aggregates live water source telemetry, manages offline emergency reporting via USSD and SMS, and provides real-time status dashboards for administrative and field coordination.
 
 ---
 
-## 🚀 Key Features
+## System Functions
 
-*   **Offline Reporting (USSD & SMS Gateway)**: Provides GSM-based paginated USSD menus (`*789#`) in Somali, allowing rural communities to check water availability and report failures (e.g. well damage, dried-up sources) using simple feature phones. Integrates the Telesom SMS REST client with secure dynamic MD5 signing keys.
-*   **Administrative Web Portal (Next.js)**: A secure portal for MOWRD officials and NGOs to monitor live maps, approve incoming reports, assign targeted relief interventions (planned, in progress, completed), and view comprehensive status analytics.
-*   **Inspector Mobile App (React Native & Expo)**: Enables field inspectors to view local water source maps, submit verified reports, and capture photos of water source structures.
-*   **AI Drought Early Warning Engine**: Simulates fluctuating weather indicators (soil moisture, temperature, humidity, water level) across Somaliland villages and auto-generates critical alerts and SMS advisories when drought risk rises to "High" or "Severe".
+*   **USSD and SMS Offline Reporting**: A GSM-based, paginated USSD interface (`*789#`) in Somali that allows rural communities to query water source status and report infrastructure failures. The system utilizes Telesom SMS integration secured with dynamic MD5-signed API keys.
+*   **Next.js Administrative Portal**: A centralized management interface for ministry officials and NGOs. Features interactive Leaflet maps, community report verification queues, structured relief intervention status trackers (Planned, In Progress, Completed), and regional water telemetry analytics.
+*   **Expo Mobile Application**: A React Native mobile app for field inspectors to coordinate site surveys, verify offline community alerts, and upload localized telemetry logs.
+*   **Telemetry and Drought Modeling Engine**: A simulator module that evaluates regional environmental indicators (soil moisture, temperature, humidity, and water levels) to calculate local drought probability indices and dispatch automated SMS warnings.
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Component | Framework / Technology | Purpose |
 | :--- | :--- | :--- |
-| **Backend API** | Express.js, TypeScript, Node.js | Core logic, USSD handler, SMS engine, AI simulator |
-| **Database** | PostgreSQL, Prisma ORM | Data persistence, location modeling, relational schemas |
-| **Web Portal** | Next.js 15, TailwindCSS, Lucide Icons | Admin interface, Leaflet map nodes, analytics |
-| **Mobile App** | React Native, Expo, TypeScript | Field inspector tools, local caching |
-| **Integrations**| Telesom API, SWIMS CSV Dataset | Mobile USSD sessions, dynamic MD5 SMS Auth, CSV seeding |
+| **Backend API** | Express.js, TypeScript, Node.js | Core application logic, USSD sessions, SMS gateway client, and telemetry simulator |
+| **Database** | PostgreSQL, Prisma ORM | Relational data persistence and Somaliland geographical hierarchy mapping |
+| **Web Portal** | Next.js 15, TailwindCSS | Administrative dashboard, geospatial mapping, and status reporting |
+| **Mobile App** | React Native, Expo, TypeScript | Field inspector workflow, local caching, and offline data sync |
+| **Integrations**| Telesom REST API, SWIMS Dataset | USSD session management, MD5-signed SMS gateway, and CSV telemetry import |
 
 ---
 
-## 📂 Repository Structure
+## Directory Structure
 
 ```
 ogaal/
-├── backend/            # Express.js REST API & USSD server
-│   ├── prisma/         # PostgreSQL schema & database seed scripts
+├── backend/            # Express.js REST API and USSD server
+│   ├── prisma/         # PostgreSQL schema and database seed scripts
 │   ├── scripts/        # SWIMS CSV dataset import and status check scripts
 │   └── src/            # Controllers, routes, and custom middlewares
 ├── mobile/             # React Native/Expo mobile app for field inspectors
@@ -54,31 +48,31 @@ ogaal/
 
 ---
 
-## 📖 In-Depth Documentation
+## Documentation
 
-We have prepared comprehensive guides for every layer of the OGAAL platform inside the `docs/` folder:
+Comprehensive technical specifications are available in the `docs/` directory:
 
-1.  **[System Architecture & Database Design](docs/architecture.md)**: Explore the visual architecture, Prisma DB entities, enumeration types, and Somaliland's 4-tier location hierarchy mapping.
-2.  **[AI Early Warning & Simulation System](docs/ai-early-warning.md)**: Learn how OGAAL processes telemetry indicators, computes drought probabilities, and triggers proactive alerts.
-3.  **[REST API Reference](docs/api-reference.md)**: Detailed routes, body parameters, and JSON payloads for user authentication, water sources, alerts, reports, and analytics.
-4.  **[USSD Menu & SMS Gateways](docs/ussd-system.md)**: Read about Somali USSD navigation trees, paginated USSD menu builders, and Telesom's dynamic MD5 salted gateway client.
+1.  **[System Architecture and Database Design](docs/architecture.md)**: Visual architectures, PostgreSQL entities, Prisma schemas, and the Somaliland 4-tier administrative location hierarchy.
+2.  **[Drought Modeling and Simulation](docs/ai-early-warning.md)**: Specifications for the telemetry processing algorithms, environmental risk indexing, and alert dispatch triggers.
+3.  **[REST API Reference](docs/api-reference.md)**: Route definitions, JWT authentication payloads, database query options, and JSON response models for all system layers.
+4.  **[USSD Menu and SMS Gateways](docs/ussd-system.md)**: USSD session lifecycle logs, paginated menu utilities, and the MD5-authenticated Telesom API client wrapper.
 
 ---
 
-## ⚙️ Quick Start & Installation
+## Installation and Setup
 
 ### Prerequisites
 *   Node.js (v18.0 or higher)
-*   PostgreSQL running locally or on the cloud
+*   PostgreSQL instance (local or remote)
 *   pnpm (recommended) or npm
 
-### Step 1: Backend Setup
-1.  Navigate into `backend/` and install dependencies:
+### 1. Backend Server Setup
+1.  Navigate to the `backend` directory and install dependencies:
     ```bash
     cd backend
     pnpm install
     ```
-2.  Configure your environment in `backend/.env`:
+2.  Create and configure `backend/.env`:
     ```ini
     DATABASE_URL="postgresql://postgres:password@localhost:5432/ogaal"
     JWT_SECRET="your-jwt-auth-secret-key"
@@ -89,21 +83,21 @@ We have prepared comprehensive guides for every layer of the OGAAL platform insi
     TELESOM_PASSWORD="your-password"
     TELESOM_SENDER_ID="Ogaal1"
     ```
-3.  Apply Prisma migrations to initialize the database:
+3.  Deploy the Prisma schema to initialize your database:
     ```bash
     npx prisma migrate dev --name init
     ```
-4.  Import the Somaliland MOWRD SWIMS dataset:
+4.  Seed the database with the Somaliland MOWRD SWIMS dataset:
     ```bash
-    pnpm run db:import  # Executes scripts/import_swims_data.ts
+    pnpm run db:import
     ```
-5.  Start the development backend server:
+5.  Start the development API server:
     ```bash
     pnpm run dev
     ```
 
-### Step 2: Next.js Web Dashboard Setup
-1.  Navigate to `web/` and install dependencies:
+### 2. Next.js Web Dashboard Setup
+1.  Navigate to the `web` directory and install dependencies:
     ```bash
     cd ../web
     pnpm install
@@ -112,23 +106,23 @@ We have prepared comprehensive guides for every layer of the OGAAL platform insi
     ```bash
     pnpm run dev
     ```
-3.  Open [http://localhost:3000](http://localhost:3000) to access the landing page, Admin portal, and USSD simulator.
+3.  Access the admin interface at [http://localhost:3000](http://localhost:3000).
 
-### Step 3: Expo Mobile App Setup
-1.  Navigate to `mobile/` and install dependencies:
+### 3. Expo Mobile App Setup
+1.  Navigate to the `mobile` directory and install dependencies:
     ```bash
     cd ../mobile
     pnpm install
     ```
-2.  Launch the Expo development server:
+2.  Start the Expo development server:
     ```bash
     npx expo start
     ```
 
 ---
 
-## 🛡️ License
+## License and Credits
 
-Created and engineered by **Yasir (@sirrryasir)**.
+Developed and engineered by **Yasir (@sirrryasir)**.
 
-Copyright © 2026. All rights reserved. Registered under the Somaliland Ministry of Water Resources Development initiatives.
+Copyright © 2026. Registered in collaboration with the Somaliland Ministry of Water Resources Development. All rights reserved.
