@@ -20,7 +20,7 @@ const AboutScreen: React.FC = () => {
 
   const socialLinks = [
     { icon: 'globe-outline', label: 'Website', color: '#0c6dff', url: 'https://ogaal.ai' },
-    { icon: 'mail-outline', label: 'Email', color: '#ef4444', url: 'mailto:salmanabdikadir01@gmail.com' },
+    { icon: 'mail-outline', label: 'Email', color: '#ef4444', url: 'mailto:hyaasir012@gmail.com' },
     { icon: 'call-outline', label: 'Phone', color: '#10b981', url: 'tel:+252636819294' },
   ];
 
@@ -178,7 +178,7 @@ const AboutScreen: React.FC = () => {
           </Typography>
           <View style={styles.developerCard}>
             <Typography variant="body" style={styles.developerText}>
-              This app was developed by Salman Abdikadir, dedicated to improving water resource management in Somaliland through innovative technology solutions.
+              This app was developed by Yasir, dedicated to improving water resource management in Somaliland through innovative technology solutions.
             </Typography>
           </View>
         </View>

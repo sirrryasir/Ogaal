@@ -110,4 +110,4 @@ The structure is designed to be easily extensible:
 - Database connection and JWT secrets are configurable
 - Server port is configurable via `PORT` environment variable
 
-## CREATED AND INSTRAUCTURED BY SALMAN ABDIKADIR ALI (BAASHE)
+## CREATED AND INSTRUCTURED BY YASIR (@sirrryasir)
