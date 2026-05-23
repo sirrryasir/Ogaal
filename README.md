@@ -36,7 +36,7 @@ The system incorporates a specialized Python-based decision intelligence engine 
 
 ```
 ogaal/
-├── app/                # Python FastAPI decision engine
+├── ai/                 # Python FastAPI decision engine
 │   ├── api/            # API routing for stress calculations and failure countdowns
 │   ├── domain/         # Core evaluation rules, priority scoring, and stress calculators
 │   ├── schemas/        # Request and response data contracts
@@ -80,9 +80,9 @@ Comprehensive technical specifications are available in the `docs/` directory:
 *   pnpm (recommended) or npm
 
 ### 1. Decision Engine Setup (Python)
-1.  Navigate to the `app` directory:
+1.  Navigate to the `ai` directory:
     ```bash
-    cd app
+    cd ai
     ```
 2.  Create a virtual environment and install dependencies:
     ```bash
@@ -92,7 +92,7 @@ Comprehensive technical specifications are available in the `docs/` directory:
     ```
 3.  Start the FastAPI application:
     ```bash
-    uvicorn app.main:app --reload --port 8000
+    uvicorn ai.main:app --reload --port 8000
     ```
 
 ### 2. Backend Server Setup (Node.js)

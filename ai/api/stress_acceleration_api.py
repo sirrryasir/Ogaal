@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from typing import List, Dict
-from app.services.stress_acceleration_service import StressAccelerationService
+from ai.services.stress_acceleration_service import StressAccelerationService
 
 router = APIRouter(prefix="/stress-acceleration", tags=["AI"])
 

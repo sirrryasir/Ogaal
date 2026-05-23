@@ -1,6 +1,6 @@
 from typing import List, Dict
-from app.services.usage_collector import get_water_sources_with_last_7_days_sr
-from app.domain.stress_engine import WaterStressEngine
+from ai.services.usage_collector import get_water_sources_with_last_7_days_sr
+from ai.domain.stress_engine import WaterStressEngine
 
 class StressAccelerationService:
 

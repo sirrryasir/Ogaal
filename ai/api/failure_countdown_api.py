@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from typing import List, Optional
-from app.domain.failure_countdown_engine import FailureCountdownEngine
-from app.schemas.failure_countdown import FailureCountdownInput, FailureCountdownOutput
+from ai.domain.failure_countdown_engine import FailureCountdownEngine
+from ai.schemas.failure_countdown import FailureCountdownInput, FailureCountdownOutput
 
 router = APIRouter(prefix="/failure-countdown", tags=["AI"])
 

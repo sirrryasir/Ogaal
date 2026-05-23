@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from app.schemas.input import WaterStressInput
-from app.schemas.output import WaterStressOutput
-from app.services.stress_evaluator import evaluate_water_stress
+from ai.schemas.input import WaterStressInput
+from ai.schemas.output import WaterStressOutput
+from ai.services.stress_evaluator import evaluate_water_stress
 
 router = APIRouter(prefix="/ai", tags=["Water Stress"])
 

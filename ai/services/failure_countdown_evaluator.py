@@ -1,7 +1,7 @@
-# app/services/failure_countdown_evaluator.py
+# ai/services/failure_countdown_evaluator.py
 
 from typing import Optional
-from app.domain.failure_countdown_engine import FailureCountdownEngine
+from ai.domain.failure_countdown_engine import FailureCountdownEngine
 
 
 class FailureCountdownEvaluator:
