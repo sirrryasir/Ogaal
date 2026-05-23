@@ -1,1 +1,0 @@
-{"kind":"FETCH","data":{"headers":{"content-length":"74","content-type":"application/json","date":"Sun, 14 Dec 2025 19:16:56 GMT","server":"uvicorn"},"body":"eyJsb2NhdGlvbl9pZCI6Miwic3RyZXNzX2xldmVsIjoiTUVESVVNIiwicHJpb3JpdHlfc2NvcmUiOjQzLCJyZWFzb25zIjpbXX0=","status":200,"url":"http://127.0.0.1:8000/ai/water-stress"},"revalidate":31536000,"tags":[]}

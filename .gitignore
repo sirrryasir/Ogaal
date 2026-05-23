@@ -1,8 +1,15 @@
-# Ignore build outputs
-backend/dist/
-
 # Node modules
 **/node_modules/
+
+# Next.js build outputs and cache
+**/.next/
+
+# Build outputs
+dist/
+build/
+out/
+bin/
+obj/
 
 # Logs
 logs
@@ -13,4 +20,16 @@ yarn-error.log*
 
 # OS files
 .DS_Store
- Thumbs.db
+Thumbs.db
+
+# VS Code settings
+.vscode/
+
+# Antigravity CLI config
+.antigravitycli/
+
+# Local environment variables
+.env
+.env.*
+backend/.env
+backend/.env.*
