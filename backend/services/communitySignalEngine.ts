@@ -28,7 +28,7 @@ export const saveCommunityReport = async (report: CommunityReport) => {
       report.complaints_count || 0,
     ]
   );
-  return res.rows[0];
+  return res[0];
 };
 
 // Compute a signal score from a report
@@ -64,7 +64,7 @@ export const saveCommunitySignal = async (signal: CommunitySignal) => {
       signal.overall_signal_score,
     ]
   );
-  return res.rows[0];
+  return res[0];
 };
 
 // Full pipeline: report -> signal -> save

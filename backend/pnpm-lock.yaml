@@ -14,6 +14,9 @@ importers:
       '@prisma/client':
         specifier: ^7.1.0
         version: 7.1.0(prisma@7.1.0(@types/react@19.2.7)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@uploadcare/upload-client':
+        specifier: ^6.18.4
+        version: 6.18.4
       axios:
         specifier: ^1.13.2
         version: 1.16.1
@@ -487,6 +490,10 @@ packages:
 
   '@types/serve-static@1.15.10':
     resolution: {integrity: sha512-tRs1dB+g8Itk72rlSI2ZrW6vZg0YrLI81iQSTkMmOqnqCaNr/8Ek4VwWcN5vZgCYWbg/JJSGBlUaYGAOP73qBw==}
+
+  '@uploadcare/upload-client@6.18.4':
+    resolution: {integrity: sha512-I0XjhwYAPRGpK/E0PVuRdrDZEa1d8RsU8toA76Yi3wY7kyD20D25hn21/QRL1ZLmsEsVdC0D1hFFOn5kutHZ2A==}
+    engines: {node: '>=16'}
 
   abbrev@1.1.1:
     resolution: {integrity: sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==}
@@ -1940,6 +1947,14 @@ snapshots:
       '@types/node': 25.0.1
       '@types/send': 0.17.6
 
+  '@uploadcare/upload-client@6.18.4':
+    dependencies:
+      form-data: 4.0.5
+      ws: 8.18.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   abbrev@1.1.1: {}
 
   accepts@2.0.0:
@@ -3035,8 +3050,7 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  ws@8.18.3:
-    optional: true
+  ws@8.18.3: {}
 
   xtend@4.0.2: {}
 

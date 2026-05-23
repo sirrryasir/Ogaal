@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
+import { ReportStatus } from "@prisma/client";
 import crypto from "crypto";
 import axios from "axios";
 
@@ -459,7 +460,12 @@ const handleUssdRequest = async (req: Request, res: Response) => {
         // FLOW 2: Issue type selected - submit report
         else if (action === "2") {
           const issueTypes = ["Biyihii dhammaaday", "Ceelkaa jabay", "Biyo qashan", "Dhib kale"];
-          const statusMap = ["DRY", "BROKEN", "CONTAMINATED", "UNKNOWN"];
+          const statusMap: (ReportStatus | null)[] = [
+            ReportStatus.DRY,
+            ReportStatus.BROKEN,
+            ReportStatus.CONTAMINATION,
+            null
+          ];
           
           const issueNum = parseInt(selection);
           if (issueNum >= 1 && issueNum <= 4) {

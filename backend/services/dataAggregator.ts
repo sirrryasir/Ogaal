@@ -2,7 +2,7 @@ import { query } from "../lib/db";
 import { getClimateData } from "../lib/climateClient";
 
 export async function getWaterStressPayload() {
-  const sources = await query<any>(`
+  const sources = await query(`
     SELECT
       ws.id,
       ws.district,
