@@ -2,8 +2,8 @@
 # exit on error
 set -o errexit
 
-# Install pnpm correctly
-npm install -g pnpm
+# Install pnpm correctly (Version 9 to prevent build errors)
+npm install -g pnpm@9
 
 # Install dependencies
 pnpm install
