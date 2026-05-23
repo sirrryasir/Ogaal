@@ -1,6 +1,8 @@
 # OGAAL: Somaliland Water Intelligence and Early Warning Platform
 
-OGAAL is an integrated water intelligence monitoring and drought early warning system developed in alignment with the Somaliland Ministry of Water Resources Development. The platform aggregates live water source telemetry, manages offline emergency reporting via USSD and SMS, and provides real-time status dashboards for administrative and field coordination.
+OGAAL is an integrated water intelligence monitoring, drought early warning, and decision support platform developed in alignment with the Somaliland Ministry of Water Resources Development. The platform aggregates live water source telemetry, manages offline emergency reporting via USSD and SMS, and provides real-time status dashboards for administrative and field coordination.
+
+The system incorporates a specialized Python-based decision intelligence engine that evaluates localized water stress ratios, computes infrastructure failure countdowns, and prioritizes site-specific investment and rehabilitation plans.
 
 ---
 
@@ -9,6 +11,10 @@ OGAAL is an integrated water intelligence monitoring and drought early warning s
 *   **USSD and SMS Offline Reporting**: A GSM-based, paginated USSD interface (`*789#`) in Somali that allows rural communities to query water source status and report infrastructure failures. The system utilizes Telesom SMS integration secured with dynamic MD5-signed API keys.
 *   **Next.js Administrative Portal**: A centralized management interface for ministry officials and NGOs. Features interactive Leaflet maps, community report verification queues, structured relief intervention status trackers (Planned, In Progress, Completed), and regional water telemetry analytics.
 *   **Expo Mobile Application**: A React Native mobile app for field inspectors to coordinate site surveys, verify offline community alerts, and upload localized telemetry logs.
+*   **Decision Intelligence and Water Stress Analytics**: A Python-based engine (`app/`) that calculates:
+    *   **Stress Ratio (SR)**: Area-level water stress assessment based on demand and environmental indicators.
+    *   **Failure Countdown**: Environmental depletion and telemetry calculations indicating days remaining before a water source is exhausted.
+    *   **Investment Prioritization**: Algorithmic scoring and ranking of water source repair and construction works based on local urgency, population density, and budget constraints.
 *   **Telemetry and Drought Modeling Engine**: A simulator module that evaluates regional environmental indicators (soil moisture, temperature, humidity, and water levels) to calculate local drought probability indices and dispatch automated SMS warnings.
 
 ---
@@ -18,6 +24,7 @@ OGAAL is an integrated water intelligence monitoring and drought early warning s
 | Component | Framework / Technology | Purpose |
 | :--- | :--- | :--- |
 | **Backend API** | Express.js, TypeScript, Node.js | Core application logic, USSD sessions, SMS gateway client, and telemetry simulator |
+| **Decision Engine** | FastAPI, Python 3.10 | High-performance calculation of water stress models, priority scores, and failure timelines |
 | **Database** | PostgreSQL, Prisma ORM | Relational data persistence and Somaliland geographical hierarchy mapping |
 | **Web Portal** | Next.js 15, TailwindCSS | Administrative dashboard, geospatial mapping, and status reporting |
 | **Mobile App** | React Native, Expo, TypeScript | Field inspector workflow, local caching, and offline data sync |
@@ -29,6 +36,11 @@ OGAAL is an integrated water intelligence monitoring and drought early warning s
 
 ```
 ogaal/
+├── app/                # Python FastAPI decision engine
+│   ├── api/            # API routing for stress calculations and failure countdowns
+│   ├── domain/         # Core evaluation rules, priority scoring, and stress calculators
+│   ├── schemas/        # Request and response data contracts
+│   └── services/       # Explanation builders and countdown evaluators
 ├── backend/            # Express.js REST API and USSD server
 │   ├── prisma/         # PostgreSQL schema and database seed scripts
 │   ├── scripts/        # SWIMS CSV dataset import and status check scripts
@@ -63,13 +75,30 @@ Comprehensive technical specifications are available in the `docs/` directory:
 
 ### Prerequisites
 *   Node.js (v18.0 or higher)
+*   Python (v3.10 or higher)
 *   PostgreSQL instance (local or remote)
 *   pnpm (recommended) or npm
 
-### 1. Backend Server Setup
+### 1. Decision Engine Setup (Python)
+1.  Navigate to the `app` directory:
+    ```bash
+    cd app
+    ```
+2.  Create a virtual environment and install dependencies:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    pip install fastapi uvicorn
+    ```
+3.  Start the FastAPI application:
+    ```bash
+    uvicorn app.main:app --reload --port 8000
+    ```
+
+### 2. Backend Server Setup (Node.js)
 1.  Navigate to the `backend` directory and install dependencies:
     ```bash
-    cd backend
+    cd ../backend
     pnpm install
     ```
 2.  Create and configure `backend/.env`:
@@ -96,7 +125,7 @@ Comprehensive technical specifications are available in the `docs/` directory:
     pnpm run dev
     ```
 
-### 2. Next.js Web Dashboard Setup
+### 3. Next.js Web Dashboard Setup
 1.  Navigate to the `web` directory and install dependencies:
     ```bash
     cd ../web
@@ -108,7 +137,7 @@ Comprehensive technical specifications are available in the `docs/` directory:
     ```
 3.  Access the admin interface at [http://localhost:3000](http://localhost:3000).
 
-### 3. Expo Mobile App Setup
+### 4. Expo Mobile App Setup
 1.  Navigate to the `mobile` directory and install dependencies:
     ```bash
     cd ../mobile
